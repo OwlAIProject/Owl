@@ -1,0 +1,13 @@
+# Local audio
+audio_cache/
+
+# Local models
+pretrained_models/
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Annoying things
+.DS_Store

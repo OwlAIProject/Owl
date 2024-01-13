@@ -1,0 +1,38 @@
+[tool.poetry]
+name = "untitledai"
+version = "0.1.0"
+description = ""
+authors = ["Ethan Sutin <ethan@sutin.net>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+pydub = "^0.25.1"
+speechbrain = "^0.5.16"
+whisperx = {git = "https://github.com/m-bain/whisperx.git"}
+pandas = "^2.1.4"
+transformers = "^4.36.2"
+nltk = "^3.8.1"
+ctranslate2 = ">=3.22,<4"
+huggingface-hub = ">=0.13"
+tokenizers = ">=0.13,<0.16"
+onnxruntime = ">=1.14,<2"
+torch = ">=2"
+torchaudio = ">=2"
+faster-whisper = {git = "https://github.com/SYSTRAN/faster-whisper.git", rev = "0.10.0"}
+pyannote-audio = "3.1.1"
+pydantic = "^2.5.3"
+click = "^8.1.7"
+torchvision = "^0.16.2"
+litellm = "^1.17.4"
+
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.4.4"
+
+[tool.poetry.scripts]
+untitledai = "untitledai.core.cli:cli"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
