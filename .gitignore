@@ -4,6 +4,8 @@ audio_cache/
 # Local models
 pretrained_models/
 
+# Captures
+captures/
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

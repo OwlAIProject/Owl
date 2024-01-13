@@ -18,5 +18,8 @@ class LLMConfig:
     MODEL = "ollama/llama2"
     API_BASE_URL = "http://localhost:11434" 
 
+class CaptureConfig:
+    CAPTURE_DIRECTORY = "captures"
+
 class UserConfig:
     NAME = "Bob"

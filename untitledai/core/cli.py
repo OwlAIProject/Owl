@@ -2,8 +2,9 @@ import click
 from rich.console import Console
 import time
 import os
-import sys
 import contextlib
+import sys
+import uvicorn
 
 @contextlib.contextmanager
 def suppress_output():
@@ -83,6 +84,17 @@ def summarize(main_audio_filepath, voice_sample_filepath, speaker_name):
 
     console.print(summary, style="bold yellow")
     console.log("[bold green]Summarization complete!")
+
+
+@cli.command()
+@click.option('--host', default='127.0.0.1', help='The interface to bind to.')
+@click.option('--port', default=8000, help='The port to bind to.')
+def serve(host, port):
+    """Start the server."""
+    from ..server.main import app
+    console = Console()
+    console.log(f"[bold green]Starting server at http://{host}:{port}...")
+    uvicorn.run(app, host=host, port=port, log_level="info")
 
 if __name__ == '__main__':
     cli()

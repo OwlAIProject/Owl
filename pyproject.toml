@@ -25,6 +25,9 @@ pydantic = "^2.5.3"
 click = "^8.1.7"
 torchvision = "^0.16.2"
 litellm = "^1.17.4"
+fastapi = "^0.109.0"
+uvicorn = "^0.25.0"
+asyncio = "^3.4.3"
 
 
 [tool.poetry.group.dev.dependencies]
