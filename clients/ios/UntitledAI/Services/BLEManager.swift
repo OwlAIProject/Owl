@@ -306,7 +306,6 @@ class BLEManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate, Obse
         if characteristic.uuid.isEqual(audioCharacteristicUUID) {
             if let  completeFrames = frameSequencer?.add(packet: value) {
                 for frame in completeFrames {
-                    print(frame)
                     socketManager.sendAudioData(frame) // if streaming enabled
                     // TODO: append to writer
                 }
