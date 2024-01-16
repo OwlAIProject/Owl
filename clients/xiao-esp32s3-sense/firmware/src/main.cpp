@@ -152,6 +152,11 @@ void setup()
 
 void loop()
 {
+  if (!s_is_connected) {
+    delay(50); // Wait for a connection
+    return;
+  }
+  
   unsigned long t0 = millis();
 
   size_t bytes_recorded = 0;
