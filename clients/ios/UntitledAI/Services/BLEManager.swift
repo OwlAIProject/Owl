@@ -338,6 +338,7 @@ class BLEManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate, Obse
     
     func centralManager(_ central: CBCentralManager, didDisconnectPeripheral peripheral: CBPeripheral, error: Error?) {
         print("Peripheral disconnected, trying to reconnect")
+        socketManager.finishAudio()
         centralManager.connect(peripheral, options: nil)
     }
   
