@@ -29,6 +29,7 @@ fastapi = "^0.109.0"
 uvicorn = "^0.25.0"
 asyncio = "^3.4.3"
 python-socketio = "^5.11.0"
+pydantic-yaml = "^1.2.0"
 
 
 [tool.poetry.group.dev.dependencies]

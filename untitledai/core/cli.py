@@ -1,10 +1,15 @@
-import click
-from rich.console import Console
 import time
 import os
-import contextlib
 import sys
+
+import contextlib
+import click
+from rich.console import Console
+from pydantic_yaml import parse_yaml_raw_as
 import uvicorn
+
+from .config import Configuration
+
 
 @contextlib.contextmanager
 def suppress_output():
@@ -18,6 +23,20 @@ def suppress_output():
             # Restore stdout and stderr
             sys.stdout, sys.stderr = original_stdout, original_stderr
 
+def load_config_yaml(ctx, param, value) -> Configuration:
+    return parse_yaml_raw_as(Configuration, value)
+
+def add_options(options):
+    def _add_options(func):
+        for option in reversed(options):
+            func = option(func)
+        return func
+    return _add_options
+
+_config_options = [
+    click.option("--config", default="untitledai/config.yaml", help="Configuration file", type=click.File(mode="r"), callback=load_config_yaml)
+]
+
 @click.group()
 def cli():
     """UntitledAI CLI tool."""
@@ -25,9 +44,10 @@ def cli():
 
 @cli.command()
 @click.argument('main_audio_filepath', type=click.Path(exists=True))
+@add_options(_config_options)
 @click.option('--voice_sample_filepath', type=click.Path(exists=True), help='Path to the voice sample file')
 @click.option('--speaker_name', help='Name of the speaker')
-def transcribe(main_audio_filepath, voice_sample_filepath, speaker_name):
+def transcribe(config: Configuration, main_audio_filepath: str, voice_sample_filepath: str, speaker_name: str):
     """Transcribe an audio file."""
     console = Console()
 
@@ -35,7 +55,7 @@ def transcribe(main_audio_filepath, voice_sample_filepath, speaker_name):
     console.log("[bold green]Loading models...")
     start_time = time.time()
     with suppress_output(): # WhisperX has noisy warnings but they don't matter
-        from ..services.transcription.whisper_transcription_service import transcribe_audio
+        from ..services.transcription.whisper_transcription_service import WhisperTranscriptionService
     end_time = time.time()
     console.log(f"[bold green]Models loaded successfully! Time taken: {end_time - start_time:.2f} seconds")
 
@@ -43,7 +63,7 @@ def transcribe(main_audio_filepath, voice_sample_filepath, speaker_name):
     start_transcription_time = time.time()
     console.log("[cyan]Transcribing audio...")
 
-    transcription = transcribe_audio(main_audio_filepath, voice_sample_filepath, speaker_name)
+    transcription = WhisperTranscriptionService(config=config.transcription).transcribe_audio(main_audio_filepath, voice_sample_filepath, speaker_name)
 
     end_transcription_time = time.time()
 
@@ -52,18 +72,20 @@ def transcribe(main_audio_filepath, voice_sample_filepath, speaker_name):
 
 @cli.command()
 @click.argument('main_audio_filepath', type=click.Path(exists=True))
+@add_options(_config_options)
 @click.option('--voice_sample_filepath', type=click.Path(exists=True), help='Path to the voice sample file')
 @click.option('--speaker_name', help='Name of the speaker')
-def summarize(main_audio_filepath, voice_sample_filepath, speaker_name):
+def summarize(config: Configuration, main_audio_filepath: str, voice_sample_filepath: str, speaker_name: str):
     """Transcribe and summarize an audio file."""
-    from ..services.llm.session import summarize
+    from ..services.llm import LLM
+    from .. import prompts
     console = Console()
 
     # Model loading
     console.log("[bold green]Loading models...")
     start_time = time.time()
     with suppress_output():
-        from ..services.transcription.whisper_transcription_service import transcribe_audio
+        from ..services.transcription.whisper_transcription_service import WhisperTranscriptionService
     end_time = time.time()
     console.log(f"[bold green]Models loaded successfully! Time taken: {end_time - start_time:.2f} seconds")
 
@@ -71,7 +93,7 @@ def summarize(main_audio_filepath, voice_sample_filepath, speaker_name):
     start_transcription_time = time.time()
     console.log("[cyan]Transcribing audio...")
 
-    transcription = transcribe_audio(main_audio_filepath, voice_sample_filepath, speaker_name)
+    transcription = WhisperTranscriptionService(config=config.transcription).transcribe_audio(main_audio_filepath, voice_sample_filepath, speaker_name)
 
     end_transcription_time = time.time()
 
@@ -80,7 +102,10 @@ def summarize(main_audio_filepath, voice_sample_filepath, speaker_name):
 
     console.log("[bold green]Summarizing transcription...")
 
-    summary = summarize(transcription)
+    summary = LLM(config=config.llm).summarize(
+        transcription=transcription,
+        system_message=prompts.summarization_system_message(config=config.user)
+    )
 
     console.print(summary, style="bold yellow")
     console.log("[bold green]Summarization complete!")

@@ -2785,6 +2785,27 @@ files = [
 typing-extensions = ">=4.6.0,<4.7.0 || >4.7.0"
 
 [[package]]
+name = "pydantic-yaml"
+version = "1.2.0"
+description = "Adds some YAML functionality to the excellent `pydantic` library."
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "pydantic_yaml-1.2.0-py3-none-any.whl", hash = "sha256:196cd4286a66cbe913bcc2e463251cb6b73ebe5ac9c8af2ceed0b1c72ddc03a2"},
+    {file = "pydantic_yaml-1.2.0.tar.gz", hash = "sha256:54bdaf4da25bca95bb9ba790b1a5c6b4b3e93f7cf218fcde46b3073b61779f81"},
+]
+
+[package.dependencies]
+importlib-metadata = "*"
+pydantic = ">=1.8"
+"ruamel.yaml" = ">=0.16.0,<0.18.0"
+typing-extensions = ">=4.5.0"
+
+[package.extras]
+dev = ["black (==23.3.0)", "mypy (==1.5.1)", "pre-commit (==2.21.0)", "pytest (==7.4.2)", "ruff (==0.0.291)", "setuptools (>=61.0.0)", "setuptools-scm[toml] (>=6.2)"]
+docs = ["mkdocs", "mkdocs-material", "mkdocstrings[python]", "pygments", "pymdown-extensions"]
+
+[[package]]
 name = "pydub"
 version = "0.25.1"
 description = "Manipulate audio with an simple and easy high level interface"
@@ -3191,13 +3212,13 @@ jupyter = ["ipywidgets (>=7.5.1,<9)"]
 
 [[package]]
 name = "ruamel-yaml"
-version = "0.18.5"
+version = "0.17.40"
 description = "ruamel.yaml is a YAML parser/emitter that supports roundtrip preservation of comments, seq/map flow style, and map key order"
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3"
 files = [
-    {file = "ruamel.yaml-0.18.5-py3-none-any.whl", hash = "sha256:a013ac02f99a69cdd6277d9664689eb1acba07069f912823177c5eced21a6ada"},
-    {file = "ruamel.yaml-0.18.5.tar.gz", hash = "sha256:61917e3a35a569c1133a8f772e1226961bf5a1198bea7e23f06a0841dea1ab0e"},
+    {file = "ruamel.yaml-0.17.40-py3-none-any.whl", hash = "sha256:b16b6c3816dff0a93dca12acf5e70afd089fa5acb80604afd1ffa8b465b7722c"},
+    {file = "ruamel.yaml-0.17.40.tar.gz", hash = "sha256:6024b986f06765d482b5b07e086cc4b4cd05dd22ddcbc758fa23d54873cf313d"},
 ]
 
 [package.dependencies]
@@ -4582,4 +4603,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "011a9363b7d29670acd31967157f4ce6feaa1b115d2854cb675fedd408cc9794"
+content-hash = "db8a889a55dbcf4595c0b40295f91d2b6d297b279499147821dc3fb65a33144f"
