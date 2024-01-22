@@ -12,8 +12,8 @@ class TranscriptionConfiguration(BaseModel):
 
 class LLMConfiguration(BaseModel):
     model: str
-    api_base_url: str
-    api_key: str
+    api_base_url: str | None
+    api_key: str | None
 
 class CapturesConfiguration(BaseModel):
     capture_dir: str
