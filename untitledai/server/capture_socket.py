@@ -32,7 +32,7 @@ class CaptureSocketApp(socketio.AsyncNamespace):
         self._current_file_name = ""
         self._last_audio_time = None
         self._file_timeout_task = None
-        self.audio_directory = self._app_state.get_audio_directory()
+        self.audio_directory = self._app_state._get_audio_directory()
         
     def mount_to(self, app: FastAPI, at_path: str):
         app.mount(path=at_path, app=self._app)

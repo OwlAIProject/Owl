@@ -27,7 +27,7 @@ class AppState:
         else:
             raise TypeError("`from_obj` must be of type `FastAPI` or `Request`")
 
-    def get_audio_directory(self) -> str:
+    def _get_audio_directory(self) -> str:
         audio_directory = os.path.join(self.config.captures.capture_dir, "audio")
         os.makedirs(audio_directory, exist_ok=True)
         return audio_directory
