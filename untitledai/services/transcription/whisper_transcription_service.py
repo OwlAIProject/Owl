@@ -13,6 +13,7 @@ from pydub import AudioSegment
 from speechbrain.pretrained import SpeakerRecognition
 
 from ...core.config import TranscriptionConfiguration
+from ...core.utils.suppress_output import suppress_output
 from ...models.schemas import Word, Utterance, Transcription
 
 
@@ -87,7 +88,9 @@ class WhisperTranscriptionService:
     
     @staticmethod
     def _load_models(config: TranscriptionConfiguration):
-        transcription_model = whisperx.load_model(config.model, config.device, compute_type=config.compute_type)
+        with suppress_output():
+            # WhisperX has noisy warnings but they don't matter
+            transcription_model = whisperx.load_model(config.model, config.device, compute_type=config.compute_type)
         diarize_model = whisperx.DiarizationPipeline(use_auth_token=config.hf_token, device=config.device)
         verification_model = SpeakerRecognition.from_hparams(source=config.verification_model_source, savedir=config.verification_model_savedir, run_opts={"device": config.device})
         return transcription_model, diarize_model, verification_model
