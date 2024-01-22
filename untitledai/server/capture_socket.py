@@ -32,20 +32,20 @@ class CaptureSocketApp(socketio.AsyncNamespace):
         self._current_file_name = ""
         self._last_audio_time = None
         self._file_timeout_task = None
-
+        self.audio_directory = self._app_state.get_audio_directory()
+        
     def mount_to(self, app: FastAPI, at_path: str):
         app.mount(path=at_path, app=self._app)
     
-    async def on_connect(self, sid, environ):
+    async def on_connect(self, path, sid, *args):
         print('Connected: ', sid)
     
-    async def on_disconnect(self, sid):
+    async def on_disconnect(self, path, sid, *args):
         print('Disconnected: ', sid)
 
-    async def on_audio_data(self, sid, binary_data):
-        print(sid)
+    async def on_audio_data(self, path, sid, binary_data):
         if not self._current_file:
-            self._current_file_name = os.path.join(self._app_state.get_audio_directory(), f"audio_{datetime.now().strftime('%Y%m%d%H%M%S')}.aac")
+            self._current_file_name = os.path.join(self.audio_directory, f"audio_{datetime.now().strftime('%Y%m%d%H%M%S')}.aac")
             self._current_file = open(self._current_file_name, "ab")
             self._last_audio_time = asyncio.get_event_loop().time()
             if self._file_timeout_task:
@@ -54,7 +54,7 @@ class CaptureSocketApp(socketio.AsyncNamespace):
         self._current_file.write(binary_data)
         self._last_audio_time = asyncio.get_event_loop().time()
     
-    async def on_finish_audio(self, sid):
+    async def on_finish_audio(self, path, sid):
         await self._close_and_process_file()
     
     async def _file_timeout(self):

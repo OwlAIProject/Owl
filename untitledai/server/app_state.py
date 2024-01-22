@@ -30,3 +30,4 @@ class AppState:
     def get_audio_directory(self) -> str:
         audio_directory = os.path.join(self.config.captures.capture_dir, "audio")
         os.makedirs(audio_directory, exist_ok=True)
+        return audio_directory
