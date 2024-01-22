@@ -1,3 +1,9 @@
+#
+# whisper_transcription_service.py
+#
+# Local Whisper model for audio transcription with diarization and speaker identification.
+#
+
 import os
 from tempfile import NamedTemporaryFile
 

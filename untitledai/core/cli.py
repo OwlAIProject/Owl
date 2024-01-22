@@ -1,8 +1,11 @@
-import time
-import os
-import sys
+#
+# cli.py
+#
+# Program entry points.
+#
 
-import contextlib
+import time
+
 import click
 from rich.console import Console
 from pydantic_yaml import parse_yaml_raw_as
@@ -11,17 +14,9 @@ import uvicorn
 from .config import Configuration
 
 
-@contextlib.contextmanager
-def suppress_output():
-    # Redirect stdout and stderr to /dev/null
-    with open(os.devnull, 'w') as devnull:
-        original_stdout, original_stderr = sys.stdout, sys.stderr
-        sys.stdout, sys.stderr = devnull, devnull
-        try:
-            yield
-        finally:
-            # Restore stdout and stderr
-            sys.stdout, sys.stderr = original_stdout, original_stderr
+####################################################################################################
+# Config File Parsing
+####################################################################################################
 
 def load_config_yaml(ctx, param, value) -> Configuration:
     return parse_yaml_raw_as(Configuration, value)
@@ -37,10 +32,20 @@ _config_options = [
     click.option("--config", default="untitledai/config.yaml", help="Configuration file", type=click.File(mode="r"), callback=load_config_yaml)
 ]
 
+
+####################################################################################################
+# Help (no args)
+####################################################################################################
+
 @click.group()
 def cli():
     """UntitledAI CLI tool."""
     pass
+
+
+####################################################################################################
+# Transcribe File
+####################################################################################################
 
 @cli.command()
 @click.argument('main_audio_filepath', type=click.Path(exists=True))
@@ -54,8 +59,7 @@ def transcribe(config: Configuration, main_audio_filepath: str, voice_sample_fil
     # Model loading
     console.log("[bold green]Loading models...")
     start_time = time.time()
-    with suppress_output(): # WhisperX has noisy warnings but they don't matter
-        from ..services.transcription.whisper_transcription_service import WhisperTranscriptionService
+    from ..services import WhisperTranscriptionService
     end_time = time.time()
     console.log(f"[bold green]Models loaded successfully! Time taken: {end_time - start_time:.2f} seconds")
 
@@ -70,6 +74,11 @@ def transcribe(config: Configuration, main_audio_filepath: str, voice_sample_fil
     console.print(transcription, style="bold yellow")
     console.log(f"[bold green]Transcription complete! Time taken: {end_transcription_time - start_transcription_time:.2f} seconds")
 
+
+####################################################################################################
+# Summarize File
+####################################################################################################
+
 @cli.command()
 @click.argument('main_audio_filepath', type=click.Path(exists=True))
 @add_options(_config_options)
@@ -77,15 +86,14 @@ def transcribe(config: Configuration, main_audio_filepath: str, voice_sample_fil
 @click.option('--speaker_name', help='Name of the speaker')
 def summarize(config: Configuration, main_audio_filepath: str, voice_sample_filepath: str, speaker_name: str):
     """Transcribe and summarize an audio file."""
-    from ..services.llm import LLM
     from .. import prompts
     console = Console()
 
     # Model loading
     console.log("[bold green]Loading models...")
     start_time = time.time()
-    with suppress_output():
-        from ..services.transcription.whisper_transcription_service import WhisperTranscriptionService
+    from ..services import WhisperTranscriptionService
+    from ..services import LLMService
     end_time = time.time()
     console.log(f"[bold green]Models loaded successfully! Time taken: {end_time - start_time:.2f} seconds")
 
@@ -102,7 +110,7 @@ def summarize(config: Configuration, main_audio_filepath: str, voice_sample_file
 
     console.log("[bold green]Summarizing transcription...")
 
-    summary = LLM(config=config.llm).summarize(
+    summary = LLMService(config=config.llm).summarize(
         transcription=transcription,
         system_message=prompts.summarization_system_message(config=config.user)
     )
@@ -111,14 +119,20 @@ def summarize(config: Configuration, main_audio_filepath: str, voice_sample_file
     console.log("[bold green]Summarization complete!")
 
 
+####################################################################################################
+# Server
+####################################################################################################
+
 @cli.command()
+@add_options(_config_options)
 @click.option('--host', default='127.0.0.1', help='The interface to bind to.')
 @click.option('--port', default=8000, help='The port to bind to.')
-def serve(host, port):
+def serve(config: Configuration, host, port):
     """Start the server."""
-    from ..server.main import app
+    from .. import server
     console = Console()
     console.log(f"[bold green]Starting server at http://{host}:{port}...")
+    app = server.create_server_app(config=config)
     uvicorn.run(app, host=host, port=port, log_level="info")
 
 if __name__ == '__main__':

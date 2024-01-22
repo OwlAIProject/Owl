@@ -1,10 +1,16 @@
+#
+# llm.py
+#
+# LLM class: LLM abstraction layer. Performs LLM requests using a particular local or remote model.
+#
+
 from litellm import completion
 
 from ...core.config import LLMConfiguration
 from ...models.schemas import Transcription
 
 
-class LLM:
+class LLMService:
     def __init__(self, config: LLMConfiguration, model_override: str = None):
         self._config = config
         self._model = model_override if model_override else config.model

@@ -11,6 +11,7 @@ transcription:
 llm:
   model: ollama/llama2
   api_base_url: http://localhost:11434
+  api_key: your_llm_api_key_if_needed
 
 captures:
   capture_dir: captures
