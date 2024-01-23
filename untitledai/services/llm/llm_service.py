@@ -19,9 +19,9 @@ class LLMService:
             "stream": stream
         }
 
-        if hasattr(self._config, 'api_base_url'):
+        if self._config.api_base_url:
             llm_params["api_base"] = self._config.api_base_url
-        if hasattr(self._config, 'api_key'):
+        if self._config.api_key:
             llm_params["api_key"] = self._config.api_key
 
         return completion(**llm_params)
@@ -33,9 +33,9 @@ class LLMService:
             "messages": messages
         }
 
-        if hasattr(self._config, 'api_base_url'):
+        if self._config.api_base_url:
             llm_params["api_base"] = self._config.api_base_url
-        if hasattr(self._config, 'api_key'):
+        if self._config.api_key:
             llm_params["api_key"] = self._config.api_key
 
         return await acompletion(**llm_params)
