@@ -27,12 +27,8 @@ class ConversationService:
         # Start transcription timer
         start_time = time.time()
 
-        # Perform transcription and receive a populated Transcription object
-        print("Transcribing enter...")
         transcription = await self.transcription_service.transcribe_audio(capture_filepath, voice_sample_filepath, speaker_name)
-        print("Transcription exit.")
 
-        # Set additional attributes
         transcription.model = self.config.llm.model
         transcription.file_name = capture_filepath
         transcription.duration = audio_duration
@@ -47,17 +43,13 @@ class ConversationService:
             device_name = "Unknown"
         transcription.source_device = device_name
 
-        print("Transcription complete.")
         with next(self.database.get_db()) as db:
             try:
-                print("Database operations start.")
                 saved_transcription = create_transcription(db, transcription)
-                print(f"Transcription saved with ID: {saved_transcription.id}")
 
                 summary_text = await self.summarizer.summarize(transcription)
                 conversation = Conversation(summary=summary_text, transcriptions=[saved_transcription])
                 saved_conversation = create_conversation(db, conversation)
-                print(f"Conversation saved with ID: {saved_conversation.id}")
 
             except Exception as e:
                 print(f"Error in database operations: {e}")
