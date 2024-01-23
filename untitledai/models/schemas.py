@@ -1,6 +1,7 @@
 from typing import List, Optional
 from sqlmodel import SQLModel, Field, Relationship
 from datetime import datetime, timezone
+from pydantic import BaseModel, validator
 
 class CreatedAtMixin(SQLModel):
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), nullable=False)
@@ -44,7 +45,59 @@ class Transcription(CreatedAtMixin, table=True):
 
     utterances: List[Utterance] = Relationship(back_populates="transcription", sa_relationship_kwargs={"cascade": "all, delete-orphan"})
 
+
 class Conversation(CreatedAtMixin, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     summary: str  
     transcriptions: List[Transcription] = Relationship(back_populates="conversation")
+
+
+#  API Response Models
+#  https://sqlmodel.tiangolo.com/tutorial/fastapi/relationships/#dont-include-all-the-data
+    
+class WordRead(BaseModel):
+    id: Optional[int]
+    word: str
+    start: Optional[float]
+    end: Optional[float]
+    score: Optional[float]
+    speaker: Optional[str]
+    utterance_id: Optional[int]
+    class Config:
+        orm_mode = True
+        from_attributes=True
+
+
+class UtteranceRead(BaseModel):
+    id: Optional[int]
+    start: Optional[float]
+    end: Optional[float]
+    text: Optional[str]
+    speaker: Optional[str]
+    words: List[WordRead] = []
+    class Config:
+        orm_mode = True
+        from_attributes=True
+
+class TranscriptionRead(BaseModel):
+    id: Optional[int]
+    model: str 
+    file_name: str 
+    duration: float  
+    source_device: str 
+    transcription_time: float
+    utterances: List[UtteranceRead] = []
+    class Config:
+        orm_mode = True
+        from_attributes=True
+
+class ConversationRead(BaseModel):
+    id: Optional[int]
+    summary: str  
+    transcriptions: List[TranscriptionRead] = []
+    class Config:
+        orm_mode = True
+        from_attributes=True
+
+class ConversationsResponse(BaseModel):
+    conversations: List[ConversationRead]

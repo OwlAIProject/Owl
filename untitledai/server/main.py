@@ -14,7 +14,8 @@ from fastapi import FastAPI
 
 from ..core.config import Configuration
 from .app_state import AppState
-from .capture import router as capture_router
+from .routes.capture import router as capture_router
+from .routes.conversations import router as conversations_router
 from .capture_socket import CaptureSocketApp
 from ..services import LLMService
 from ..services import ConversationService
@@ -42,6 +43,7 @@ def create_server_app(config: Configuration) -> FastAPI:
     socket_app = CaptureSocketApp(app_state = AppState.get(from_obj=app))
     socket_app.mount_to(app=app, at_path="/socket.io")
     app.include_router(capture_router)
+    app.include_router(conversations_router)
 
     @app.on_event("startup")
     async def startup_event():

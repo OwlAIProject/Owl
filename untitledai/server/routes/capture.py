@@ -11,7 +11,7 @@ from fastapi.responses import JSONResponse
 from starlette.requests import ClientDisconnect
 from pydub import AudioSegment
 
-from ..server import AppState
+from .. import AppState
 
 router = APIRouter()
     
