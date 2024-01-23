@@ -1,8 +1,8 @@
 from sqlmodel import SQLModel, Session, select
 from ..models.schemas import Transcription, Conversation, Utterance
 from typing import List
-
 from sqlalchemy.orm import joinedload
+from sqlalchemy import desc
 
 def create_transcription(db: Session, transcription: Transcription) -> Transcription:
     db.add(transcription)
@@ -37,4 +37,4 @@ def create_conversation(db: Session, conversation: Conversation) -> Conversation
 def get_all_conversations(db: Session, offset: int = 0, limit: int = 10) -> List[Conversation]:
     return db.query(Conversation).options(
         joinedload(Conversation.transcriptions).joinedload(Transcription.utterances).joinedload(Utterance.words)
-    ).offset(offset).limit(limit).all()
+    ).order_by(desc(Conversation.created_at)).offset(offset).limit(limit).all()
