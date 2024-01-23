@@ -20,11 +20,12 @@ class AppState:
     conversation_service: ConversationService
     llm_service: LLMService
 
-    def get(from_obj: FastAPI |  Request) -> AppState:
+    @staticmethod
+    def get(from_obj: FastAPI | Request) -> AppState:
         if isinstance(from_obj, FastAPI):
             return from_obj.state._app_state
         elif isinstance(from_obj, Request):
-            return from_obj._app_state
+            return from_obj.app.state._app_state
         else:
             raise TypeError("`from_obj` must be of type `FastAPI` or `Request`")
 
