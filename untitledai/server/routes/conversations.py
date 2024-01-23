@@ -1,7 +1,6 @@
 
 from fastapi import APIRouter, Depends, Query, Request
-from sqlmodel import select, Session
-from pydantic import parse_obj_as
+from sqlmodel import Session
 
 from ...server.app_state import AppState
 from ...models.schemas import Conversation, ConversationRead, ConversationsResponse 
