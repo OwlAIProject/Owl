@@ -5,6 +5,7 @@ from ...database.database import Database
 from ...core.config import Configuration
 from ...models.schemas import Transcription, Conversation
 import asyncio
+import os
 import time
 from pydub import AudioSegment
 
@@ -35,13 +36,20 @@ class ConversationService:
         transcription.model = self.config.llm.model
         transcription.file_name = capture_filepath
         transcription.duration = audio_duration
-        transcription.source_device = "XIOA"
         transcription.transcription_time = time.time() - start_time  # Transcription time
+
+        # should we explicitly pass the device or infer from filename convention?
+        file_name = os.path.basename(capture_filepath)
+        parts = file_name.split('_')
+        if len(parts) >= 2:
+            device_name = parts[1].split('.')[0] 
+        else:
+            device_name = "Unknown"
+        transcription.source_device = device_name
 
         print("Transcription complete.")
         with next(self.database.get_db()) as db:
             try:
-                # Perform database operations within this context
                 print("Database operations start.")
                 saved_transcription = create_transcription(db, transcription)
                 print(f"Transcription saved with ID: {saved_transcription.id}")
