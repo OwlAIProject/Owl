@@ -57,6 +57,7 @@ def create_server_app(config: Configuration) -> FastAPI:
     async def shutdown_event():
         if ray.is_initialized():
             ray.shutdown()
+            
     # Base routing
     @app.get("/")
     def read_root():
