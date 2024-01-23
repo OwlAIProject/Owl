@@ -12,7 +12,6 @@ from starlette.requests import ClientDisconnect
 from pydub import AudioSegment
 
 from ..server import AppState
-from .process_session import process_session_from_audio
 
 router = APIRouter()
     
@@ -48,6 +47,6 @@ async def complete_audio(request: Request, background_tasks: BackgroundTasks, un
 
     audio_data.export(wave_file_name, format="wav")
     os.remove(pcm_file_name)
-    background_tasks.add_task(process_session_from_audio, state.transcription_service, state.llm_service, wave_file_name)
+    # background_tasks.add_task(process_session_from_audio, state.transcription_service, state.llm_service, wave_file_name)
 
     return JSONResponse(content={"message": f"Audio processed"})

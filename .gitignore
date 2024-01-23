@@ -1,6 +1,9 @@
 # Local configuration files
 /*.yaml
 
+# Local database
+*.sqlite3
+
 # Local audio
 audio_cache/
 

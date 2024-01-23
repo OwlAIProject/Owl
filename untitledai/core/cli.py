@@ -5,10 +5,13 @@
 #
 
 import time
-
+import asyncio
 import click
 from rich.console import Console
 from pydantic_yaml import parse_yaml_raw_as
+from ..services.stt.asynchronous.async_transcription_service_factory import AsyncTranscriptionServiceFactory
+from ..services.conversation.transcript_summarizer import TranscriptionSummarizer
+
 import uvicorn
 
 from .config import Configuration
@@ -43,9 +46,10 @@ def cli():
     pass
 
 
-####################################################################################################
+###################################################################################################
 # Transcribe File
-####################################################################################################
+###################################################################################################
+
 
 @cli.command()
 @click.argument('main_audio_filepath', type=click.Path(exists=True))
@@ -56,28 +60,30 @@ def transcribe(config: Configuration, main_audio_filepath: str, voice_sample_fil
     """Transcribe an audio file."""
     console = Console()
 
-    # Model loading
-    console.log("[bold green]Loading models...")
+    console.log("[bold green]Loading transcription service...")
     start_time = time.time()
-    from ..services import WhisperTranscriptionService
-    end_time = time.time()
-    console.log(f"[bold green]Models loaded successfully! Time taken: {end_time - start_time:.2f} seconds")
 
-    # Transcription
-    start_transcription_time = time.time()
+    transcription_service = AsyncTranscriptionServiceFactory.get_service(config)
+
+    end_time = time.time()
+    console.log(f"[bold green]Transcription service loaded! Time taken: {end_time - start_time:.2f} seconds")
+
     console.log("[cyan]Transcribing audio...")
 
-    transcription = WhisperTranscriptionService(config=config.transcription).transcribe_audio(main_audio_filepath, voice_sample_filepath, speaker_name)
+    transcription = asyncio.run(
+        transcription_service.transcribe_audio(
+            main_audio_filepath, voice_sample_filepath, speaker_name
+        )
+    )
 
-    end_transcription_time = time.time()
-
-    console.print(transcription, style="bold yellow")
-    console.log(f"[bold green]Transcription complete! Time taken: {end_transcription_time - start_transcription_time:.2f} seconds")
+    console.print(transcription.utterances, style="bold yellow")
+    console.log(f"[bold green]Transcription complete! Time taken: {time.time() - start_time:.2f} seconds")
 
 
-####################################################################################################
+
+###################################################################################################
 # Summarize File
-####################################################################################################
+###################################################################################################
 
 @cli.command()
 @click.argument('main_audio_filepath', type=click.Path(exists=True))
@@ -89,30 +95,27 @@ def summarize(config: Configuration, main_audio_filepath: str, voice_sample_file
     from .. import prompts
     console = Console()
 
-    # Model loading
-    console.log("[bold green]Loading models...")
+    console.log("[bold green]Loading transcription service...")
     start_time = time.time()
-    from ..services import WhisperTranscriptionService
-    from ..services import LLMService
-    end_time = time.time()
-    console.log(f"[bold green]Models loaded successfully! Time taken: {end_time - start_time:.2f} seconds")
 
-    # Transcription
-    start_transcription_time = time.time()
+    transcription_service = AsyncTranscriptionServiceFactory.get_service(config)
+
+    end_time = time.time()
+    console.log(f"[bold green]Transcription service loaded! Time taken: {end_time - start_time:.2f} seconds")
+
     console.log("[cyan]Transcribing audio...")
 
-    transcription = WhisperTranscriptionService(config=config.transcription).transcribe_audio(main_audio_filepath, voice_sample_filepath, speaker_name)
+    transcription = asyncio.run(
+        transcription_service.transcribe_audio(
+            main_audio_filepath, voice_sample_filepath, speaker_name
+        )
+    )
 
-    end_transcription_time = time.time()
-
-    console.print(transcription, style="bold yellow")
-    console.log(f"[bold green]Transcription complete! Time taken: {end_transcription_time - start_transcription_time:.2f} seconds")
-
-    console.log("[bold green]Summarizing transcription...")
-
-    summary = LLMService(config=config.llm).summarize(
-        transcription=transcription,
-        system_message=prompts.summarization_system_message(config=config.user)
+    console.print(transcription.utterances, style="bold yellow")
+    console.log(f"[bold green]Transcription complete! Time taken: {time.time() - start_time:.2f} seconds")
+    summarizer = TranscriptionSummarizer(config)
+    summary = asyncio.run(
+        summarizer.summarize(transcription)
     )
 
     console.print(summary, style="bold yellow")

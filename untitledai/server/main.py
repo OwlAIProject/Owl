@@ -16,25 +16,45 @@ from ..core.config import Configuration
 from .app_state import AppState
 from .capture import router as capture_router
 from .capture_socket import CaptureSocketApp
-from ..services import WhisperTranscriptionService, LLMService
+from ..services import LLMService
+from ..services import ConversationService
+from ..database.database import Database
+from ..services.stt.asynchronous.async_transcription_service_factory import AsyncTranscriptionServiceFactory
+import ray
 
 
 def create_server_app(config: Configuration) -> FastAPI:
+    # Database
+    database = Database(config.database)
     # Services
-    transcription_service = WhisperTranscriptionService(config=config.transcription)
     llm_service = LLMService(config=config.llm)
+    transcription_service = AsyncTranscriptionServiceFactory.get_service(config)
+    conversation_service = ConversationService(config, database, transcription_service)
 
     # Create server app
     app = FastAPI()
     app.state._app_state = AppState(
         config=config,
-        transcription_service=transcription_service,
+        database=database,
+        conversation_service=conversation_service,
         llm_service=llm_service
     )
     socket_app = CaptureSocketApp(app_state = AppState.get(from_obj=app))
     socket_app.mount_to(app=app, at_path="/socket.io")
     app.include_router(capture_router)
 
+    @app.on_event("startup")
+    async def startup_event():
+        if not ray.is_initialized():
+            ray.init()
+        # Initialize the database
+        app.state._app_state.database.init_db()
+
+
+    @app.on_event("shutdown")
+    async def shutdown_event():
+        if ray.is_initialized():
+            ray.shutdown()
     # Base routing
     @app.get("/")
     def read_root():

@@ -6,8 +6,8 @@ import os
 from fastapi import FastAPI, Request
 
 from ..core.config import Configuration
-from ..services import WhisperTranscriptionService, LLMService
-
+from ..services import ConversationService, LLMService
+from ..database.database import Database
 
 @dataclass
 class AppState:
@@ -16,7 +16,8 @@ class AppState:
     """
 
     config: Configuration
-    transcription_service: WhisperTranscriptionService
+    database: Database
+    conversation_service: ConversationService
     llm_service: LLMService
 
     def get(from_obj: FastAPI |  Request) -> AppState:

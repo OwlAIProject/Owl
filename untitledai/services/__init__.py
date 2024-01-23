@@ -1,2 +1,2 @@
-from .transcription.whisper_transcription_service import WhisperTranscriptionService
+from .conversation.conversation_service import ConversationService
 from .llm.llm_service import LLMService
