@@ -11,6 +11,7 @@ class AppDelegate: NSObject, UIApplicationDelegate {
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         _ = SocketManager.shared
+        _ = BLEManager.shared
         return true
     }
 }
@@ -18,7 +19,6 @@ class AppDelegate: NSObject, UIApplicationDelegate {
 
 @main
 struct UntitledAIApp: App {
-    @ObservedObject var ble = BLEManager.shared
     @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     var body: some Scene {
         WindowGroup {

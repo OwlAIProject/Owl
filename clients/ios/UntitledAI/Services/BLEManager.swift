@@ -9,7 +9,10 @@ import Foundation
 import CoreBluetooth
 
 class BLEManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate, ObservableObject {
+    
     static let shared = BLEManager()
+    
+    @Published var connectedDeviceName: String?
     var centralManager: CBCentralManager!
     var connectedPeripheral: CBPeripheral?
     let serviceUUID = CBUUID(string: AppConstants.bleServiceUUID)
@@ -24,6 +27,9 @@ class BLEManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate, Obse
     
     func centralManager(_ central: CBCentralManager, didConnect peripheral: CBPeripheral) {
         print("Connected to peripheral: name=\(peripheral.name ?? ""), UUID=\(peripheral.identifier)")
+        DispatchQueue.main.async {
+            self.connectedDeviceName = peripheral.name
+        }
         peripheral.discoverServices([serviceUUID])
         frameSequencer = FrameSequencer()
     }
@@ -108,7 +114,8 @@ class BLEManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate, Obse
         if characteristic.uuid.isEqual(audioCharacteristicUUID) {
             if let  completeFrames = frameSequencer?.add(packet: value) {
                 for frame in completeFrames {
-                    socketManager.sendAudioData(frame) // if streaming enabled
+                    let deviceName = peripheral.name ?? "Unknown"
+                    socketManager.sendAudioData(frame, deviceName: deviceName) // if streaming enabled
                     // TODO: append to writer
                 }
             }
@@ -140,6 +147,11 @@ class BLEManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate, Obse
     
     func centralManager(_ central: CBCentralManager, didDisconnectPeripheral peripheral: CBPeripheral, error: Error?) {
         print("Peripheral disconnected, trying to reconnect")
+        if peripheral == connectedPeripheral {
+            DispatchQueue.main.async {
+                self.connectedDeviceName = nil
+            }
+        }
         socketManager.finishAudio()
         centralManager.connect(peripheral, options: nil)
     }
