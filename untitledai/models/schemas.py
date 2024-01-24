@@ -64,7 +64,6 @@ class WordRead(BaseModel):
     speaker: Optional[str]
     utterance_id: Optional[int]
     class Config:
-        orm_mode = True
         from_attributes=True
 
 
@@ -76,7 +75,6 @@ class UtteranceRead(BaseModel):
     speaker: Optional[str]
     words: List[WordRead] = []
     class Config:
-        orm_mode = True
         from_attributes=True
 
 class TranscriptionRead(BaseModel):
@@ -88,7 +86,6 @@ class TranscriptionRead(BaseModel):
     transcription_time: float
     utterances: List[UtteranceRead] = []
     class Config:
-        orm_mode = True
         from_attributes=True
 
 class ConversationRead(BaseModel):
@@ -96,7 +93,6 @@ class ConversationRead(BaseModel):
     summary: str  
     transcriptions: List[TranscriptionRead] = []
     class Config:
-        orm_mode = True
         from_attributes=True
 
 class ConversationsResponse(BaseModel):

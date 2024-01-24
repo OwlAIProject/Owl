@@ -9,17 +9,19 @@ import whisperx
 import asyncio
 from pydub import AudioSegment
 from speechbrain.pretrained import SpeakerRecognition
+import logging
 
+logger = logging.getLogger(__name__)
 
-@ray.remote(max_concurrency=10) 
+@ray.remote(max_concurrency=1) 
 class WhisperTranscriptionActor:
     def __init__(self, config):
             self.config = config
             self.transcription_model, self.diarize_model, self.verification_model = self.load_models(config)
 
     def load_models(self, config):
-        print(f"Transcription model: {config.model}")
-        transcription_model = whisperx.load_model(config.model, config.device, compute_type=config.    compute_type)
+        logger.info(f"Transcription model: {config.model}")
+        transcription_model = whisperx.load_model(config.model, config.device, compute_type=config.compute_type)
         diarize_model = whisperx.DiarizationPipeline(use_auth_token=config.hf_token, device=config.device)
         verification_model = SpeakerRecognition.from_hparams(source=config.verification_model_source, savedir=config.verification_model_savedir, run_opts={"device": config.device})
         return transcription_model, diarize_model, verification_model
@@ -47,12 +49,12 @@ class WhisperTranscriptionActor:
     async def transcribe_audio(self, main_audio_filepath, voice_sample_filepath=None, speaker_name=None):
         if not os.path.exists(main_audio_filepath):
             raise FileNotFoundError("Main audio file not found")
-        print(f"Transcribing audio file: {main_audio_filepath}")
+        logger.info(f"Transcribing audio file: {main_audio_filepath}")
         # Transcription
         audio = whisperx.load_audio(main_audio_filepath)
         result = self.transcription_model.transcribe(audio, batch_size=self.config.batch_size)
         initial_transcription = result["segments"]
-        print(f"Initial transcription complete. Total segments: {len(initial_transcription)}")
+        logger.info(f"Initial transcription complete. Total segments: {len(initial_transcription)}")
 
         # Align whisper output
         model_a, metadata = whisperx.load_align_model(language_code=result["language"], device=self.config.device)
@@ -62,7 +64,7 @@ class WhisperTranscriptionActor:
         diarize_segments = self.diarize_model(audio)
         result = whisperx.assign_word_speakers(diarize_segments, result)
         final_transcription_data = result["segments"]
-        print(f"Transcription complete. Total segments: {len(final_transcription_data)}")
+        logger.info(f"Transcription complete. Total segments: {len(final_transcription_data)}")
         # Convert transcription data to Pydantic models
         utterances = []
         for segment in final_transcription_data:
@@ -88,7 +90,7 @@ class WhisperTranscriptionActor:
             utterances.append(utterance)
 
         final_transcription = Transcription(utterances=utterances)
-        print("Transcription converted to Pydantic model.")
+        logger.info("Transcription converted to Pydantic model.")
         # Speaker verification (if voice sample file path provided)
         if voice_sample_filepath:
             # Ensure voice sample file exists
@@ -111,7 +113,7 @@ class WhisperTranscriptionActor:
 
 class AsyncWhisperTranscriptionService(AbstractAsyncTranscriptionService):
     def __init__(self, config):
-        self.actor = WhisperTranscriptionActor.options(max_concurrency=10).remote(config)  # Set concurrency here
+        self.actor = WhisperTranscriptionActor.options(max_concurrency=1).remote(config) 
 
     async def transcribe_audio(self, main_audio_filepath, voice_sample_filepath=None, speaker_name=None):
         return await self.actor.transcribe_audio.remote(main_audio_filepath, voice_sample_filepath, speaker_name)

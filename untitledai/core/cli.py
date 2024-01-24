@@ -136,7 +136,7 @@ def serve(config: Configuration, host, port):
     console = Console()
     console.log(f"[bold green]Starting server at http://{host}:{port}...")
     app = server.create_server_app(config=config)
-    uvicorn.run(app, host=host, port=port, log_level="info")
+    uvicorn.run(app, host=host, port=port, log_level="info", ws_ping_interval=None, ws_ping_timeout=None)
 
 if __name__ == '__main__':
     cli()

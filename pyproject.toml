@@ -40,7 +40,7 @@ asyncio = "^3.4.3"
 python-socketio = "^5.11.0"
 pydantic-yaml = "^1.2.0"
 sqlmodel = "^0.0.14"
-ray = "^2.9.1"
+ray = {extras = ["default"], version = "^2.9.1"}
 deepgram-sdk = "^3.1.0"
 
 [tool.poetry.group.dev.dependencies]

@@ -1,5 +1,8 @@
 from .async_whisper_transcription_service import AsyncWhisperTranscriptionService
 from .async_deepgram_transcription_service import AsyncDeepgramTranscriptionService
+import logging
+
+logger = logging.getLogger(__name__)
 
 class AsyncTranscriptionServiceFactory:
     _instances = {}
@@ -8,7 +11,7 @@ class AsyncTranscriptionServiceFactory:
     def get_service(config):
         service_type = config.async_transcription.provider
         if service_type not in AsyncTranscriptionServiceFactory._instances:
-            print(f"Creating new {service_type} service")
+            logger.info(f"Creating new {service_type} asynchronous transcription service")
             if service_type == "whisper":
                 AsyncTranscriptionServiceFactory._instances[service_type] = AsyncWhisperTranscriptionService(config.transcription)
             elif service_type == "deepgram":

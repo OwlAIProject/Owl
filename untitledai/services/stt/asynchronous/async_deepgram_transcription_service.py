@@ -7,10 +7,10 @@ from deepgram import (
     PrerecordedOptions,
     FileSource,
 )
-
+import logging
 from ....models.schemas import Transcription, Utterance, Word
 
-
+logger = logging.getLogger(__name__)
 
 class AsyncDeepgramTranscriptionService(AbstractAsyncTranscriptionService):
     def __init__(self, config):
@@ -20,7 +20,7 @@ class AsyncDeepgramTranscriptionService(AbstractAsyncTranscriptionService):
     async def transcribe_audio(self, main_audio_filepath, voice_sample_filepath=None, speaker_name=None) -> Transcription:
         with open(main_audio_filepath, 'rb') as audio:
             audio_data = audio.read()
-        print(f"Transcribing audio file: {main_audio_filepath}")    
+        logger.info(f"Transcribing audio file: {main_audio_filepath}")    
         response = await self._transcribe_with_deepgram(audio_data)
 
         return self._convert_to_transcription_model(response, main_audio_filepath)
@@ -42,16 +42,16 @@ class AsyncDeepgramTranscriptionService(AbstractAsyncTranscriptionService):
             return self.deepgram_client.listen.prerecorded.v("1").transcribe_file(payload, options)
 
         try:
-            print("Transcribing with Deepgram...")
+            logger.info("Transcribing with Deepgram...")
             response = await asyncio.get_event_loop().run_in_executor(None, synchronous_transcribe)
-            print("Deepgram transcription complete.")
+            logger.info("Deepgram transcription complete.")
             return response
         except Exception as e:
-            print(f"An error occurred during transcription: {e}")
+            logger.error(f"An error occurred during transcription: {e}")
             raise
 
     def _convert_to_transcription_model(self, response, file_name: str) -> Transcription:
-        print("Converting Deepgram response to Transcription model...")
+        logger.info("Converting Deepgram response to Transcription model...")
 
         try:
             duration = response.metadata.duration if response.metadata else 0
@@ -85,8 +85,8 @@ class AsyncDeepgramTranscriptionService(AbstractAsyncTranscriptionService):
 
                     transcription.utterances.append(new_utterance)
 
-            print("Conversion complete. Transcription object created.")
+            logger.info("Conversion complete. Transcription object created.")
             return transcription
         except Exception as e:
-            print(f"An error occurred during model conversion: {e}")
+            logger.error(f"An error occurred during model conversion: {e}")
             raise

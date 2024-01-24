@@ -10,14 +10,14 @@ from fastapi import APIRouter, Request, HTTPException, BackgroundTasks
 from fastapi.responses import JSONResponse
 from starlette.requests import ClientDisconnect
 from pydub import AudioSegment
-
+import logging
 from .. import AppState
 
 router = APIRouter()
     
 @router.post("/capture/streaming_post/{unique_id}")
 async def streaming_post(request: Request, unique_id: str):
-    print('Client connected')
+    logging.info('Client connected')
     state = AppState.get(from_obj=request)
     file_path = os.path.join(state.get_audio_directory(), f"{unique_id}.pcm")
     file_mode = "ab" if os.path.exists(file_path) else "wb"
@@ -28,7 +28,7 @@ async def streaming_post(request: Request, unique_id: str):
                 file.write(chunk)
                 file.flush()
     except ClientDisconnect:
-        print(f"Client disconnected while streaming {unique_id}.")
+        logging.info(f"Client disconnected while streaming {unique_id}.")
 
     return JSONResponse(content={"message": f"Audio received"})
 

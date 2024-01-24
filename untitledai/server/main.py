@@ -22,9 +22,43 @@ from ..services import ConversationService
 from ..database.database import Database
 from ..services.stt.asynchronous.async_transcription_service_factory import AsyncTranscriptionServiceFactory
 import ray
+import logging
+import logging
+from colorama import init, Fore, Style, Back
+
+
+# TODO: How to handle logging configuration?
+class ColorfulLogger(logging.StreamHandler):
+
+    FORMAT = {
+        logging.DEBUG: Fore.CYAN + "%(message)s" + Fore.RESET,
+        logging.INFO: Fore.GREEN + "%(message)s" + Fore.RESET,
+        logging.WARNING: Fore.YELLOW + "%(message)s" + Fore.RESET,
+        logging.ERROR: Back.RED + Fore.WHITE + "%(message)s" + Fore.RESET,
+        logging.CRITICAL: Back.RED + Fore.YELLOW + "%(message)s" + Fore.RESET,
+    }
+
+    def __init__(self):
+        logging.StreamHandler.__init__(self)
+        formatter = logging.Formatter('%(asctime)s [%(levelname)s] %(name)s: %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+        self.setFormatter(formatter)
+
+    def format(self, record):
+        record.message = record.getMessage()
+        string = logging.StreamHandler.format(self, record)
+        return ColorfulLogger.FORMAT[record.levelno] % {'message': string}
+
+def setup_logging():
+     init(autoreset=True)
+     logging.root.setLevel(logging.INFO)
+     handler = ColorfulLogger()
+     logging.root.addHandler(handler)
+
+
 
 
 def create_server_app(config: Configuration) -> FastAPI:
+    setup_logging()
     # Database
     database = Database(config.database)
     # Services
@@ -48,7 +82,7 @@ def create_server_app(config: Configuration) -> FastAPI:
     @app.on_event("startup")
     async def startup_event():
         if not ray.is_initialized():
-            ray.init()
+            ray.init(dashboard=True)
         # Initialize the database
         app.state._app_state.database.init_db()
 
