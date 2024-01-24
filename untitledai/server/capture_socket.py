@@ -52,11 +52,11 @@ class CaptureSocketApp(socketio.AsyncNamespace):
         self._last_utterance_time = datetime.now()
 
     async def on_connect(self, path, sid, *args):
-        logging.info('Connected: ', sid)
+        logging.info(f'Connected: {sid}')
         await self.start_timer()
 
     async def on_disconnect(self, path, sid, *args):
-        logging.info('Disconnected: ', sid)
+        logging.info(f'Disconnected: {sid}')
 
     async def on_audio_data(self, path, sid, binary_data, device_name):
         if not self._current_conversation_id:
