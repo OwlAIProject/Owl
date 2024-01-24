@@ -12,6 +12,7 @@ from datetime import datetime, timedelta
 from uuid import uuid4
 from fastapi import FastAPI
 import socketio
+import logging
 import json
 import time
 from ..services.conversation.conversation_service import ConversationService
@@ -47,15 +48,15 @@ class CaptureSocketApp(socketio.AsyncNamespace):
         app.mount(path=at_path, app=self._app)
 
     async def _handle_utterance(self, utterance):
-        print(f"Received utterance: {utterance}")
+        logging.info(f"Received utterance: {utterance}")
         self._last_utterance_time = datetime.now()
 
     async def on_connect(self, path, sid, *args):
-        print('Connected: ', sid)
+        logging.info('Connected: ', sid)
         await self.start_timer()
 
     async def on_disconnect(self, path, sid, *args):
-        print('Disconnected: ', sid)
+        logging.info('Disconnected: ', sid)
 
     async def on_audio_data(self, path, sid, binary_data, device_name):
         if not self._current_conversation_id:
@@ -69,9 +70,9 @@ class CaptureSocketApp(socketio.AsyncNamespace):
             try:
                 self._current_file.write(binary_data)
             except Exception as e:
-                print(f"Error writing to file: {e}")
+                logging.error(f"Error writing to file: {e}")
         else:
-            print("Error: Current file is not open.")
+            logging.error("Error: Current file is not open.")
 
         await self.transcription_service.send_audio(binary_data)
 
@@ -84,7 +85,7 @@ class CaptureSocketApp(socketio.AsyncNamespace):
         if self._current_file:
             self._current_file.close()
             self._current_file = None
-            print(f"File {self._current_file_name} closed.")
+            logging.info(f"File {self._current_file_name} closed.")
 
             try:
                 processing_task = asyncio.create_task(
@@ -99,7 +100,7 @@ class CaptureSocketApp(socketio.AsyncNamespace):
                     conversation_json = json.dumps(conversation_data)
                     await self._sio.emit('new_conversation', conversation_json)
             except Exception as e:
-                print(f"Error processing session from audio: {e}")
+                logging.error(f"Error processing session from audio: {e}")
 
             self._current_file_name = ""
             self._last_utterance_time = None

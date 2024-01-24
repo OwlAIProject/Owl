@@ -22,7 +22,12 @@ from ..services import ConversationService
 from ..database.database import Database
 from ..services.stt.asynchronous.async_transcription_service_factory import AsyncTranscriptionServiceFactory
 import ray
+import logging
 
+# TODO: How to handle logging configuration?
+logging.basicConfig(level=logging.INFO,
+                        format='%(asctime)s %(levelname)s:%(name)s: %(message)s',
+                        datefmt='%Y-%m-%d %H:%M:%S')
 
 def create_server_app(config: Configuration) -> FastAPI:
     # Database
