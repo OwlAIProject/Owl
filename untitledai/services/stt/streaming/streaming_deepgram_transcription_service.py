@@ -4,6 +4,8 @@ import websockets
 import json
 import logging
 
+logger = logging.getLogger(__name__)
+
 class StreamingDeepgramTranscriptionService(AbstractStreamingTranscriptionService):
 
     def __init__(self, config, callback):
@@ -17,7 +19,7 @@ class StreamingDeepgramTranscriptionService(AbstractStreamingTranscriptionServic
     async def _ensure_connection(self):
         async with self.connection_lock:
             if not self.websocket or self.websocket.closed:
-                logging.info("Establishing new connection to Deepgram...")
+                logger.info("Establishing new connection to Deepgram...")
                 await self.start_transcription()
 
     async def start_transcription(self):
@@ -25,13 +27,13 @@ class StreamingDeepgramTranscriptionService(AbstractStreamingTranscriptionServic
             headers = {"Authorization": f"Token {self.config.api_key}"}
             query_params = f"model={self.config.model}&language={self.config.language}"
             self.websocket = await websockets.connect(f"{self.websocket_url}?{query_params}", extra_headers=headers)
-            logging.info("Connected to Deepgram.")
+            logger.info("Connected to Deepgram.")
             if not self.is_receiving:
                 self.is_receiving = True
                 asyncio.create_task(self.receive_transcriptions())
         except Exception as e:
             self.websocket = None
-            logging.error(f"Failed to connect to Deepgram: {e}")
+            logger.error(f"Failed to connect to Deepgram: {e}")
             await asyncio.sleep(1)  # Delay before retrying, adjust as needed
             await self._ensure_connection()  # Attempt reconnection
 
@@ -45,12 +47,11 @@ class StreamingDeepgramTranscriptionService(AbstractStreamingTranscriptionServic
                     if sentence and self.on_utterance_callback:
                         await self.on_utterance_callback(sentence)
         except websockets.exceptions.ConnectionClosed:
-            logging.info("Deepgram WebSocket connection closed. Attempting to reconnect...")
+            logger.info("Deepgram WebSocket connection closed.")
             self.is_receiving = False
-            await self._ensure_connection()
         except Exception as e:
             self.is_receiving = False
-            logging.error(f"Error receiving transcription: {e}")
+            logger.error(f"Error receiving transcription: {e}")
 
     async def stop_transcription(self):
         if self.websocket:
@@ -58,7 +59,7 @@ class StreamingDeepgramTranscriptionService(AbstractStreamingTranscriptionServic
             await self.websocket.close()
             self.websocket = None
             self.is_receiving = False
-            logging.info("Deepgram transcription stopped.")
+            logger.info("Deepgram transcription stopped.")
 
     async def send_audio(self, audio_chunk):
         await self._ensure_connection()
@@ -66,7 +67,7 @@ class StreamingDeepgramTranscriptionService(AbstractStreamingTranscriptionServic
             try:
                 await self.websocket.send(audio_chunk)
             except Exception as e:
-                logging.error(f"Error sending audio to Deepgram: {e}")
+                logger.error(f"Error sending audio to Deepgram: {e}")
                 await self.websocket.close()
                 self.websocket = None
                 self.is_receiving = False
