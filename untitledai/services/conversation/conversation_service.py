@@ -8,6 +8,7 @@ import asyncio
 import os
 import time
 from pydub import AudioSegment
+import logging
 
 
 class ConversationService:
@@ -18,7 +19,7 @@ class ConversationService:
         self.summarizer = TranscriptionSummarizer(config)
 
     async def process_conversation_from_audio(self, capture_filepath, voice_sample_filepath=None, speaker_name=None):
-        print("Processing session from audio...")
+        logging.info("Processing session from audio...")
 
         # Measure audio duration using Pydub
         audio = AudioSegment.from_file(capture_filepath)
@@ -52,5 +53,5 @@ class ConversationService:
                 saved_conversation = create_conversation(db, conversation)
 
             except Exception as e:
-                print(f"Error in database operations: {e}")
+                logging.error(f"Error in database operations: {e}")
         return saved_transcription, saved_conversation
