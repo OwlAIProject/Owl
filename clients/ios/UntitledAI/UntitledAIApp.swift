@@ -11,7 +11,6 @@ class AppDelegate: NSObject, UIApplicationDelegate {
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         _ = SocketManager.shared
-        _ = BLEManager.shared
         return true
     }
 }
@@ -20,6 +19,7 @@ class AppDelegate: NSObject, UIApplicationDelegate {
 @main
 struct UntitledAIApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+    private var ble = BLEManager.shared
     var body: some Scene {
         WindowGroup {
             ContentView()
