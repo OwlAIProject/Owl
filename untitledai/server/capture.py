@@ -1,20 +1,26 @@
+#
+# capture.py
+#
+# Capture endpoints: streaming and chunked file uploads via HTTP handled here.
+#
+
+import os
+
 from fastapi import APIRouter, Request, HTTPException, BackgroundTasks
 from fastapi.responses import JSONResponse
 from starlette.requests import ClientDisconnect
 from pydub import AudioSegment
-from ..services.session.session_service import process_session_from_audio
-from ..core.config import CaptureConfig
-import os
+
+from ..server import AppState
+from .process_session import process_session_from_audio
 
 router = APIRouter()
-
-audio_directory = f"{CaptureConfig.CAPTURE_DIRECTORY}/audio"
-os.makedirs(audio_directory, exist_ok=True)
     
 @router.post("/capture/streaming_post/{unique_id}")
 async def streaming_post(request: Request, unique_id: str):
     print('Client connected')
-    file_path = os.path.join(audio_directory, f"{unique_id}.pcm")
+    state = AppState.get(from_obj=request)
+    file_path = os.path.join(state.get_audio_directory(), f"{unique_id}.pcm")
     file_mode = "ab" if os.path.exists(file_path) else "wb"
 
     try:
@@ -27,10 +33,10 @@ async def streaming_post(request: Request, unique_id: str):
 
     return JSONResponse(content={"message": f"Audio received"})
 
-
 @router.post("/capture/streaming_post/{unique_id}/complete")
-async def complete_audio(background_tasks: BackgroundTasks, unique_id: str):
-    pcm_file_name = os.path.join(audio_directory, f"{unique_id}.pcm")
+async def complete_audio(request: Request, background_tasks: BackgroundTasks, unique_id: str):
+    state = AppState.get(from_obj=request)
+    pcm_file_name = os.path.join(state.get_audio_directory(), f"{unique_id}.pcm")
     if not os.path.exists(pcm_file_name):
         raise HTTPException(status_code=404, detail="File not found")
     try:
@@ -42,6 +48,6 @@ async def complete_audio(background_tasks: BackgroundTasks, unique_id: str):
 
     audio_data.export(wave_file_name, format="wav")
     os.remove(pcm_file_name)
-    background_tasks.add_task(process_session_from_audio, wave_file_name)
+    background_tasks.add_task(process_session_from_audio, state.transcription_service, state.llm_service, wave_file_name)
 
     return JSONResponse(content={"message": f"Audio processed"})
