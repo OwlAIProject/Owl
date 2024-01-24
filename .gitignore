@@ -9,6 +9,9 @@ pretrained_models/
 
 # Captures
 captures/
+
+# Ignore poetry lock for now
+poetry.lock
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
