@@ -25,9 +25,11 @@ logger = logging.getLogger(__name__)
 class CaptureHandler:
     def __init__(self, app_state, conversation_timeout_threshold=30):
         self._app_state = app_state
-        self._conversation_timeout_threshold = conversation_timeout_threshold
-        self._conversations_queue = Queue()
-        self._current_capture_id = None
+        self.transcription_service = StreamingTranscriptionServiceFactory.get_service(
+            app_state.config, self._handle_utterance
+        )
+        self.audio_directory = self._app_state.get_audio_directory()
+        self._current_conversation_id = None
         self._current_file = None
         self._current_file_name = ""
         self._last_utterance_time = None
