@@ -229,7 +229,7 @@ fileprivate func getAudioFilesAscendingTimeOrder(fileExtension: String) -> [URL]
 
         return directoryContents.filter {
             // Must conform to naming convention established by AudioFileWriter
-            AudioFileWriter.isValid(url: $0)
+            AudioFileWriter.isValid(url: $0) && $0.pathExtension == fileExtension
         }.sorted {
             // Sort ascending by timestamp and chunk number. Comparing filenames directly would
             // work only if all other metadata in filename is constant.
@@ -267,7 +267,6 @@ fileprivate func deleteAllFiles(fileExtension: String) {
             includingPropertiesForKeys: nil
         )
 
-        let fileExtension = ".\(fileExtension)"
         let files = directoryContents.filter { $0.pathExtension == fileExtension }
 
         for url in files {
