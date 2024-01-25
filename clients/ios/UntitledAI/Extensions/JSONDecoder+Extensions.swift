@@ -21,3 +21,14 @@ extension JSONDecoder {
         }
     }
 }
+
+extension JSONDecoder {
+    static func dateDecoder() -> JSONDecoder {
+        let decoder = JSONDecoder()
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss"
+        dateFormatter.timeZone = TimeZone(secondsFromGMT: 0) // Adjust if necessary
+        decoder.dateDecodingStrategy = .formatted(dateFormatter)
+        return decoder
+    }
+}

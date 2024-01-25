@@ -28,16 +28,28 @@ struct ConversationsView: View {
 struct ConversationCellView: View {
     let conversation: Conversation
 
+    private var formattedStartTime: String {
+        conversation.startTime.formatted(date: .long, time: .shortened)
+    }
+
     var body: some View {
-        HStack(alignment: .top) { 
-            Text(conversation.summary)
-                .font(.headline)
-                .foregroundColor(.primary)
-                .lineLimit(3)
-                .truncationMode(.tail)
-                .padding()
-                .multilineTextAlignment(.leading)
-            Spacer()
+        VStack(alignment: .leading, spacing: 5) {
+            Text(formattedStartTime)
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+                .padding(.horizontal)
+                .padding(.top)
+
+            HStack(alignment: .top) {
+                Text(conversation.summary)
+                    .font(.headline)
+                    .foregroundColor(.primary)
+                    .lineLimit(3)
+                    .truncationMode(.tail)
+                    .padding()
+                    .multilineTextAlignment(.leading)
+                Spacer()
+            }
         }
         .background(Color(.secondarySystemBackground))
         .cornerRadius(8)
