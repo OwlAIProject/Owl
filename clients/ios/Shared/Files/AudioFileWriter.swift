@@ -81,6 +81,24 @@ class AudioFileWriter {
         return parts[2]
     }
 
+    /// Extracts date from an audio filename.
+    /// - Parameter from: Complete file URL.
+    /// - Returns: Date (yyyyMMdd) or `nil` if incorrectly formatted.
+    static func getDate(from url: URL) -> String? {
+        let baseFilename = url.deletingPathExtension().lastPathComponent
+        let parts = baseFilename.components(separatedBy: "_")
+        guard parts.count == 4, parts[2].count == 19 else {
+            return nil
+        }
+
+        // Split yyyyMMdd-HHmmss.SSS by '-' and get first part
+        let timeParts = parts[2].components(separatedBy: "-")
+        guard timeParts.count == 2, timeParts[0].count == 8 else {
+            return nil
+        }
+        return timeParts[0]
+    }
+
     /// Extracts chunk number from an audio filename.
     /// - Parameter from: Complete file URL.
     /// - Returns: Chunk number or `nil` if incorrectly formatted.
