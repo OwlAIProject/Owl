@@ -32,8 +32,15 @@ class AppState:
             return from_obj.app.state._app_state
         else:
             raise TypeError("`from_obj` must be of type `FastAPI` or `Request`")
+        
+    @staticmethod
+    def get_db(request: Request):
+        app_state: AppState = AppState.get(request)
+        return next(app_state.database.get_db())
 
     def get_audio_directory(self) -> str:
         audio_directory = os.path.join(self.config.captures.capture_dir, "audio")
         os.makedirs(audio_directory, exist_ok=True)
         return audio_directory
+
+  

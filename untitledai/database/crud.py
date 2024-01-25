@@ -1,8 +1,10 @@
 from sqlmodel import SQLModel, Session, select
-from ..models.schemas import Transcription, Conversation, Utterance
-from typing import List
+from ..models.schemas import Transcription, Conversation, Utterance, Location
+from typing import List, Optional
 from sqlalchemy.orm import joinedload
-from sqlalchemy import desc
+from sqlalchemy import desc, func
+from datetime import datetime
+
 
 def create_transcription(db: Session, transcription: Transcription) -> Transcription:
     db.add(transcription)
@@ -38,3 +40,23 @@ def get_all_conversations(db: Session, offset: int = 0, limit: int = 10) -> List
     return db.query(Conversation).options(
         joinedload(Conversation.transcriptions).joinedload(Transcription.utterances).joinedload(Utterance.words)
     ).order_by(desc(Conversation.created_at)).offset(offset).limit(limit).all()
+
+def create_location(db: Session, location_data: Location) -> Location:
+    new_location = Location(latitude=location_data.latitude, longitude=location_data.longitude, address=location_data.address)
+    db.add(new_location)
+    db.commit()
+    db.refresh(new_location)
+    return new_location
+
+def find_most_common_location(db: Session, start_time: datetime, end_time: datetime) -> Optional[Location]:
+    most_common_location = (
+        db.query(Location.id, Location.address, func.count(Location.id).label('address_count'))
+          .filter(Location.created_at >= start_time, Location.created_at <= end_time)
+          .group_by(Location.address)
+          .order_by(desc('address_count'))
+          .first()
+    )
+    if most_common_location:
+        return db.get(Location, most_common_location.id)
+    else:
+        return None

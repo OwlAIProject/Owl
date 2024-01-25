@@ -45,12 +45,24 @@ class Transcription(CreatedAtMixin, table=True):
 
     utterances: List[Utterance] = Relationship(back_populates="transcription", sa_relationship_kwargs={"cascade": "all, delete-orphan"})
 
+class Location(CreatedAtMixin, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    latitude: float = Field(nullable=False)
+    longitude: float = Field(nullable=False)
+    address: Optional[str] = None
+
+    # Relationship with Conversation
+    conversation: Optional["Conversation"] = Relationship(back_populates="primary_location")
+
 
 class Conversation(CreatedAtMixin, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
+    start_time: datetime = Field(...)
     summary: str  
     transcriptions: List[Transcription] = Relationship(back_populates="conversation")
 
+    primary_location_id: Optional[int] = Field(default=None, foreign_key="location.id")
+    primary_location: Optional[Location] = Relationship(back_populates="conversation")
 
 #  API Response Models
 #  https://sqlmodel.tiangolo.com/tutorial/fastapi/relationships/#dont-include-all-the-data
@@ -88,12 +100,23 @@ class TranscriptionRead(BaseModel):
     class Config:
         from_attributes=True
 
-class ConversationRead(BaseModel):
+class LocationRead(BaseModel):
     id: Optional[int]
-    summary: str  
-    transcriptions: List[TranscriptionRead] = []
+    latitude: float
+    longitude: float
+    address: Optional[str]
     class Config:
         from_attributes=True
+
+class ConversationRead(BaseModel):
+    id: Optional[int]
+    start_time: datetime
+    summary: str  
+    transcriptions: List[TranscriptionRead] = []
+    primary_location: Optional[LocationRead] = None
+
+    class Config:
+        from_attributes = True
 
 class ConversationsResponse(BaseModel):
     conversations: List[ConversationRead]

@@ -6,23 +6,33 @@
 
 import os
 
-from fastapi import APIRouter, Request, HTTPException, BackgroundTasks, UploadFile
+from fastapi import APIRouter, Request, HTTPException, BackgroundTasks, UploadFile, Depends
 from fastapi.responses import JSONResponse
 from starlette.requests import ClientDisconnect
 from pydub import AudioSegment
+from ...models.schemas import Location
+from sqlmodel import Session
+from ...database.crud import create_location
 import logging
+import traceback
 
 from .. import AppState
 from ...devices import DeviceType
 from ..capture import CaptureSession, create_wav_header, wav_header_size
 
+logger = logging.getLogger(__name__)
+
 router = APIRouter()
+
+def get_database(request: Request):
+    app_state: AppState = AppState.get(request)
+    return app_state.database.get_db()
 
 supported_upload_file_extensions = set([ "pcm", "aac", "m4a" ])
     
 @router.post("/capture/streaming_post/{unique_id}")
 async def streaming_post(request: Request, unique_id: str):
-    logging.info('Client connected')
+    logger.info('Client connected')
     state = AppState.get(from_obj=request)
     file_path = os.path.join(state.get_audio_directory(), f"{unique_id}.pcm")
     file_mode = "ab" if os.path.exists(file_path) else "wb"
@@ -33,7 +43,7 @@ async def streaming_post(request: Request, unique_id: str):
                 file.write(chunk)
                 file.flush()
     except ClientDisconnect:
-        logging.info(f"Client disconnected while streaming {unique_id}.")
+        logger.info(f"Client disconnected while streaming {unique_id}.")
 
     return JSONResponse(content={"message": f"Audio received"})
 
@@ -116,12 +126,17 @@ async def upload_chunk(request: Request, file: UploadFile, session_id: str, time
     except Exception as e:
         return JSONResponse(content={"message": f"Failed to process: {e}"})
 
-
-
     
-
-
-
+@router.post("/capture/location")
+async def receive_location(location: Location, db: Session = Depends(AppState.get_db)):
+    try:
+        logger.info(f"Received location: {location}")
+        new_location = create_location(db, location)
+        return {"message": "Location received", "location_id": new_location.id}
+    except Exception as e:
+        logger.error(f"Error processing location: {e}")
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 

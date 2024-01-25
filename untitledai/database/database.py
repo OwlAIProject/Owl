@@ -4,7 +4,7 @@ from ..core.config import DatabaseConfiguration
 
 class Database:
     def __init__(self, config: DatabaseConfiguration):
-        self.engine = create_engine(config.url, echo=True)
+        self.engine = create_engine(config.url, pool_size=20, max_overflow=40, echo=True)
         self.SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=self.engine)
 
     def init_db(self):

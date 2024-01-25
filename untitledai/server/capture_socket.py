@@ -15,6 +15,7 @@ from queue import Queue
 import socketio
 from uuid import uuid4
 import time
+from datetime import timezone
 import json
 from ..services.conversation.conversation_service import ConversationService
 from ..services.stt.streaming.streaming_transcription_service_factory import StreamingTranscriptionServiceFactory
@@ -37,7 +38,7 @@ class CaptureHandler:
 
     def handle_capture(self, binary_data, device_name):
         if not self._current_capture_id:
-            timestamp = time.strftime("%Y%m%d%H%M%S")
+            timestamp = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
             sanitized_device_name = "".join(char for char in device_name if char.isalnum())
             self._current_file_name = os.path.join(self._app_state.get_audio_directory(), f"{timestamp}_{sanitized_device_name}.aac")
             self._current_file = open(self._current_file_name, "ab")
@@ -111,8 +112,9 @@ class CaptureSocketApp(socketio.AsyncNamespace):
                     with next(self._app_state.database.get_db()) as db:
                         saved_conversation = db.query(Conversation).get(saved_conversation.id)
                         db.refresh(saved_conversation)
-                        conversation_data = ConversationRead.from_orm(saved_conversation).dict()
-                        conversation_json = json.dumps(conversation_data)
+                        conversation_data = ConversationRead.from_orm(saved_conversation)
+                        conversation_json = conversation_data.json()
+
                         await self._sio.emit('new_conversation', conversation_json)
                 except Exception as e:
                     logger.error(f"Error processing session from audio: {e}")
