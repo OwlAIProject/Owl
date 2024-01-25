@@ -28,7 +28,6 @@ class CaptureManager: NSObject {
             _fileWriter = AudioFileWriter(fileExtension: "pcm", maxSecondsPerFile: 30)
         }
         setupAudioSession()
-        //setupAudioEngine()
         setupAudioGraph()
         startAudioEngine()
     }
@@ -95,35 +94,6 @@ class CaptureManager: NSObject {
         _audioEngine.detach(_silenceInputMixerNode)
         _audioEngine.detach(_playerNode)
     }
-
-    private func setupAudioEngine() {  // TODO: down sample and/or compress
-        let inputNode = _audioEngine.inputNode
-        let inputFormat = inputNode.inputFormat(forBus: 0)
-
-        let converterFormat = AVAudioFormat(commonFormat: .pcmFormatInt16, sampleRate: 48000, channels: 1, interleaved: true)
-
-        
-        let converterNode = AVAudioMixerNode()
-        let sinkNode = AVAudioMixerNode()
-        
-        _audioEngine.attach(converterNode)
-        _audioEngine.attach(sinkNode)
-        
-//        converterNode.installTap(onBus: 0, bufferSize: 1024, format: converterFormat) { [weak self] (buffer: AVAudioPCMBuffer!, time: AVAudioTime!) -> Void in
-//            guard let self = self else { return }
-//            if let data = toData(buffer: buffer) {
-//                if _isStreaming {
-//                    NetworkManager.shared.writeData(data)
-//                } else {
-//                    _fileWriter?.append(data)
-//                }
-//            }
-//        }
-
-        _audioEngine.connect(inputNode, to: converterNode, format: inputFormat)
-        _audioEngine.connect(converterNode, to: sinkNode, format: converterFormat)
-        _audioEngine.prepare()
-    }
   
     private func startAudioEngine() {
         // Install a tap that down-samples audio to our desired format and writes to file
@@ -170,8 +140,6 @@ class CaptureManager: NSObject {
                 print("Error: Unable to convert audio: \(error!.localizedDescription)")
                 return
             }
-
-            //print("Successfully converted \(outputAudioBuffer.frameLength) bytes")
 
             // Write
             if _isStreaming {
