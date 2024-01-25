@@ -13,7 +13,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-@ray.remote(max_concurrency=1) 
+@ray.remote(max_concurrency=1, num_gpus=1) 
 class WhisperTranscriptionActor:
     def __init__(self, config):
             self.config = config
