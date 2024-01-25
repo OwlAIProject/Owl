@@ -9,11 +9,12 @@ import whisperx
 import asyncio
 from pydub import AudioSegment
 from speechbrain.pretrained import SpeakerRecognition
+import torch
 import logging
 
 logger = logging.getLogger(__name__)
 
-@ray.remote(max_concurrency=1, num_gpus=1) 
+@ray.remote(max_concurrency=1, num_gpus=0 if not torch.cuda.is_available() else 1)
 class WhisperTranscriptionActor:
     def __init__(self, config):
             self.config = config
