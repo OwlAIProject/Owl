@@ -91,11 +91,11 @@ class CaptureSocketApp(socketio.AsyncNamespace):
     async def on_disconnect(self, path, sid, *args):
         logger.info(f'Disconnected: {sid}')
 
-    async def on_audio_data(self, path, sid, binary_data, device_name):
+    async def on_audio_data(self, path, sid, binary_data, device_name, *args):
         self.capture_handler.handle_capture(binary_data, device_name)
         await self.transcription_service.send_audio(binary_data)
 
-    async def on_finish_audio(self, path, sid):
+    async def on_finish_audio(self, path, sid, *args):
         logger.info(f"Client signalled end of audio stream")
         self.capture_handler.finish_conversation()
         
