@@ -13,5 +13,5 @@ struct AppConstants {
     
     // Feature flags
     static let locationReportingEnabled = true
-    static let locationReportingInterval: TimeInterval = 5
+    static let locationReportingInterval: TimeInterval = 60
 }
