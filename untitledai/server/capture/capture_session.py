@@ -33,7 +33,7 @@ class CaptureSession:
 
         # Filepath: {capture_dir}/{date}/{device}/{timestamp}_{session_id}.{ext}
         ext = (kwargs["file_extension"] if "file_extension" in kwargs else "bin").lstrip(".")
-        dir = os.path.join(audio_directory, self.date_string(), self.device_type)
+        dir = os.path.join(audio_directory, self.date_string(), self.device_type.value)
         filename = f"{self.timestamp_string()}_{self.session_id}.{ext}"
         self.filepath = os.path.join(dir, filename)
 
@@ -41,10 +41,10 @@ class CaptureSession:
         os.makedirs(name=dir, exist_ok=True)
 
     def timestamp_string(self) -> str:
-        return self.timestamp.strftime("%Y%m%d-%H%M%S")
+        return time.strftime("%Y%m%d-%H%M%S", self.timestamp)
 
     def date_string(self) -> str:
-        return self.timestamp.strftime("%Y%m%d")
+        return time.strftime("%Y%m%d", self.timestamp)
     
 
 

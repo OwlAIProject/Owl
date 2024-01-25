@@ -174,7 +174,13 @@ class CaptureManager: NSObject {
             //print("Successfully converted \(outputAudioBuffer.frameLength) bytes")
 
             // Write
-            _fileWriter?.append(outputAudioBuffer)
+            if _isStreaming {
+                if let data = toData(buffer: outputAudioBuffer) {
+                    NetworkManager.shared.writeData(data)
+                }
+            } else {
+                _fileWriter?.append(outputAudioBuffer)
+            }
         }
 
         // Start recording

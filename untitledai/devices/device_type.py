@@ -1,6 +1,15 @@
-from enum import Enum
+from enum import Enum, EnumMeta
 
-class DeviceType(Enum):
+class DeviceTypeMeta(EnumMeta):
+    def __contains__(cls, item):
+        # This allows us to test e.g. ("apple_watch" in DeviceType)
+        try:
+            cls(item)
+        except ValueError:
+            return False
+        return True
+    
+class DeviceType(Enum, metaclass=DeviceTypeMeta):
     """
     Short-form unique identifiers for supported capture devices. Must be consistent with all client
     software.

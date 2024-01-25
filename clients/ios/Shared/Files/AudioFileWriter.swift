@@ -48,28 +48,21 @@ class AudioFileWriter {
 
     /// - Returns: True if filename in URL conforms to format used by `AudioFileWriter`.
     static func isValid(url: URL) -> Bool {
-        let filename = url.lastPathComponent
-        let parts = filename.components(separatedBy: "_")
-        guard parts.count == 4,
-              parts[0] == "audio",
-              parts[1].count == 32,
-              parts[2].count == 19 else {
-            return false
-        }
-        let lastParts = parts[3].components(separatedBy: ".")
-        guard lastParts.count == 2,
-              Int(lastParts[0]) != nil else {
-            return false
-        }
-        return true
+        let baseFilename = url.deletingPathExtension().lastPathComponent
+        let parts = baseFilename.components(separatedBy: "_")
+        return parts.count == 4 &&
+               parts[0] == "audio" &&
+               parts[1].count == 32 &&
+               parts[2].count == 19 &&
+               Int(parts[3]) != nil
     }
 
     /// Extracts session ID from an audio filename.
     /// - Parameter from: Complete file URL.
     /// - Returns: Session ID (32 characters) or `nil` if the format was incorrect.
     static func getSessionID(from url: URL) -> String? {
-        let filename = url.lastPathComponent
-        let parts = filename.components(separatedBy: "_")
+        let baseFilename = url.deletingPathExtension().lastPathComponent
+        let parts = baseFilename.components(separatedBy: "_")
         if parts.count != 4 && parts[1].count != 32 {
             return nil
         }
@@ -80,8 +73,8 @@ class AudioFileWriter {
     /// - Parameter from: Complete file URL.
     /// - Returns: Timestamp (yyyyMMdd-HHmmss.SSS format) or `nil` if incorrectly formatted.
     static func getTimestamp(from url: URL) -> String? {
-        let filename = url.lastPathComponent
-        let parts = filename.components(separatedBy: "_")
+        let baseFilename = url.deletingPathExtension().lastPathComponent
+        let parts = baseFilename.components(separatedBy: "_")
         if parts.count != 4 && parts[2].count != 19 {
             return nil
         }
@@ -92,19 +85,12 @@ class AudioFileWriter {
     /// - Parameter from: Complete file URL.
     /// - Returns: Chunk number or `nil` if incorrectly formatted.
     static func getChunkNumber(from url: URL) -> Int? {
-        let filename = url.lastPathComponent
-        let parts = filename.components(separatedBy: "_")
+        let baseFilename = url.deletingPathExtension().lastPathComponent
+        let parts = baseFilename.components(separatedBy: "_")
         if parts.count != 4 && parts[3].count < 1 {
             return nil
         }
-
-        // Last part includes extension. Split it off.
-        let lastParts = parts[3].components(separatedBy: ".")
-        guard lastParts.count == 2,
-              let chunkNum = Int(lastParts[0]) else {
-            return nil
-        }
-        return chunkNum
+        return Int(parts[3])
     }
 
     /// Append signed 16-bit PCM data. If channel data is any other format, this does nothing.

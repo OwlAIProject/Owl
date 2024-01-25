@@ -5,8 +5,8 @@
 //  Created by Bart Trzynadlowski on 1/5/24.
 //
 // TODO:
-// - Handle _uploadAllowed.
-// - Handle case of all files uploaded but process command failed. Need to retain etadata on disk.
+// -----
+// - Handle case of all files uploaded but process command failed. Need to retain metadata on disk.
 //
 
 import Foundation
@@ -46,6 +46,7 @@ func runFileUploadTask(fileExtension: String) async {
 
     while true {
         try? await Task.sleep(for: .seconds(5))
+        guard _uploadAllowed else { continue }
 
         // Sample current files on disk and session IDs known to be complete
         let completedChunkURLs = getAudioFilesAscendingTimeOrder(fileExtension: fileExtension)
@@ -53,6 +54,7 @@ func runFileUploadTask(fileExtension: String) async {
         let completedCaptureSessionIDs = _completedCaptureSessionIDs
 
         // Process any completed sessions that have been completely uploaded
+        guard _uploadAllowed else { continue }
         let processed = await tryProcessUploadedSessions(
             existingURLs: allInProgressURLs,
             completedCaptureSessionIDs: completedCaptureSessionIDs
@@ -64,6 +66,7 @@ func runFileUploadTask(fileExtension: String) async {
         // Upload each. Need to group by session ID because if any chunk fails, we need to skip all
         // subsequent files in session to prevent chunks from being sent out of order. We sorted
         // by time earlier, files will remain in this order.
+        guard _uploadAllowed else { continue }
         var urlsBySessionID: [String: [URL]] = [:]
         for url in completedChunkURLs {
             guard let sessionID = AudioFileWriter.getSessionID(from: url) else {
@@ -229,7 +232,7 @@ fileprivate func getAudioFilesAscendingTimeOrder(fileExtension: String) -> [URL]
 
         return directoryContents.filter {
             // Must conform to naming convention established by AudioFileWriter
-            AudioFileWriter.isValid(url: $0)
+            AudioFileWriter.isValid(url: $0) && $0.pathExtension == fileExtension
         }.sorted {
             // Sort ascending by timestamp and chunk number. Comparing filenames directly would
             // work only if all other metadata in filename is constant.
@@ -267,7 +270,6 @@ fileprivate func deleteAllFiles(fileExtension: String) {
             includingPropertiesForKeys: nil
         )
 
-        let fileExtension = ".\(fileExtension)"
         let files = directoryContents.filter { $0.pathExtension == fileExtension }
 
         for url in files {
