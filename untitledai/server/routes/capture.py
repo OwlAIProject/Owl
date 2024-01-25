@@ -5,8 +5,9 @@
 #
 
 import os
+from typing import Annotated
 
-from fastapi import APIRouter, Request, HTTPException, BackgroundTasks, UploadFile
+from fastapi import APIRouter, Request, HTTPException, BackgroundTasks, UploadFile, Form
 from fastapi.responses import JSONResponse
 from starlette.requests import ClientDisconnect
 from pydub import AudioSegment
@@ -57,30 +58,30 @@ async def complete_audio(request: Request, background_tasks: BackgroundTasks, un
     return JSONResponse(content={"message": f"Audio processed"})
 
 @router.post("/capture/upload_chunk")
-async def upload_chunk(request: Request, file: UploadFile, session_id: str, timestamp: str, device_type: str):
+async def upload_chunk(request: Request, file: UploadFile, session_id: Annotated[str, Form()], timestamp: Annotated[str, Form()], device_type: Annotated[str, Form()]):
     try:
         app_state: AppState = AppState.get(from_obj=request)
+        
+        # Validate file format
+        file_extension = os.path.splitext(file.filename)[1].lstrip(".")
+        if file_extension not in supported_upload_file_extensions:
+            return JSONResponse(content={"message": f"Failed to process because file extension is unsupported"})
+
+        # Raw PCM is automatically converted to wave format. We do this to prevent client from
+        # having to worry about reliability of transmission (in case WAV header chunk is dropped).
+        if file_extension == "pcm":
+            file_extension = "wav"  
 
         # Look up session or create a new one
         session: CaptureSession = None
         if session_id in app_state.capture_sessions_by_id:
             session = app_state.capture_sessions_by_id[session_id]
         else:
-            # Validate file format
-            file_extension = os.path.splitext(file.filename)[1].lstrip(".")
-            if file_extension not in supported_upload_file_extensions:
-                return JSONResponse(content={"message": f"Failed to process because file extension is unsupported"})
-
-            # Raw PCM is automatically converted to wave format. We do this to prevent client from
-            # having to worry about reliability of transmission (in case WAV header chunk is dropped).
-            if file_extension == "pcm":
-                file_extension = "wav"
-
             # Create new session
             session = CaptureSession(
                 audio_directory=app_state.get_audio_directory(),
                 session_id=session_id,
-                device_type=DeviceType(device_type) if hasattr(DeviceType, device_type) else DeviceType.UNKNOWN,
+                device_type=DeviceType(device_type) if device_type in DeviceType else DeviceType.UNKNOWN,
                 timestamp=timestamp,
                 file_extension=file_extension
             )
@@ -99,10 +100,10 @@ async def upload_chunk(request: Request, file: UploadFile, session_id: str, time
             if file_extension == "wav":
                 if first_chunk:
                     header = create_wav_header(sample_bytes=len(content), sample_rate=16000)
-                    await fp.write(header)
+                    fp.write(header)
                 else:
                     fp.seek(0, 2)       # seek to end to get size
-                    existing_sample_bytes = await fp.tell() - wav_header_size
+                    existing_sample_bytes = fp.tell() - wav_header_size
                     added_sample_bytes = len(content)
                     header = create_wav_header(sample_bytes=existing_sample_bytes + added_sample_bytes, sample_rate=16000)
                     fp.seek(0)          # beginning of file
@@ -111,9 +112,13 @@ async def upload_chunk(request: Request, file: UploadFile, session_id: str, time
 
             # Append file data 
             bytes_written = fp.write(content)
-            print(f"{session.filepath}: {bytes_written} bytes appended")
+            logging.info(f"{session.filepath}: {bytes_written} bytes appended")
+
+            # Success
+            return JSONResponse(content={"message": f"Audio processed"})
 
     except Exception as e:
+        logging.error(f"Failed to process: {e}")
         return JSONResponse(content={"message": f"Failed to process: {e}"})
 
 
