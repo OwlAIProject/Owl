@@ -6,7 +6,12 @@
 //
 // TODO:
 // -----
+// - Watch Connectivity for background transfers that are more reliable?
 // - Handle case of all files uploaded but process command failed. Need to retain metadata on disk.
+//   Idea: write empty file with extension .sent and use those to trigger processing.
+// - Need a flag to indicate whether file formats are frame-based (e.g., aac) or continuous (pcm).
+//   For the latter, even .*-wip files can actually be uploaded but for the former, they would
+//   likely contain incomplete frames.
 //
 
 import Foundation
@@ -14,9 +19,9 @@ import os
 
 /// Stores IDs of capture sessions that are complete (no more files will be produced). Once all
 /// files have been uploaded, processing will be requested.
-private var _completedCaptureSessionIDs: Set<String> = []
+fileprivate var _completedCaptureSessionIDs: Set<String> = []
 
-private var _uploadAllowed = true
+fileprivate var _uploadAllowed = true
 
 fileprivate let _logger = Logger()
 
@@ -189,7 +194,7 @@ fileprivate func processCapture(_ sessionID: String) async -> Bool {
     let form = MultipartForm(fields: fields)
 
     // Request type
-    let url = URL(string: "\(AppConstants.apiBaseURL)/capture/process_completed_session")!
+    let url = URL(string: "\(AppConstants.apiBaseURL)/capture/process_session")!
     var request = URLRequest(url: url)
     request.httpMethod = "POST"
     request.setValue("multipart/form-data;boundary=\(form.boundary)", forHTTPHeaderField: "Content-Type")
