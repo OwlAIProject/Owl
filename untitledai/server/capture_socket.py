@@ -39,7 +39,7 @@ class CaptureHandler:
         if not self._current_capture_id:
             timestamp = time.strftime("%Y%m%d%H%M%S")
             sanitized_device_name = "".join(char for char in device_name if char.isalnum())
-            self._current_file_name = os.path.join(self._app_state._get_audio_directory(), f"{timestamp}_{sanitized_device_name}.aac")
+            self._current_file_name = os.path.join(self._app_state.get_audio_directory(), f"{timestamp}_{sanitized_device_name}.aac")
             self._current_file = open(self._current_file_name, "ab")
             self._current_capture_id = uuid4().hex
             logger.info(f"New capture started: {self._current_capture_id} ({self._current_file_name})")
