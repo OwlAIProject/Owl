@@ -4,14 +4,52 @@
 //
 //  Created by Bart Trzynadlowski on 1/5/24.
 //
+
+//
+// Overview
+// --------
+//
+// Uploads capture files and requests processing when an entire session has been uploaded. Sessions
+// are written to disk as a series of files (chunks), uploaded sequentially. This is 1) to make it
+// simple to reason about what to upload next without requiring any back-and-forth with the server
+// or additional metadata to be maintained, and 2) because it means completed chunks of compressed
+// formats can be guaranteed to be valid and playable in case the most recent chunk is interrupted.
+//
+// Here is an outline of the process:
+//
+// 1. In-progress recordings are written with a .*-wip extension and contain session ID, start
+//    timestamp, and sequential chunk number.
+//
+//      audio_6cea0828bbef11ee906aa67caffadefc_20240125-180400.123_0.pcm-wip
+//
+// 2. When completed, these are renamed with "-wip" being dropped. The chunks accumulate on disk
+//    as the file upload task attempts to upload completed chunks in chronological order.
+//
+//      audio_6cea0828bbef11ee906aa67caffadefc_20240125-180400.123_0.pcm
+//      audio_6cea0828bbef11ee906aa67caffadefc_20240125-180400.123_1.pcm
+//      audio_6cea0828bbef11ee906aa67caffadefc_20240125-180400.123_2.pcm
+//      audio_6cea0828bbef11ee906aa67caffadefc_20240125-180400.123_3.pcm-wip
+//
+// 3. If the session is complete and no more files will be produced for it, an empty .end file
+//    named with the session ID is written. Session completion occurs when recording is explicitly
+//    stopped or when the app first starts and discovers recordings on the disk leftover from a
+//    previous session (which, if lacking a corresponding .end file, was interrupted). Below is an
+//    example of a session with two remaining chunks left to upload that has been marked as
+//    completed. Once the files are sent, processing will be requested and the .end file will be
+//    removed.
+//
+//      audio_6cea0828bbef11ee906aa67caffadefc_20240125-180400.123_30.pcm
+//      audio_6cea0828bbef11ee906aa67caffadefc_20240125-180400.123_31.pcm
+//      6cea0828bbef11ee906aa67caffadefc.end
+//
+//    The completion file ensures that if the app crashes after all chunks have uploaded but before
+//    processing has been triggered, it can be requested the next time the app launches.
+//
+//
 // TODO:
 // -----
+//
 // - Watch Connectivity for background transfers that are more reliable?
-// - Handle case of all files uploaded but process command failed. Need to retain metadata on disk.
-//   Idea: write empty file with extension .sent and use those to trigger processing.
-// - If there is any response from server, even an error, we should consider the capture processed
-//   and remove from disk. Only want to keep retrying if server is legitimately down and unable to
-//   accept requests.
 // - Need a flag to indicate whether file formats are frame-based (e.g., aac) or continuous (pcm).
 //   For the latter, even .*-wip files can actually be uploaded but for the former, they would
 //   likely contain incomplete frames.
@@ -20,12 +58,7 @@
 import Foundation
 import os
 
-/// Stores IDs of capture sessions that are complete (no more files will be produced). Once all
-/// files have been uploaded, processing will be requested.
-fileprivate var _completedCaptureSessionIDs: Set<String> = []
-
 fileprivate var _uploadAllowed = true
-
 fileprivate let _logger = Logger()
 
 fileprivate func log(_ message: String) {
@@ -38,7 +71,6 @@ func runFileUploadTask(fileExtension: String) async {
     let contentType = "audio/\(fileExtension)"
 
     // Delete *.*-wip files that are incomplete
-    // TODO: if .pcm-wip, these should actually be just fine provided they contain an even number of bytes
     deleteAllFiles(fileExtension: "\(fileExtension)-wip")
 
     // Get initial files left over from last session. Mark them all completed because these
@@ -59,7 +91,7 @@ func runFileUploadTask(fileExtension: String) async {
         // Sample current files on disk and session IDs known to be complete
         let completedChunkURLs = getAudioFilesAscendingTimeOrder(fileExtension: fileExtension)
         let allInProgressURLs = completedChunkURLs + getAudioFilesAscendingTimeOrder(fileExtension: "\(fileExtension)-wip")
-        let completedCaptureSessionIDs = _completedCaptureSessionIDs
+        let completedCaptureSessionIDs = getCompletedSessionIDs()
 
         // Process any completed sessions that have been completely uploaded
         guard _uploadAllowed else { continue }
@@ -68,7 +100,7 @@ func runFileUploadTask(fileExtension: String) async {
             completedCaptureSessionIDs: completedCaptureSessionIDs
         )
         for sessionID in processed {
-            _completedCaptureSessionIDs.remove(sessionID)
+            deleteSessionIDCompletionFile(sessionID)
         }
 
         // Upload each. Need to group by session ID because if any chunk fails, we need to skip all
@@ -109,11 +141,21 @@ func setUploadAllowed(to allowed: Bool) {
 }
 
 func markSessionComplete(_ sessionID: String) {
-    _completedCaptureSessionIDs.insert(sessionID)
+    // Mark completed sessions by creating empty file anmed {session_id}.end
+    let url = URL.documents.appendingPathComponent("\(sessionID).end")
+    if !FileManager.default.createFile(atPath: url.path(percentEncoded: true), contents: nil, attributes: nil) {
+        log("Failed to create completion file for session: \(sessionID)")
+        return
+    }
     log("Added \(sessionID) to completed queue")
 }
 
-fileprivate func tryProcessUploadedSessions(existingURLs urls: [URL], completedCaptureSessionIDs: Set<String>) async -> [String] {
+fileprivate func deleteSessionIDCompletionFile(_ sessionID: String) {
+    let url = URL.documents.appendingPathComponent("\(sessionID).end")
+    deleteFile(url)
+}
+
+fileprivate func tryProcessUploadedSessions(existingURLs urls: [URL], completedCaptureSessionIDs: [String]) async -> [String] {
     // Once we have uploaded files that were marked completed, process them
     var sessionIDsToProcess: [String] = []
     for sessionID in completedCaptureSessionIDs {
@@ -174,11 +216,13 @@ fileprivate func uploadFile(_ url: URL, contentType: String) async -> Bool {
             (200...299).contains(response.statusCode) else {
             if let response = response as? HTTPURLResponse {
                 log("Error: Code \(response.statusCode)")
-                return false
             } else {
                 log("Error: Unknown error trying to communicate with server")
-                return false
             }
+
+            // Despite error, server did respond, and we will not retry. It is not ujp to the
+            // client to deal with internal server errors.
+            return true
         }
         log("Uploaded file successfully")
         return true
@@ -186,6 +230,7 @@ fileprivate func uploadFile(_ url: URL, contentType: String) async -> Bool {
         log("Error: Upload failed: \(error.localizedDescription)")
     }
 
+    // Failed to even upload, client will keep trying until it can contact server
     return false
 }
 
@@ -213,7 +258,7 @@ fileprivate func processCapture(_ sessionID: String) async -> Bool {
             } else {
                 log("Error: Unknown error trying to communicate with server")
             }
-            return false
+            return true
         }
         log("Processed session \(sessionID) successfully")
         return true
@@ -222,6 +267,39 @@ fileprivate func processCapture(_ sessionID: String) async -> Bool {
     }
 
     return false
+}
+
+fileprivate func getCompletedSessionIDs() -> [String] {
+    do {
+        let documentDirectory = try FileManager.default.url(
+            for: .documentDirectory,
+            in: .userDomainMask,
+            appropriateFor: nil,
+            create: true
+        )
+
+        let directoryContents = try FileManager.default.contentsOfDirectory(
+            at: documentDirectory,
+            includingPropertiesForKeys: nil
+        )
+
+        return directoryContents
+            .compactMap {
+                if $0.pathExtension == "end" {
+                    let sessionID = $0.deletingPathExtension().lastPathComponent
+                    if sessionID.count == 32 {
+                        // Valid session ID is a 32-digit UUID
+                        return sessionID
+                    }
+                    return nil
+                }
+                return nil
+            }
+    } catch {
+        log("Error getting files: \(error.localizedDescription)")
+    }
+
+    return []
 }
 
 fileprivate func getAudioFilesAscendingTimeOrder(fileExtension: String) -> [URL] {
