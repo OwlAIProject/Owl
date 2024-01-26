@@ -6,7 +6,7 @@
 
 from __future__ import annotations 
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 import uuid
 
@@ -108,7 +108,7 @@ class CaptureFile:
         timestamp : str | datetime | None
             Timestamp of beginning of capture in format %Y%m%d-%H%M%S.%f (YYYYmmdd-hhmm.sss) or as a
             datetime object. If None or if a string was supplied that could not be parsed,
-            datetime.now() will be used.
+            datetime.now(timezone.utc) will be used.
         file_extension : str | None
             File extension (e.g., "wav"). If not provided, "bin" will be used.
         """
@@ -126,12 +126,12 @@ class CaptureFile:
                     self.timestamp = datetime.strptime(ts, "%Y%m%d-%H%M%S.%f")
                 except:
                     #TODO: log error
-                    self.timestamp = datetime.now()
+                    self.timestamp = datetime.now(timezone.utc)
             elif isinstance(ts, datetime):
                 self.timestamp = ts
             else:
                 #TODO: log error
-                self.timestamp = datetime.now()
+                self.timestamp = datetime.now(timezone.utc)
 
         # Filepath: {audio_dir}/{date}/{device}/{timestamp}_{capture_id}.{ext}
         ext = (kwargs["file_extension"] if "file_extension" in kwargs else "bin").lstrip(".")
