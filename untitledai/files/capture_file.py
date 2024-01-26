@@ -113,11 +113,11 @@ class CaptureFile:
         if isinstance(self.device_type, str):
             self.device_type = DeviceType(self.device_type) if self.device_type in DeviceType else DeviceType.UNKNOWN
 
-        # Timestamp may be correctly-formatted string or struct_time
+        # Timestamp may be correctly-formatted string or datetime
         if "timestamp" in kwargs:
             ts = kwargs["timestamp"]
             if isinstance(ts, str):
-                # Ensure timestamp is consistent format by internalizing to struct_time
+                # Ensure timestamp is consistent format by internalizing to datetime
                 try:
                     self.timestamp = datetime.strptime(ts, "%Y%m%d-%H%M%S.%f")
                 except:
