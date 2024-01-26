@@ -9,6 +9,9 @@
 // - Watch Connectivity for background transfers that are more reliable?
 // - Handle case of all files uploaded but process command failed. Need to retain metadata on disk.
 //   Idea: write empty file with extension .sent and use those to trigger processing.
+// - If there is any response from server, even an error, we should consider the capture processed
+//   and remove from disk. Only want to keep retrying if server is legitimately down and unable to
+//   accept requests.
 // - Need a flag to indicate whether file formats are frame-based (e.g., aac) or continuous (pcm).
 //   For the latter, even .*-wip files can actually be uploaded but for the former, they would
 //   likely contain incomplete frames.
