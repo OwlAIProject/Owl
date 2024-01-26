@@ -25,10 +25,6 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
-def get_database(request: Request):
-    app_state: AppState = AppState.get(request)
-    return app_state.database.get_db()
-
 def find_audio_filepath(audio_directory: str, capture_id: str) -> str | None:
     # Files stored as: {audio_directory}/{date}/{device}/{files}.{ext}
     filepaths = glob(os.path.join(audio_directory, "*/*/*"))
@@ -41,10 +37,9 @@ def find_audio_filepath(audio_directory: str, capture_id: str) -> str | None:
 supported_upload_file_extensions = set([ "pcm", "aac", "m4a" ])
     
 @router.post("/capture/streaming_post/{unique_id}")
-async def streaming_post(request: Request, unique_id: str):
+async def streaming_post(request: Request, unique_id: str, app_state = Depends(AppState.get_from_request)):
     logger.info('Client connected')
-    state = AppState.get(from_obj=request)
-    file_path = os.path.join(state.get_audio_directory(), f"{unique_id}.pcm")
+    file_path = os.path.join(app_state.get_audio_directory(), f"{unique_id}.pcm")
     file_mode = "ab" if os.path.exists(file_path) else "wb"
 
     try:
@@ -58,9 +53,8 @@ async def streaming_post(request: Request, unique_id: str):
     return JSONResponse(content={"message": f"Audio received"})
 
 @router.post("/capture/streaming_post/{unique_id}/complete")
-async def complete_audio(request: Request, background_tasks: BackgroundTasks, unique_id: str):
-    state = AppState.get(from_obj=request)
-    pcm_file_name = os.path.join(state.get_audio_directory(), f"{unique_id}.pcm")
+async def complete_audio(request: Request, background_tasks: BackgroundTasks, unique_id: str, app_state = Depends(AppState.get_from_request)):
+    pcm_file_name = os.path.join(app_state.get_audio_directory(), f"{unique_id}.pcm")
     if not os.path.exists(pcm_file_name):
         raise HTTPException(status_code=404, detail="File not found")
     try:
@@ -72,15 +66,20 @@ async def complete_audio(request: Request, background_tasks: BackgroundTasks, un
 
     audio_data.export(wave_file_name, format="wav")
     os.remove(pcm_file_name)
-    # background_tasks.add_task(process_session_from_audio, state.transcription_service, state.llm_service, wave_file_name)
+
+    logger.info(f"Processing audio file: {wave_file_name}")
+    background_tasks.add_task(app_state.conversation_service.process_conversation_from_audio(capture_file=wave_file_name))
 
     return JSONResponse(content={"message": f"Audio processed"})
 
 @router.post("/capture/upload_chunk")
-async def upload_chunk(request: Request, file: UploadFile, capture_id: Annotated[str, Form()], timestamp: Annotated[str, Form()], device_type: Annotated[str, Form()]):
+async def upload_chunk(request: Request,
+                       file: UploadFile,
+                       capture_id: Annotated[str, Form()],
+                       timestamp: Annotated[str, Form()],
+                       device_type: Annotated[str, Form()],
+                       app_state = Depends(AppState.get_from_request)):
     try:
-        app_state: AppState = AppState.get(from_obj=request)
-        
         # Validate file format
         file_extension = os.path.splitext(file.filename)[1].lstrip(".")
         if file_extension not in supported_upload_file_extensions:
@@ -143,9 +142,8 @@ async def upload_chunk(request: Request, file: UploadFile, capture_id: Annotated
 
     
 @router.post("/capture/process_capture")
-async def process_capture(request: Request, capture_id: Annotated[str, Form()]):
+async def process_capture(request: Request, capture_id: Annotated[str, Form()], app_state = Depends(AppState.get_from_request)):
     try:
-        app_state: AppState = AppState.get(from_obj=request)
         filepath = find_audio_filepath(audio_directory=app_state.get_audio_directory(), capture_id = capture_id)
         logger.info(f"Found file to process: {filepath}")
         capture_file = CaptureFile.from_filepath(filepath=filepath)

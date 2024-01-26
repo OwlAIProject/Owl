@@ -34,6 +34,10 @@ class AppState:
             raise TypeError("`from_obj` must be of type `FastAPI` or `Request`")
         
     @staticmethod
+    def get_from_request(request: Request) -> AppState:
+            return request.app.state._app_state  
+    
+    @staticmethod
     def get_db(request: Request):
         app_state: AppState = AppState.get(request)
         return next(app_state.database.get_db())
