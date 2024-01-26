@@ -63,25 +63,21 @@ class CaptureFile:
         """
         path_parts = Path(filepath).parts
         if len(path_parts) < 4:
-            print("1")
             return None
         audio_directory = os.path.join(*path_parts[:-3])    # audio base directory excludes last three parts
         device_type = path_parts[-2]
         rootname, file_extension = os.path.splitext(path_parts[-1])
         file_parts = rootname.split("_")
         if len(file_parts) != 2:
-            print("2")
             return None
         timestamp, capture_id = file_parts
         if len(capture_id) != 32:
-            print("3")
             return None
         try:
             print(timestamp)
             datetime.strptime(timestamp, "%Y%m%d-%H%M%S.%f")
         except:
             # Invalid timestamp format
-            print("4")
             return None
         return CaptureFile(
             audio_directory=audio_directory,
