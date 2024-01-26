@@ -10,20 +10,27 @@ class NetworkManager : NSObject, URLSessionDataDelegate {
     static var shared = NetworkManager()
     private let bufferQueue = DispatchQueue(label: "com.untitledai.networkManagerBufferQueue")
     private var urlSession: URLSession! = nil
-    private var sessionID: String?
+    private var captureID: String?
     private var streamingTask: URLSessionDataTask? = nil
     
     var isStreaming: Bool { return self.streamingTask != nil }
     
-    func connect(sessionID: String?) {
-        guard let sessionID else {
-            print("Session ID is nil")
+    func connect(captureID: String?) {
+        guard let captureID else {
+            print("Capture ID is nil")
             return
         }
         let config = URLSessionConfiguration.default
         config.requestCachePolicy = .reloadIgnoringLocalCacheData
         self.urlSession = URLSession(configuration: config, delegate: self, delegateQueue: .main)
-        let url = URL(string: "\(AppConstants.apiBaseURL)/capture/streaming_post/\(sessionID)")!
+        let url = URL(string: "\(AppConstants.apiBaseURL)/capture/streaming_post/\(captureID)")!
+        var components = URLComponents(string: "\(AppConstants.apiBaseURL)/capture/streaming_post/\(captureID)")
+        components?.queryItems = [
+            URLQueryItem(name: "device_type", value: "apple_watch")
+        ]
+        guard let url = components?.url else {
+            fatalError("Invalid URL")
+        }
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/octet-stream", forHTTPHeaderField: "Content-Type")
@@ -35,23 +42,23 @@ class NetworkManager : NSObject, URLSessionDataDelegate {
     func startStreaming() {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyyMMdd_HHmmss_ZZZ"
-        sessionID = "watch_\(formatter.string(from: Date()))"
-        connect(sessionID: sessionID)
+        captureID = "watch_\(formatter.string(from: Date()))"
+        connect(captureID: captureID)
     }
     
     func stopStreaming() {
         guard let task = self.streamingTask else {
             return
         }
-        guard let sessionID else {
-            print("Session ID is nil")
+        guard let captureID else {
+            print("Capture ID is nil")
             return
         }
         self.streamingTask = nil
         task.cancel()
         self.closeStream()
         self.urlSession = nil
-        let url = URL(string: "\(AppConstants.apiBaseURL)/capture/streaming_post/\(sessionID)/complete")!
+        let url = URL(string: "\(AppConstants.apiBaseURL)/capture/streaming_post/\(captureID)/complete")!
         
         // Signal end
         var request = URLRequest(url: url)
@@ -66,7 +73,7 @@ class NetworkManager : NSObject, URLSessionDataDelegate {
             print("Completion signal sent successfully.")
         }
         postTask.resume()
-        self.sessionID = nil
+        self.captureID = nil
     }
     
     var outputStream: OutputStream? = nil

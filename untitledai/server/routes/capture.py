@@ -17,6 +17,7 @@ from sqlmodel import Session
 from ...database.crud import create_location
 import logging
 import traceback
+from datetime import datetime, timezone
 
 from .. import AppState
 from ...files import CaptureFile, create_wav_header, wav_header_size
@@ -36,39 +37,62 @@ def find_audio_filepath(audio_directory: str, capture_id: str) -> str | None:
 
 supported_upload_file_extensions = set([ "pcm", "aac", "m4a" ])
     
-@router.post("/capture/streaming_post/{unique_id}")
-async def streaming_post(request: Request, unique_id: str, app_state = Depends(AppState.get_from_request)):
+@router.post("/capture/streaming_post/{capture_id}")
+async def streaming_post(request: Request, capture_id: str, device_type: str, app_state = Depends(AppState.get_from_request)):
     logger.info('Client connected')
-    file_path = os.path.join(app_state.get_audio_directory(), f"{unique_id}.pcm")
-    file_mode = "ab" if os.path.exists(file_path) else "wb"
-
     try:
-        with open(file_path, file_mode) as file:
+        capture_file: CaptureFile = None
+        if capture_id in app_state.capture_sessions_by_id:
+            capture_file = app_state.capture_sessions_by_id[capture_id]
+        else:
+            # Create new capture session
+            capture_file = CaptureFile(
+                audio_directory=app_state.get_audio_directory(),
+                capture_id=capture_id,
+                device_type=device_type,
+                timestamp=datetime.now(timezone.utc),
+                file_extension="wav"  # Keep WAV extension in CaptureFile
+            )
+            app_state.capture_sessions_by_id[capture_id] = capture_file
+
+        # Temporary PCM file path
+        pcm_file_path = os.path.splitext(capture_file.filepath)[0] + ".pcm"
+        file_mode = "ab" if os.path.exists(pcm_file_path) else "wb"
+
+        with open(pcm_file_path, file_mode) as file:
             async for chunk in request.stream():
                 file.write(chunk)
                 file.flush()
+
     except ClientDisconnect:
-        logger.info(f"Client disconnected while streaming {unique_id}.")
+        logger.info(f"Client disconnected while streaming {capture_id}.")
 
     return JSONResponse(content={"message": f"Audio received"})
 
-@router.post("/capture/streaming_post/{unique_id}/complete")
-async def complete_audio(request: Request, background_tasks: BackgroundTasks, unique_id: str, app_state = Depends(AppState.get_from_request)):
-    pcm_file_name = os.path.join(app_state.get_audio_directory(), f"{unique_id}.pcm")
-    if not os.path.exists(pcm_file_name):
-        raise HTTPException(status_code=404, detail="File not found")
+@router.post("/capture/streaming_post/{capture_id}/complete")
+async def complete_audio(request: Request, background_tasks: BackgroundTasks, capture_id: str, app_state = Depends(AppState.get_from_request)):
+    logger.info(f"Completing audio capture for {capture_id}")
+    capture_file: CaptureFile = None
+    if capture_id in app_state.capture_sessions_by_id:
+        capture_file = app_state.capture_sessions_by_id[capture_id]
+    else:
+        logger.error(f"Capture session not found for ID: {capture_id}")
+        raise HTTPException(status_code=500, detail="Internal error: Capture session not found")
+
+    pcm_file_path = os.path.splitext(capture_file.filepath)[0] + ".pcm"
+    if not os.path.exists(pcm_file_path):
+        raise HTTPException(status_code=404, detail="PCM file not found")
+
     try:
-        audio_data = AudioSegment.from_file(pcm_file_name, format="raw", frame_rate=16000, channels=1, sample_width=2)
+        audio_data = AudioSegment.from_file(pcm_file_path, format="raw", frame_rate=16000, channels=1, sample_width=2)
+        audio_data.export(capture_file.filepath, format="wav")
+        os.remove(pcm_file_path)
     except Exception as e:
+        logger.error(f"Error processing audio file: {e}")
         raise HTTPException(status_code=500, detail=f"Error processing audio file: {e}")
-    
-    wave_file_name = ".".join(pcm_file_name.split(".")[:-1]) + ".wav"
 
-    audio_data.export(wave_file_name, format="wav")
-    os.remove(pcm_file_name)
-
-    logger.info(f"Processing audio file: {wave_file_name}")
-    background_tasks.add_task(app_state.conversation_service.process_conversation_from_audio(capture_file=wave_file_name))
+    logger.info(f"Audio file processed: {capture_file.filepath}")
+    background_tasks.add_task(app_state.conversation_service.process_conversation_from_audio, capture_file=capture_file)
 
     return JSONResponse(content={"message": f"Audio processed"})
 
