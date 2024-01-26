@@ -12,7 +12,7 @@ class DeviceTypeMeta(EnumMeta):
 class DeviceType(Enum, metaclass=DeviceTypeMeta):
     """
     Short-form unique identifiers for supported capture devices. Must be consistent with all client
-    software.
+    software. Names must be usable in filepaths.
     """
     UNKNOWN = "unknown_device"
     IPHONE = "iphone"

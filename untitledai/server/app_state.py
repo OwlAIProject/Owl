@@ -8,7 +8,7 @@ from fastapi import FastAPI, Request
 from ..core.config import Configuration
 from ..services import ConversationService, LLMService
 from ..database.database import Database
-from .capture import CaptureSession
+from ..files import CaptureSessionFile
 
 @dataclass
 class AppState:
@@ -22,7 +22,7 @@ class AppState:
     conversation_service: ConversationService
     llm_service: LLMService
     
-    capture_sessions_by_id: Dict[str, CaptureSession] = field(default_factory=lambda: {})
+    capture_sessions_by_id: Dict[str, CaptureSessionFile] = field(default_factory=lambda: {})
 
     @staticmethod
     def get(from_obj: FastAPI | Request) -> AppState:

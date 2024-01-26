@@ -1,2 +1,2 @@
-from .capture_session import CaptureSession
+from .capture_session_file import CaptureSessionFile
 from .wav_file import create_wav_header, wav_header_size
