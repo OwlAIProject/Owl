@@ -1,5 +1,5 @@
 from sqlmodel import SQLModel, Session, select
-from ..models.schemas import Transcription, Conversation, Utterance, Location
+from ..models.schemas import Transcription, Conversation, Utterance, Location, SegmentedCaptureFile, CaptureFileRef
 from typing import List, Optional
 from sqlalchemy.orm import joinedload
 from sqlalchemy import desc, func
@@ -12,8 +12,29 @@ def create_transcription(db: Session, transcription: Transcription) -> Transcrip
     db.refresh(transcription)
     return transcription
 
+def create_segmented_capture_file(db: Session, segmented_capture_file: SegmentedCaptureFile) -> SegmentedCaptureFile:
+    db.add(segmented_capture_file)
+    db.commit()
+    db.refresh(segmented_capture_file)
+    return segmented_capture_file
+
+def create_capture_file_ref(db: Session, capture_file_ref: CaptureFileRef) -> CaptureFileRef:
+    db.add(capture_file_ref)
+    db.commit()
+    db.refresh(capture_file_ref)
+    return capture_file_ref
+
+def get_capture_file_ref(db: Session, capture_id: str) -> Optional[CaptureFileRef]:
+    statement = select(CaptureFileRef).where(CaptureFileRef.id == capture_id)
+    result = db.execute(statement).first()
+    return result[0] if result else None
+
 def get_transcription(db: Session, transcription_id: int) -> Transcription:
     statement = select(Transcription).where(Transcription.id == transcription_id)
+    return db.exec(statement).first()
+
+def get_conversation(db: Session, conversation_id: int) -> Conversation:
+    statement = select(Conversation).where(Conversation.id == conversation_id)
     return db.exec(statement).first()
 
 def update_transcription(db: Session, transcription_id: int, updated_transcription: Transcription) -> Transcription:

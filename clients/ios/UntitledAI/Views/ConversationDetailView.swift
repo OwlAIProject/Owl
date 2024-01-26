@@ -86,12 +86,12 @@ struct MetadataView: View {
                 .font(.subheadline)
                 .fontWeight(.bold)
             
-            Text("\(String(format: "%.2f seconds", transcription.duration))")
+            Text("\(String(format: "%.2f seconds", transcription.segmentedCapture.duration))")
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .font(.subheadline)
                 .fontWeight(.bold)
             
-            Text(transcription.sourceDevice)
+            Text(transcription.segmentedCapture.sourceCapture.deviceType)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .font(.subheadline)
                 .fontWeight(.bold)

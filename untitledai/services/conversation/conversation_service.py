@@ -1,9 +1,9 @@
 from ..stt.asynchronous.abstract_async_transcription_service import AbstractAsyncTranscriptionService
 from ..conversation.transcript_summarizer import TranscriptionSummarizer  
-from ...database.crud import create_transcription, create_conversation, find_most_common_location 
+from ...database.crud import create_transcription, create_conversation, find_most_common_location, create_capture_file_ref, create_segmented_capture_file,get_capture_file_ref  
 from ...database.database import Database
 from ...core.config import Configuration
-from ...models.schemas import Transcription, Conversation
+from ...models.schemas import Transcription, Conversation, CaptureFileRef, SegmentedCaptureFile
 from ...files import CaptureFile
 import asyncio
 import os
@@ -22,27 +22,29 @@ class ConversationService:
         self.transcription_service = transcription_service
         self.summarizer = TranscriptionSummarizer(config)
    
-    async def process_conversation_from_audio(self, capture_file: CaptureFile, voice_sample_filepath: str = None, speaker_name: str = None):
-        logger.info(f"Processing capture from audio file: {capture_file.filepath}...")
+    async def process_conversation_from_audio(self, capture_file: CaptureFile, segment_file_path: str = None, voice_sample_filepath: str = None, speaker_name: str = None):
+        if not segment_file_path:
+            segment_file_path = capture_file.filepath
+        logger.info(f"Processing capture from audio file: {segment_file_path}...")
 
         # Measure audio duration using Pydub
-        audio = AudioSegment.from_file(capture_file.filepath)
+        audio = AudioSegment.from_file(segment_file_path)
         audio_duration = len(audio) / 1000.0  # Duration in seconds
+
+        capture_audio = AudioSegment.from_file(capture_file.filepath)
+        capture_audio_duration = len(capture_audio) / 1000.0  # Duration in seconds
 
         # Start transcription timer
         start_time = time.time()
 
-        transcription = await self.transcription_service.transcribe_audio(capture_file.filepath, voice_sample_filepath, speaker_name)
+        transcription = await self.transcription_service.transcribe_audio(segment_file_path, voice_sample_filepath, speaker_name)
         transcription.model = self.config.llm.model
-        transcription.file_name = os.path.basename(capture_file.filepath)
-        transcription.duration = audio_duration
-        transcription.source_device = capture_file.device_type.value
         transcription.transcription_time = time.time() - start_time  # Transcription time
         logger.info(f"Transcription complete in {transcription.transcription_time:.2f} seconds")
         logger.info(f"Transcription: {transcription.utterances}")
                 
         # Conversation start and end time
-        conversation_start_time = capture_file.timestamp
+        conversation_start_time = capture_file.timestamp  #  todo: add offset
         conversation_end_time = conversation_start_time + timedelta(seconds=audio_duration)
 
         start_time = time.time()
@@ -51,18 +53,42 @@ class ConversationService:
         logger.info(f"Summary generated: {summary_text}")
         with next(self.database.get_db()) as db:
             try:
+                # Create and save capture file reference
+                saved_capture_file_ref = get_capture_file_ref(db, capture_file.capture_id)
+                if not saved_capture_file_ref:
+                    saved_capture_file_ref = create_capture_file_ref(db, CaptureFileRef(
+                        capture_id=capture_file.capture_id,
+                        file_path=capture_file.filepath,
+                        duration=capture_audio_duration,
+                        device_type=capture_file.device_type.value,
+                        start_time=capture_file.timestamp
+                    )) 
+
+                # Create and save segmented capture file
+                saved_segmented_capture = create_segmented_capture_file(db,SegmentedCaptureFile(
+                    segment_path=segment_file_path,
+                    source_capture_id=saved_capture_file_ref.id,
+                    duration=audio_duration,
+                ))
+
+                transcription.segmented_capture_id = saved_segmented_capture.id
+                saved_transcription = create_transcription(db, transcription)
+                # Create and save conversation
                 most_common_location = find_most_common_location(db, conversation_start_time, conversation_end_time)
                 if most_common_location:
                     logger.info(f"Identified conversation primary location: {most_common_location}")
-                saved_transcription = create_transcription(db, transcription)
-                conversation = Conversation(
+
+                conversation = create_conversation(db, Conversation(
                     summary=summary_text, 
-                    start_time=conversation_start_time, 
+                    start_time=conversation_start_time,
                     transcriptions=[saved_transcription],
                     primary_location_id=most_common_location.id if most_common_location else None
-                )
-                saved_conversation = create_conversation(db, conversation)
+                )) 
 
+                # Link transcription to conversation
+                saved_transcription.conversation_id = conversation.id
+                db.commit()
+                return transcription, conversation
             except Exception as e:
                 logging.error(f"Error in database operations: {e}")
-        return saved_transcription, saved_conversation
+        
