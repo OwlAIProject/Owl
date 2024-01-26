@@ -4,7 +4,7 @@ from ...database.crud import create_transcription, create_conversation, find_mos
 from ...database.database import Database
 from ...core.config import Configuration
 from ...models.schemas import Transcription, Conversation
-from ...files import CaptureSessionFile
+from ...files import CaptureFile
 import asyncio
 import os
 import time
@@ -23,7 +23,7 @@ class ConversationService:
         self.summarizer = TranscriptionSummarizer(config)
 
     async def process_conversation_from_audio(self, capture_filepath, voice_sample_filepath=None, speaker_name=None):
-        logger.info("Processing session from audio...")
+        logger.info("Processing capture from audio...")
 
         # Measure audio duration using Pydub
         audio = AudioSegment.from_file(capture_filepath)
@@ -85,27 +85,27 @@ class ConversationService:
                 logging.error(f"Error in database operations: {e}")
         return saved_transcription, saved_conversation
     
-    async def NEW_process_conversation_from_audio(self, session_file: CaptureSessionFile, voice_sample_filepath: str = None, speaker_name: str = None):
-        logger.info(f"Processing session from audio file: {session_file.filepath}...")
+    async def NEW_process_conversation_from_audio(self, capture_file: CaptureFile, voice_sample_filepath: str = None, speaker_name: str = None):
+        logger.info(f"Processing capture from audio file: {capture_file.filepath}...")
 
         # Measure audio duration using Pydub
-        audio = AudioSegment.from_file(session_file.filepath)
+        audio = AudioSegment.from_file(capture_file.filepath)
         audio_duration = len(audio) / 1000.0  # Duration in seconds
 
         # Start transcription timer
         start_time = time.time()
 
-        transcription = await self.transcription_service.transcribe_audio(session_file.filepath, voice_sample_filepath, speaker_name)
+        transcription = await self.transcription_service.transcribe_audio(capture_file.filepath, voice_sample_filepath, speaker_name)
         transcription.model = self.config.llm.model
-        transcription.file_name = os.path.basename(session_file.filepath)
+        transcription.file_name = os.path.basename(capture_file.filepath)
         transcription.duration = audio_duration
-        transcription.source_device = session_file.device_type.value
+        transcription.source_device = capture_file.device_type.value
         transcription.transcription_time = time.time() - start_time  # Transcription time
         logger.info(f"Transcription complete in {transcription.transcription_time:.2f} seconds")
         logger.info(f"Transcription: {transcription.utterances}")
                 
         # Conversation start and end time
-        conversation_start_time = session_file.timestamp
+        conversation_start_time = capture_file.timestamp
         conversation_end_time = conversation_start_time + timedelta(seconds=audio_duration)
 
         start_time = time.time()

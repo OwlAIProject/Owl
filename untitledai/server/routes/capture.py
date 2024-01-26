@@ -19,7 +19,7 @@ import logging
 import traceback
 
 from .. import AppState
-from ...files import CaptureSessionFile, create_wav_header, wav_header_size
+from ...files import CaptureFile, create_wav_header, wav_header_size
 
 logger = logging.getLogger(__name__)
 
@@ -29,11 +29,11 @@ def get_database(request: Request):
     app_state: AppState = AppState.get(request)
     return app_state.database.get_db()
 
-def find_audio_filepath(audio_directory: str, session_id: str) -> str | None:
+def find_audio_filepath(audio_directory: str, capture_id: str) -> str | None:
     # Files stored as: {audio_directory}/{date}/{device}/{files}.{ext}
     filepaths = glob(os.path.join(audio_directory, "*/*/*"))
-    session_ids = [ CaptureSessionFile.get_session_id(filepath=filepath) for filepath in filepaths ]
-    file_idx = session_ids.index(session_id)
+    capture_ids = [ CaptureFile.get_capture_id(filepath=filepath) for filepath in filepaths ]
+    file_idx = capture_ids.index(capture_id)
     if file_idx < 0:
         return None
     return filepaths[file_idx]
@@ -77,7 +77,7 @@ async def complete_audio(request: Request, background_tasks: BackgroundTasks, un
     return JSONResponse(content={"message": f"Audio processed"})
 
 @router.post("/capture/upload_chunk")
-async def upload_chunk(request: Request, file: UploadFile, session_id: Annotated[str, Form()], timestamp: Annotated[str, Form()], device_type: Annotated[str, Form()]):
+async def upload_chunk(request: Request, file: UploadFile, capture_id: Annotated[str, Form()], timestamp: Annotated[str, Form()], device_type: Annotated[str, Form()]):
     try:
         app_state: AppState = AppState.get(from_obj=request)
         
@@ -91,27 +91,27 @@ async def upload_chunk(request: Request, file: UploadFile, session_id: Annotated
         if file_extension == "pcm":
             file_extension = "wav"  
 
-        # Look up session or create a new one
-        session_file: CaptureSessionFile = None
-        if session_id in app_state.capture_sessions_by_id:
-            session_file = app_state.capture_sessions_by_id[session_id]
+        # Look up capture session or create a new one
+        capture_file: CaptureFile = None
+        if capture_id in app_state.capture_sessions_by_id:
+            capture_file = app_state.capture_sessions_by_id[capture_id]
         else:
-            # Create new session
-            session_file = CaptureSessionFile(
+            # Create new capture session
+            capture_file = CaptureFile(
                 audio_directory=app_state.get_audio_directory(),
-                session_id=session_id,
+                capture_id=capture_id,
                 device_type=device_type,
                 timestamp=timestamp,
                 file_extension=file_extension
             )
-            app_state.capture_sessions_by_id[session_id] = session_file
+            app_state.capture_sessions_by_id[capture_id] = capture_file
 
         # First chunk or are we appending?
-        first_chunk = not os.path.exists(path=session_file.filepath)
+        first_chunk = not os.path.exists(path=capture_file.filepath)
         write_mode = "wb" if first_chunk else "r+b"
         
         # Open and write file
-        with open(file=session_file.filepath, mode=write_mode) as fp:
+        with open(file=capture_file.filepath, mode=write_mode) as fp:
             # Get uploaded bytes
             content = await file.read()
             
@@ -131,7 +131,7 @@ async def upload_chunk(request: Request, file: UploadFile, session_id: Annotated
 
             # Append file data 
             bytes_written = fp.write(content)
-            logging.info(f"{session_file.filepath}: {bytes_written} bytes appended")
+            logging.info(f"{capture_file.filepath}: {bytes_written} bytes appended")
 
             # Success
             return JSONResponse(content={"message": f"Audio processed"})
@@ -142,18 +142,18 @@ async def upload_chunk(request: Request, file: UploadFile, session_id: Annotated
         raise HTTPException(status_code=500, detail=str(e))
 
     
-@router.post("/capture/process_session")
-async def process_session(request: Request, session_id: Annotated[str, Form()]):
+@router.post("/capture/process_capture")
+async def process_capture(request: Request, capture_id: Annotated[str, Form()]):
     try:
         app_state: AppState = AppState.get(from_obj=request)
-        filepath = find_audio_filepath(audio_directory=app_state.get_audio_directory(), session_id = session_id)
+        filepath = find_audio_filepath(audio_directory=app_state.get_audio_directory(), capture_id = capture_id)
         logger.info(f"Found file to process: {filepath}")
-        session_file = CaptureSessionFile.from_filepath(filepath=filepath)
-        if session_file is None:
+        capture_file = CaptureFile.from_filepath(filepath=filepath)
+        if capture_file is None:
             logger.error(f"Filepath does not conform to expected format and cannot be processed: {filepath}")
             raise HTTPException(status_code=500, detail="Internal error: File is incorrectly named on server")
-        await app_state.conversation_service.NEW_process_conversation_from_audio(session_file=session_file)
-        logger.info(f"Finished processing conversation: {session_file.filepath}")
+        await app_state.conversation_service.NEW_process_conversation_from_audio(capture_file=capture_file)
+        logger.info(f"Finished processing conversation: {capture_file.filepath}")
         return JSONResponse(content={"message": "Conversation processed"})
     except Exception as e:
         logger.error(f"Failed to process: {e}")

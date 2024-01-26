@@ -1,8 +1,7 @@
 #
-# capture_session_file.py
+# capture_file.py
 #
-# CaptureSessionFile encapsulates a captured audio session's storage location and metadata
-# associated with the session.
+# CaptureFile encapsulates an audio capture's storage location and metadata associated with it.
 #
 
 from __future__ import annotations 
@@ -13,32 +12,31 @@ import uuid
 
 from ..devices import DeviceType
 
-class CaptureSessionFile:
+class CaptureFile:
     """
-    Encapsulates a file on disk containing a capture session. Includes only the limited metadata
-    embedded in the filepath and filename so that the object can be created from metadata or from a
-    filepath.
+    Encapsulates a file on disk containing a capture. Includes only the limited metadata embedded in
+    the filepath and filename so that the object can be created from metadata or from a filepath.
     """
-    session_id: str
+    capture_id: str
     device_type: DeviceType
     timestamp: datetime
     filepath: str
 
-    def get_session_id(filepath: str) -> str | None:
+    def get_capture_id(filepath: str) -> str | None:
         """
-        Extracts the session ID from a capture file stored on disk.
+        Extracts the capture ID from a capture file stored on disk.
 
         Parameters
         ----------
         filepath : str
-            Either a filename of format {timestamp}_{session_id}.{ext} or a complete filepath.
+            Either a filename of format {timestamp}_{capture_id}.{ext} or a complete filepath.
         
         Returns
         -------
         str | None
-            The session ID or None of it is missing/malformed.
+            The capture ID or None of it is missing/malformed.
         """
-        # {timestamp}_{session_id}.{ext} -> {sesion_id}
+        # {timestamp}_{capture_id}.{ext} -> {capture_id}
         filename = os.path.basename(filepath)
         rootname = os.path.splitext(filename)[0]
         parts = rootname.split("_")
@@ -46,20 +44,20 @@ class CaptureSessionFile:
             return None
         return parts[1]
     
-    def from_filepath(filepath: str) -> CaptureSessionFile | None:
+    def from_filepath(filepath: str) -> CaptureFile | None:
         """
         Constructs object from a complete filepath. Must include every path component following the
-        base file directory, as session metadata is sprinkled throughout.
+        base file directory, as capture metadata is sprinkled throughout.
 
         Parameters
         ----------
         filepath : str
-            Full filepath: {audio_dir}/{date}/{device}/{timestamp}_{session_id}.{ext}. The audio
+            Full filepath: {audio_dir}/{date}/{device}/{timestamp}_{capture_id}.{ext}. The audio
             directory is reconstructed from this path.
 
         Returns
         -------
-        CaptureSessionFile | None
+        CaptureFile | None
             Object corresponding to the file's metadata or None if insufficient metadata due to 
             filepath having incorrect format.
         """
@@ -74,8 +72,8 @@ class CaptureSessionFile:
         if len(file_parts) != 2:
             print("2")
             return None
-        timestamp, session_id = file_parts
-        if len(session_id) != 32:
+        timestamp, capture_id = file_parts
+        if len(capture_id) != 32:
             print("3")
             return None
         try:
@@ -85,9 +83,9 @@ class CaptureSessionFile:
             # Invalid timestamp format
             print("4")
             return None
-        return CaptureSessionFile(
+        return CaptureFile(
             audio_directory=audio_directory,
-            session_id=session_id,
+            capture_id=capture_id,
             device_type=device_type,
             timestamp=timestamp,
             file_extension=file_extension
@@ -101,20 +99,20 @@ class CaptureSessionFile:
         ----------
         audio_directory : str
             The base audio capture directory. Files stored as:
-            {audio_dir}/{date}/{device}/{timestamp}_{session_id}.{ext}
-        session_id : str | None
-            Session ID. If not specified, a new random ID is assigned.
+            {audio_dir}/{date}/{device}/{timestamp}_{capture_id}.{ext}
+        capture_id : str | None
+            Capture ID. If not specified, a new random ID is assigned.
         device_type : DeviceType | str | None
             Device type corresponding to DeviceType enum. If not a valid string, DeviceType.UNKNOWN
             will be assigned.
         timestamp : str | datetime | None
-            Timestamp of beginning of session in format %Y%m%d-%H%M%S.%f (YYYYmmdd-hhmm.sss) or as a
+            Timestamp of beginning of capture in format %Y%m%d-%H%M%S.%f (YYYYmmdd-hhmm.sss) or as a
             datetime object. If None or if a string was supplied that could not be parsed,
             datetime.now() will be used.
         file_extension : str | None
             File extension (e.g., "wav"). If not provided, "bin" will be used.
         """
-        self.session_id = kwargs["session_id"] if "session_id" in kwargs else uuid.uuid1().hex
+        self.capture_id = kwargs["capture_id"] if "capture_id" in kwargs else uuid.uuid1().hex
         self.device_type = kwargs["device_type"] if "device_type" in kwargs else "unknown"
         if isinstance(self.device_type, str):
             self.device_type = DeviceType(self.device_type) if self.device_type in DeviceType else DeviceType.UNKNOWN
@@ -135,10 +133,10 @@ class CaptureSessionFile:
                 #TODO: log error
                 self.timestamp = datetime.now()
 
-        # Filepath: {audio_dir}/{date}/{device}/{timestamp}_{session_id}.{ext}
+        # Filepath: {audio_dir}/{date}/{device}/{timestamp}_{capture_id}.{ext}
         ext = (kwargs["file_extension"] if "file_extension" in kwargs else "bin").lstrip(".")
         dir = os.path.join(audio_directory, self.date_string(), self.device_type.value)
-        filename = f"{self.timestamp_string()}_{self.session_id}.{ext}"
+        filename = f"{self.timestamp_string()}_{self.capture_id}.{ext}"
         self.filepath = os.path.join(dir, filename)
 
         # Create the directory
