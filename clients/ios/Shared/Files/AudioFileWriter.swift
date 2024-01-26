@@ -12,7 +12,7 @@ class AudioFileWriter {
     private let _maxSecondsPerFile: Double
     private let _fileExtension: String
     private var _filenameBase: String?
-    private var _sessionID: String?
+    private var _captureID: String?
     private var _fileNumber = 0
     private var _fileHandle: FileHandle?
     private var _fileURL: URL?
@@ -26,12 +26,12 @@ class AudioFileWriter {
         return _fileExtension
     }
 
-    public var sessionID: String? {
-        return _sessionID
+    public var captureID: String? {
+        return _captureID
     }
 
-    /// Initializes an audio file writer (with unique capture session ID). Writers should be used
-    /// for a single audio capture session and then destroyed.
+    /// Initializes an audio file writer (with unique capture ID). Writers should be used for a
+    /// single audio capture session and then destroyed.
     /// - Parameter fileExtension: File extension, which communicates format to server. May be
     /// "pcm" or "aac".
     /// - Parameter maxSecondsPerFile: Maximum number of seconds before closing current file chunk
@@ -57,10 +57,10 @@ class AudioFileWriter {
                Int(parts[3]) != nil
     }
 
-    /// Extracts session ID from an audio filename.
+    /// Extracts capture ID from an audio filename.
     /// - Parameter from: Complete file URL.
-    /// - Returns: Session ID (32 characters) or `nil` if the format was incorrect.
-    static func getSessionID(from url: URL) -> String? {
+    /// - Returns: Capture ID (32 characters) or `nil` if the format was incorrect.
+    static func getCaptureID(from url: URL) -> String? {
         let baseFilename = url.deletingPathExtension().lastPathComponent
         let parts = baseFilename.components(separatedBy: "_")
         if parts.count != 4 && parts[1].count != 32 {
@@ -156,8 +156,8 @@ class AudioFileWriter {
             formatter.dateFormat = "yyyyMMdd-HHmmss.SSS"
             formatter.timeZone = .current
             let timestamp = formatter.string(from: now)
-            _sessionID = UUID().hex
-            _filenameBase = "audio_\(_sessionID!)_\(timestamp)"
+            _captureID = UUID().hex
+            _filenameBase = "audio_\(_captureID!)_\(timestamp)"
         }
 
         // Will rename to .EXT when complete

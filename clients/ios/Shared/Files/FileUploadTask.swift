@@ -9,7 +9,7 @@
 // Overview
 // --------
 //
-// Uploads capture files and requests processing when an entire session has been uploaded. Sessions
+// Uploads capture files and requests processing when an entire capture has been uploaded. Captures
 // are written to disk as a series of files (chunks), uploaded sequentially. This is 1) to make it
 // simple to reason about what to upload next without requiring any back-and-forth with the server
 // or additional metadata to be maintained, and 2) because it means completed chunks of compressed
@@ -17,7 +17,7 @@
 //
 // Here is an outline of the process:
 //
-// 1. In-progress recordings are written with a .*-wip extension and contain session ID, start
+// 1. In-progress recordings are written with a .*-wip extension and contain capture ID, start
 //    timestamp, and sequential chunk number.
 //
 //      audio_6cea0828bbef11ee906aa67caffadefc_20240125-180400.123_0.pcm-wip
@@ -30,11 +30,11 @@
 //      audio_6cea0828bbef11ee906aa67caffadefc_20240125-180400.123_2.pcm
 //      audio_6cea0828bbef11ee906aa67caffadefc_20240125-180400.123_3.pcm-wip
 //
-// 3. If the session is complete and no more files will be produced for it, an empty .end file
-//    named with the session ID is written. Session completion occurs when recording is explicitly
+// 3. If the capture is complete and no more files will be produced for it, an empty .end file
+//    named with the capture ID is written. Capture completion occurs when recording is explicitly
 //    stopped or when the app first starts and discovers recordings on the disk leftover from a
 //    previous session (which, if lacking a corresponding .end file, was interrupted). Below is an
-//    example of a session with two remaining chunks left to upload that has been marked as
+//    example of a capture session with two remaining chunks left to upload that has been marked as
 //    completed. Once the files are sent, processing will be requested and the .end file will be
 //    removed.
 //
@@ -73,57 +73,57 @@ func runFileUploadTask(fileExtension: String) async {
     // Delete *.*-wip files that are incomplete
     deleteAllFiles(fileExtension: "\(fileExtension)-wip")
 
-    // Get initial files left over from last session. Mark them all completed because these
-    // sessions are definitely over.
+    // Get initial files left over from previous capture sessions. Mark them all completed because
+    // these captures are definitely finished.
     let urls = getAudioFilesAscendingTimeOrder(fileExtension: fileExtension)
     for url in urls {
-        guard let sessionID = AudioFileWriter.getSessionID(from: url) else {
+        guard let captureID = AudioFileWriter.getCaptureID(from: url) else {
             deleteFile(url) // remove files with ill-formatted names
             continue
         }
-        markSessionComplete(sessionID)
+        markCaptureComplete(captureID)
     }
 
     while true {
         try? await Task.sleep(for: .seconds(5))
         guard _uploadAllowed else { continue }
 
-        // Sample current files on disk and session IDs known to be complete
+        // Sample current files on disk and capture IDs known to be complete
         let completedChunkURLs = getAudioFilesAscendingTimeOrder(fileExtension: fileExtension)
         let allInProgressURLs = completedChunkURLs + getAudioFilesAscendingTimeOrder(fileExtension: "\(fileExtension)-wip")
-        let completedCaptureSessionIDs = getCompletedSessionIDs()
+        let completedCaptureIDs = getCompletedCaptureIDs()
 
-        // Process any completed sessions that have been completely uploaded
+        // Process any completed captures that have been completely uploaded
         guard _uploadAllowed else { continue }
-        let processed = await tryProcessUploadedSessions(
+        let processed = await tryProcessUploadedCaptures(
             existingURLs: allInProgressURLs,
-            completedCaptureSessionIDs: completedCaptureSessionIDs
+            completedCaptureIDs: completedCaptureIDs
         )
-        for sessionID in processed {
-            deleteSessionIDCompletionFile(sessionID)
+        for captureID in processed {
+            deleteCaptureCompletionFile(captureID)
         }
 
-        // Upload each. Need to group by session ID because if any chunk fails, we need to skip all
-        // subsequent files in session to prevent chunks from being sent out of order. We sorted
+        // Upload each. Need to group by capture ID because if any chunk fails, we need to skip all
+        // subsequent files in capture to prevent chunks from being sent out of order. We sorted
         // by time earlier, files will remain in this order.
         guard _uploadAllowed else { continue }
-        var urlsBySessionID: [String: [URL]] = [:]
+        var urlsByCaptureID: [String: [URL]] = [:]
         for url in completedChunkURLs {
-            guard let sessionID = AudioFileWriter.getSessionID(from: url) else {
+            guard let captureID = AudioFileWriter.getCaptureID(from: url) else {
                 deleteFile(url)
                 continue
             }
-            var urls = urlsBySessionID[sessionID] == nil ? [] : urlsBySessionID[sessionID]!
+            var urls = urlsByCaptureID[captureID] == nil ? [] : urlsByCaptureID[captureID]!
             urls.append(url)
-            urlsBySessionID[sessionID] = urls
+            urlsByCaptureID[captureID] = urls
         }
-        for (_, urls) in urlsBySessionID {
+        for (_, urls) in urlsByCaptureID {
             for url in urls {
                 let succeeded = await uploadFile(url, contentType: contentType)
                 if succeeded {
                     deleteFile(url)
                 } else {
-                    // Skip remaining URLs for this session to avoid uploading out of order
+                    // Skip remaining URLs for this capture to avoid uploading out of order
                     break
                 }
             }
@@ -140,51 +140,51 @@ func setUploadAllowed(to allowed: Bool) {
     }
 }
 
-func markSessionComplete(_ sessionID: String) {
-    // Mark completed sessions by creating empty file anmed {session_id}.end
-    let url = URL.documents.appendingPathComponent("\(sessionID).end")
+func markCaptureComplete(_ captureID: String) {
+    // Mark completed captures by creating empty file named {capture_id}.end
+    let url = URL.documents.appendingPathComponent("\(captureID).end")
     if !FileManager.default.createFile(atPath: url.path(percentEncoded: true), contents: nil, attributes: nil) {
-        log("Failed to create completion file for session: \(sessionID)")
+        log("Failed to create completion file for capture: \(captureID)")
         return
     }
-    log("Added \(sessionID) to completed queue")
+    log("Added \(captureID) to completed queue")
 }
 
-fileprivate func deleteSessionIDCompletionFile(_ sessionID: String) {
-    let url = URL.documents.appendingPathComponent("\(sessionID).end")
+fileprivate func deleteCaptureCompletionFile(_ captureID: String) {
+    let url = URL.documents.appendingPathComponent("\(captureID).end")
     deleteFile(url)
 }
 
-fileprivate func tryProcessUploadedSessions(existingURLs urls: [URL], completedCaptureSessionIDs: [String]) async -> [String] {
+fileprivate func tryProcessUploadedCaptures(existingURLs urls: [URL], completedCaptureIDs: [String]) async -> [String] {
     // Once we have uploaded files that were marked completed, process them
-    var sessionIDsToProcess: [String] = []
-    for sessionID in completedCaptureSessionIDs {
-        let moreToUpload = urls.contains { AudioFileWriter.getSessionID(from: $0) == sessionID }
+    var captureIDsToProcess: [String] = []
+    for captureID in completedCaptureIDs {
+        let moreToUpload = urls.contains { AudioFileWriter.getCaptureID(from: $0) == captureID }
         if moreToUpload {
-            log("Cannot process \(sessionID) yet, there is more to upload")
+            log("Cannot process \(captureID) yet, there is more to upload")
             continue
         }
 
         // No matches on the file system, we've finished uploading this file completely. Process!
-        log("Ready to process \(sessionID)")
-        sessionIDsToProcess.append(sessionID)
+        log("Ready to process \(captureID)")
+        captureIDsToProcess.append(captureID)
     }
 
-    var sessionIDsSuccessfullyProcessed: [String] = []
-    for sessionID in sessionIDsToProcess {
-        log("Processing \(sessionID)...")
-        if await processCapture(sessionID) {
-            sessionIDsSuccessfullyProcessed.append(sessionID)
+    var captureIDsSuccessfullyProcessed: [String] = []
+    for captureID in captureIDsToProcess {
+        log("Processing \(captureID)...")
+        if await processCapture(captureID) {
+            captureIDsSuccessfullyProcessed.append(captureID)
         }
     }
 
     // Return what was processed
-    return sessionIDsSuccessfullyProcessed
+    return captureIDsSuccessfullyProcessed
 }
 
 fileprivate func uploadFile(_ url: URL, contentType: String) async -> Bool {
     guard let fileData = try? Data(contentsOf: url),
-          let sessionID = AudioFileWriter.getSessionID(from: url),
+          let captureID = AudioFileWriter.getCaptureID(from: url),
           let timestamp = AudioFileWriter.getTimestamp(from: url) else {
         log("Error: Failed to load \(url) from disk")
         return false
@@ -196,7 +196,7 @@ fileprivate func uploadFile(_ url: URL, contentType: String) async -> Bool {
     // Create form data
     let fields: [MultipartForm.Field] = [
         .init(name: "file", filename: filename, contentType: contentType, data: fileData),
-        .init(name: "session_id", text: sessionID),
+        .init(name: "capture_id", text: captureID),
         .init(name: "timestamp", text: timestamp),
         .init(name: "device_type", text: "apple_watch")
     ]
@@ -234,15 +234,15 @@ fileprivate func uploadFile(_ url: URL, contentType: String) async -> Bool {
     return false
 }
 
-fileprivate func processCapture(_ sessionID: String) async -> Bool {
+fileprivate func processCapture(_ captureID: String) async -> Bool {
     // Create form data
     let fields: [MultipartForm.Field] = [
-        .init(name: "session_id", text: sessionID)
+        .init(name: "capture_id", text: captureID)
     ]
     let form = MultipartForm(fields: fields)
 
     // Request type
-    let url = URL(string: "\(AppConstants.apiBaseURL)/capture/process_session")!
+    let url = URL(string: "\(AppConstants.apiBaseURL)/capture/process_capture")!
     var request = URLRequest(url: url)
     request.httpMethod = "POST"
     request.setValue("multipart/form-data;boundary=\(form.boundary)", forHTTPHeaderField: "Content-Type")
@@ -260,7 +260,7 @@ fileprivate func processCapture(_ sessionID: String) async -> Bool {
             }
             return true
         }
-        log("Processed session \(sessionID) successfully")
+        log("Processed capture \(captureID) successfully")
         return true
     } catch {
         log("Error: Upload failed: \(error.localizedDescription)")
@@ -269,7 +269,7 @@ fileprivate func processCapture(_ sessionID: String) async -> Bool {
     return false
 }
 
-fileprivate func getCompletedSessionIDs() -> [String] {
+fileprivate func getCompletedCaptureIDs() -> [String] {
     do {
         let documentDirectory = try FileManager.default.url(
             for: .documentDirectory,
@@ -286,10 +286,10 @@ fileprivate func getCompletedSessionIDs() -> [String] {
         return directoryContents
             .compactMap {
                 if $0.pathExtension == "end" {
-                    let sessionID = $0.deletingPathExtension().lastPathComponent
-                    if sessionID.count == 32 {
-                        // Valid session ID is a 32-digit UUID
-                        return sessionID
+                    let captureID = $0.deletingPathExtension().lastPathComponent
+                    if captureID.count == 32 {
+                        // Valid capture ID is a 32-digit UUID
+                        return captureID
                     }
                     return nil
                 }
