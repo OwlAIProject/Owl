@@ -82,7 +82,7 @@ def create_server_app(config: Configuration) -> FastAPI:
     @app.on_event("startup")
     async def startup_event():
         if not ray.is_initialized():
-            ray.init(dashboard=True)
+            ray.init()
         # Initialize the database
         app.state._app_state.database.init_db()
 
