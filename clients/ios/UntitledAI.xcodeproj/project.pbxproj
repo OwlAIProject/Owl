@@ -40,6 +40,8 @@
 		AAB582762B53131A00CB72B8 /* AppConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAB582742B53131900CB72B8 /* AppConstants.swift */; };
 		AAB582782B53140800CB72B8 /* CaptureManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAB582772B53140800CB72B8 /* CaptureManager.swift */; };
 		AAB714792B62B23500412DB7 /* Location.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAB714782B62B23500412DB7 /* Location.swift */; };
+		AAB7147D2B64153B00412DB7 /* CaptureManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAB7147C2B64153B00412DB7 /* CaptureManager.swift */; };
+		AAB7147F2B64162800412DB7 /* Capture.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAB7147E2B64162800412DB7 /* Capture.swift */; };
 		CCD7A5BA2B6202190079D9D4 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CCD7A5B92B6202190079D9D4 /* SettingsView.swift */; };
 		CCD7A5BD2B6216060079D9D4 /* MultipartForm.swift in Sources */ = {isa = PBXBuildFile; fileRef = CCD7A5BC2B6216060079D9D4 /* MultipartForm.swift */; };
 		CCD7A5BE2B62165D0079D9D4 /* MultipartForm.swift in Sources */ = {isa = PBXBuildFile; fileRef = CCD7A5BC2B6216060079D9D4 /* MultipartForm.swift */; };
@@ -143,6 +145,8 @@
 		AAB582742B53131900CB72B8 /* AppConstants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConstants.swift; sourceTree = "<group>"; };
 		AAB582772B53140800CB72B8 /* CaptureManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureManager.swift; sourceTree = "<group>"; };
 		AAB714782B62B23500412DB7 /* Location.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Location.swift; sourceTree = "<group>"; };
+		AAB7147C2B64153B00412DB7 /* CaptureManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureManager.swift; sourceTree = "<group>"; };
+		AAB7147E2B64162800412DB7 /* Capture.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Capture.swift; sourceTree = "<group>"; };
 		CCD7A5B92B6202190079D9D4 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		CCD7A5BC2B6216060079D9D4 /* MultipartForm.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MultipartForm.swift; sourceTree = "<group>"; };
 		CCD7A5C02B6217320079D9D4 /* AudioFileWriter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioFileWriter.swift; sourceTree = "<group>"; };
@@ -212,9 +216,10 @@
 			isa = PBXGroup;
 			children = (
 				AA7E36AF2B55878400789EB0 /* BLEManager.swift */,
+				AAB7147C2B64153B00412DB7 /* CaptureManager.swift */,
 				AA7E36B52B55925300789EB0 /* SocketManager.swift */,
-				AA84B1C22B601E1C00FD654C /* API.swift */,
 				AA5DC9CA2B629E770017376F /* LocationManager.swift */,
+				AA84B1C22B601E1C00FD654C /* API.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -233,6 +238,7 @@
 				AA84B1BE2B601DC600FD654C /* Transcript.swift */,
 				AA84B1C02B601DDD00FD654C /* Conversation.swift */,
 				AAB714782B62B23500412DB7 /* Location.swift */,
+				AAB7147E2B64162800412DB7 /* Capture.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -655,6 +661,7 @@
 				AAB582152B530FD400CB72B8 /* ContentView.swift in Sources */,
 				AA7E36B02B55878400789EB0 /* BLEManager.swift in Sources */,
 				AA84B1C62B6041AB00FD654C /* JSONDecoder+Extensions.swift in Sources */,
+				AAB7147D2B64153B00412DB7 /* CaptureManager.swift in Sources */,
 				AAB582752B53131A00CB72B8 /* AppConstants.swift in Sources */,
 				AA7E36B42B558FB400789EB0 /* FrameSequencer.swift in Sources */,
 				AA7E36B62B55925300789EB0 /* SocketManager.swift in Sources */,
@@ -664,6 +671,7 @@
 				AA84B1C92B604FB000FD654C /* ConversationsViewModel.swift in Sources */,
 				AA84B1C32B601E1C00FD654C /* API.swift in Sources */,
 				CCD7A5C62B6217900079D9D4 /* URL+Extensions.swift in Sources */,
+				AAB7147F2B64162800412DB7 /* Capture.swift in Sources */,
 				AAB582132B530FD400CB72B8 /* UntitledAIApp.swift in Sources */,
 				AA5DC9CB2B629E770017376F /* LocationManager.swift in Sources */,
 				CCD7A5C22B62173E0079D9D4 /* AudioFileWriter.swift in Sources */,

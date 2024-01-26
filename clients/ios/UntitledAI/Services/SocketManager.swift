@@ -39,12 +39,12 @@ class SocketManager: ObservableObject {
         }
     }
 
-    func sendAudioData(_ data: Data, deviceName: String) {
-        socket.emit("audio_data", data, deviceName)
+    func sendAudioData(_ data: Data, capture: Capture) {
+        socket.emit("audio_data", data, capture.deviceName, capture.captureId)
     }
     
-    func finishAudio() {
-        socket.emit("finish_audio")
+    func finishAudio(capture: Capture) {
+        socket.emit("finish_audio", capture.captureId)
     }
     
 }
