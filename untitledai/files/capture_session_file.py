@@ -1,3 +1,10 @@
+#
+# capture_session_file.py
+#
+# CaptureSessionFile encapsulates a captured audio session's storage location and metadata
+# associated with the session.
+#
+
 from __future__ import annotations 
 import os
 from datetime import datetime
