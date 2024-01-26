@@ -58,7 +58,7 @@ async def complete_audio(request: Request, background_tasks: BackgroundTasks, un
     if not os.path.exists(pcm_file_name):
         raise HTTPException(status_code=404, detail="File not found")
     try:
-        audio_data = AudioSegment.from_file(pcm_file_name, format="raw", frame_rate=48000, channels=1, sample_width=2)
+        audio_data = AudioSegment.from_file(pcm_file_name, format="raw", frame_rate=16000, channels=1, sample_width=2)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error processing audio file: {e}")
     
