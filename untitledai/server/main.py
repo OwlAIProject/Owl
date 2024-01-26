@@ -54,8 +54,8 @@ def setup_logging():
      handler = ColorfulLogger()
      logging.root.addHandler(handler)
 
-
-
+def running_local_models(config: Configuration):
+    return config.async_transcription.provider == "whisper"
 
 def create_server_app(config: Configuration) -> FastAPI:
     setup_logging()
@@ -81,7 +81,7 @@ def create_server_app(config: Configuration) -> FastAPI:
 
     @app.on_event("startup")
     async def startup_event():
-        if not ray.is_initialized():
+        if not ray.is_initialized() and running_local_models(config):
             ray.init()
         # Initialize the database
         app.state._app_state.database.init_db()
