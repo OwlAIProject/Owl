@@ -20,6 +20,7 @@ import json
 from ..services.conversation.conversation_service import ConversationService
 from ..services.stt.streaming.streaming_transcription_service_factory import StreamingTranscriptionServiceFactory
 from ..models.schemas import ConversationRead, Conversation
+from ..files import CaptureFile
 
 logger = logging.getLogger(__name__)
 
@@ -28,22 +29,26 @@ class CaptureHandler:
         self._app_state = app_state
         self._conversation_timeout_threshold = conversation_timeout_threshold
         self._conversations_queue = Queue()
-        self._current_capture_id = None
+        self._current_capture_file = None
+        #self._current_capture_id = None
         self._current_file = None
-        self._current_file_name = ""
+        #self._current_file_name = ""
         self._last_utterance_time = None
 
     def notify_utterance_received(self):
         self._last_utterance_time = datetime.now()
 
     def handle_capture(self, binary_data, device_name):
-        if not self._current_capture_id:
-            timestamp = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
-            sanitized_device_name = "".join(char for char in device_name if char.isalnum())
-            self._current_file_name = os.path.join(self._app_state.get_audio_directory(), f"{timestamp}_{sanitized_device_name}.aac")
-            self._current_file = open(self._current_file_name, "ab")
-            self._current_capture_id = uuid4().hex
-            logger.info(f"New capture started: {self._current_capture_id} ({self._current_file_name})")
+        if not self._current_capture_file:
+            self._current_capture_file = CaptureFile(
+                audio_directory=self._app_state.get_audio_directory(),
+                capture_id=uuid4().hex,
+                device_type=device_name,
+                timestamp=datetime.now(timezone.utc),
+                file_extension="aac"
+            )
+            self._current_file = open(self._current_capture_file.filepath, "ab")
+            logger.info(f"New capture started: {self._current_capture_file.capture_id} ({self._current_capture_file.filepath})")
 
         if self._current_file is not None:
             try:
@@ -54,16 +59,15 @@ class CaptureHandler:
             logger.error("Error: Current file is not open.")
 
     def finish_conversation(self):
-        if self._current_file:
+        if self._current_capture_file:
             self._current_file.close()
-            self._conversations_queue.put((self._current_file_name, self._current_capture_id))
+            self._conversations_queue.put(self._current_capture_file)
             self._current_file = None
-            self._current_capture_id = None
-            self._current_file_name = ""
+            self._current_capture_file = None
             self._last_utterance_time = None
 
     def check_conversation_timeout(self):
-        if self._current_capture_id and self._last_utterance_time:
+        if self._current_capture_file and self._last_utterance_time:
             if (datetime.now() - self._last_utterance_time) > timedelta(seconds=self._conversation_timeout_threshold):
                 self.finish_conversation()
 
@@ -102,11 +106,11 @@ class CaptureSocketApp(socketio.AsyncNamespace):
         
     async def process_conversations(self):
         if not self.capture_handler._conversations_queue.empty():
-                fn, cid = self.capture_handler._conversations_queue.get()
-                logger.info(f"Processing conversation: {cid}")
+                capture_file: CaptureFile = self.capture_handler._conversations_queue.get()
+                logger.info(f"Processing conversation: {capture_file.capture_id}")
                 try:
                     processing_task = asyncio.create_task(
-                        self._app_state.conversation_service.process_conversation_from_audio(fn)
+                        self._app_state.conversation_service.process_conversation_from_audio(capture_file=capture_file)
                     )
                     saved_transcription, saved_conversation = await processing_task
                     with next(self._app_state.database.get_db()) as db:

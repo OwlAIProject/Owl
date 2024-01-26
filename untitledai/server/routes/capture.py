@@ -152,7 +152,7 @@ async def process_capture(request: Request, capture_id: Annotated[str, Form()]):
         if capture_file is None:
             logger.error(f"Filepath does not conform to expected format and cannot be processed: {filepath}")
             raise HTTPException(status_code=500, detail="Internal error: File is incorrectly named on server")
-        await app_state.conversation_service.NEW_process_conversation_from_audio(capture_file=capture_file)
+        await app_state.conversation_service.process_conversation_from_audio(capture_file=capture_file)
         logger.info(f"Finished processing conversation: {capture_file.filepath}")
         return JSONResponse(content={"message": "Conversation processed"})
     except Exception as e:
