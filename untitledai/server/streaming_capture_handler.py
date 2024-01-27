@@ -57,6 +57,7 @@ class StreamingCaptureHandler:
 
         task = (capture_file, segment_file)
         self.app_state.conversation_task_queue.put(task)
+        
     async def handle_audio_data(self, binary_data):
         with open(self.temp_pcm_file if self.file_extension == "wav" else self.capture_file.filepath, "ab") as file:
             file.write(binary_data)
