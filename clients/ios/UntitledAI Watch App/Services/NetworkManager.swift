@@ -43,6 +43,8 @@ class NetworkManager : NSObject, URLSessionDataDelegate {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyyMMdd_HHmmss_ZZZ"
         captureID = "watch_\(formatter.string(from: Date()))"
+        let message = ["event": "startedStreaming", "captureID": captureID ?? ""]
+        WatchConnectivityManager.shared.sendMessage(message)
         connect(captureID: captureID)
     }
     
@@ -54,6 +56,8 @@ class NetworkManager : NSObject, URLSessionDataDelegate {
             print("Capture ID is nil")
             return
         }
+        
+
         self.streamingTask = nil
         task.cancel()
         self.closeStream()

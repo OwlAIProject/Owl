@@ -68,7 +68,9 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
 
             let location = Location(latitude: currentLocation.coordinate.latitude,
                                     longitude: currentLocation.coordinate.longitude,
-                                    address: addressString)
+                                    address: addressString,
+                                    captureUUID: CaptureManager.shared.getCurrentCapture()?.captureId
+            )
 
             API.shared.saveLocation(location) { result in
                 switch result {
@@ -104,4 +106,13 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
                 break
         }
     }
+    
+    func sendCurrentLocation() {
+        guard let _ = locationManager.location else {
+            print("Current location not available")
+            return
+        }
+        updateLocation()
+    }
+
 }

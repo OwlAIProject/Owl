@@ -2,7 +2,7 @@ from sqlmodel import SQLModel, Session, select
 from ..models.schemas import Transcription, Conversation, Utterance, Location, SegmentedCaptureFile, CaptureFileRef
 from typing import List, Optional
 from sqlalchemy.orm import joinedload
-from sqlalchemy import desc, func
+from sqlalchemy import desc, func, or_
 from datetime import datetime
 
 
@@ -63,21 +63,24 @@ def get_all_conversations(db: Session, offset: int = 0, limit: int = 10) -> List
     ).order_by(desc(Conversation.created_at)).offset(offset).limit(limit).all()
 
 def create_location(db: Session, location_data: Location) -> Location:
-    new_location = Location(latitude=location_data.latitude, longitude=location_data.longitude, address=location_data.address)
+    new_location = Location(latitude=location_data.latitude, longitude=location_data.longitude, address=location_data.address, capture_uuid=location_data.capture_uuid)
     db.add(new_location)
     db.commit()
     db.refresh(new_location)
     return new_location
 
-def find_most_common_location(db: Session, start_time: datetime, end_time: datetime) -> Optional[Location]:
-    most_common_location = (
+def find_most_common_location(db: Session, start_time: datetime, end_time: datetime, capture_uuid: Optional[str] = None) -> Optional[Location]:
+    print(f"Finding most common location between {start_time} and {end_time} for capture {capture_uuid}")
+    query = (
         db.query(Location.id, Location.address, func.count(Location.id).label('address_count'))
-          .filter(Location.created_at >= start_time, Location.created_at <= end_time)
+          .filter(or_(Location.created_at.between(start_time, end_time), 
+                      Location.capture_uuid == capture_uuid))
           .group_by(Location.address)
           .order_by(desc('address_count'))
           .first()
     )
-    if most_common_location:
-        return db.get(Location, most_common_location.id)
+
+    if query:
+        return db.get(Location, query.id)
     else:
         return None

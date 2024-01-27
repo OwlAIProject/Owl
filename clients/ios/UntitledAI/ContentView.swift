@@ -21,11 +21,11 @@ struct ContentView: View {
 }
 
 struct BadgeView: View {
-    @ObservedObject var bleManager = BLEManager.shared
+    @ObservedObject var captureManager = CaptureManager.shared
 
     var body: some View {
         Group {
-            if let deviceName = bleManager.connectedDeviceName {
+            if let deviceName = captureManager.currentCapture?.deviceName {
                 DeviceBannerView(deviceName: deviceName)
             }
         }

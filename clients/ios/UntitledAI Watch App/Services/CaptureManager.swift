@@ -43,6 +43,9 @@ class CaptureManager: NSObject {
             markCaptureComplete(captureID)
         }
         _fileWriter = nil
+        let message = ["event": "stoppedStreaming"]
+        WatchConnectivityManager.shared.sendMessage(message)
+
     }
 
     private func setupAudioSession() {

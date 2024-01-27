@@ -158,6 +158,10 @@ class AudioFileWriter {
             let timestamp = formatter.string(from: now)
             _captureID = UUID().hex
             _filenameBase = "audio_\(_captureID!)_\(timestamp)"
+            
+            // TODO unify captureID generation for chunks and streaming so this can be centralized
+            let message = ["event": "startedStreaming", "captureID": _captureID ?? ""]
+            WatchConnectivityManager.shared.sendMessage(message)
         }
 
         // Will rename to .EXT when complete

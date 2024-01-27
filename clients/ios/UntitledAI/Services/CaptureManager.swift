@@ -7,10 +7,22 @@
 
 import Foundation
 
-class CaptureManager {
+class CaptureManager: ObservableObject {
     static let shared = CaptureManager()
 
-    private var currentCapture: Capture?
+    @Published var currentCapture: Capture? {
+        didSet {
+            if let capture = currentCapture {
+                print("Started new capture session with ID: \(capture.captureId) and device: \(capture.deviceName)")
+                LocationManager.shared.sendCurrentLocation()
+            } else {
+                if let capture = oldValue {
+                    print("Ending capture session with ID: \(capture.captureId) and device: \(capture.deviceName)")
+                    LocationManager.shared.sendCurrentLocation()
+                }
+            }
+        }
+    }
 
     private init() {}
 

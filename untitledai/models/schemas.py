@@ -48,6 +48,7 @@ class Location(CreatedAtMixin, table=True):
     latitude: float = Field(nullable=False)
     longitude: float = Field(nullable=False)
     address: Optional[str] = None
+    capture_uuid: Optional[str] = None
 
     conversation: Optional["Conversation"] = Relationship(back_populates="primary_location")
 
