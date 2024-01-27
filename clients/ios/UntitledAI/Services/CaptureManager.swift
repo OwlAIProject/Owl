@@ -13,11 +13,11 @@ class CaptureManager: ObservableObject {
     @Published var currentCapture: Capture? {
         didSet {
             if let capture = currentCapture {
-                print("Started new capture session with ID: \(capture.captureId) and device: \(capture.deviceName)")
+                print("Started new capture session with ID: \(capture.captureUUID) and device: \(capture.deviceName)")
                 LocationManager.shared.sendCurrentLocation()
             } else {
                 if let capture = oldValue {
-                    print("Ending capture session with ID: \(capture.captureId) and device: \(capture.deviceName)")
+                    print("Ending capture session with ID: \(capture.captureUUID) and device: \(capture.deviceName)")
                     LocationManager.shared.sendCurrentLocation()
                 }
             }

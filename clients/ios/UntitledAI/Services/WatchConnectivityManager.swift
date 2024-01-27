@@ -38,9 +38,9 @@ class WatchConnectivityManager: NSObject, WCSessionDelegate {
     func session(_ session: WCSession, didReceiveMessage message: [String : Any]) {
         print(message)
         if let event = message["event"] as? String {
-            if event == "startedStreaming", let captureID = message["captureID"] as? String {
+            if event == "startedStreaming", let captureUUID = message["captureUUID"] as? String {
                 DispatchQueue.main.async {
-                    CaptureManager.shared.currentCapture = Capture(deviceName: "apple_watch", captureId: captureID)
+                    CaptureManager.shared.currentCapture = Capture(deviceName: "apple_watch", captureUUID: captureUUID)
                 }
             } else if event == "stoppedStreaming" {
                 DispatchQueue.main.async {
