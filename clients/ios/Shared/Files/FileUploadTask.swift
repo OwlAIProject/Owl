@@ -17,7 +17,7 @@
 //
 // Here is an outline of the process:
 //
-// 1. In-progress recordings are written with a .*-wip extension and contain capture ID, start
+// 1. In-progress recordings are written with a .*-wip extension and contain capture UUID, start
 //    timestamp, and sequential chunk number.
 //
 //      audio_6cea0828bbef11ee906aa67caffadefc_20240125-180400.123_0.pcm-wip
@@ -31,12 +31,12 @@
 //      audio_6cea0828bbef11ee906aa67caffadefc_20240125-180400.123_3.pcm-wip
 //
 // 3. If the capture is complete and no more files will be produced for it, an empty .end file
-//    named with the capture ID is written. Capture completion occurs when recording is explicitly
-//    stopped or when the app first starts and discovers recordings on the disk leftover from a
-//    previous session (which, if lacking a corresponding .end file, was interrupted). Below is an
-//    example of a capture session with two remaining chunks left to upload that has been marked as
-//    completed. Once the files are sent, processing will be requested and the .end file will be
-//    removed.
+//    named with the capture UUID is written. Capture completion occurs when recording is
+//    explicitly stopped or when the app first starts and discovers recordings on the disk leftover
+//    from a previous session (which, if lacking a corresponding .end file, was interrupted). Below
+//    is an example of a capture session with two remaining chunks left to upload that has been
+//    marked as completed. Once the files are sent, processing will be requested and the .end file
+//    will be removed.
 //
 //      audio_6cea0828bbef11ee906aa67caffadefc_20240125-180400.123_30.pcm
 //      audio_6cea0828bbef11ee906aa67caffadefc_20240125-180400.123_31.pcm
@@ -77,47 +77,47 @@ func runFileUploadTask(fileExtension: String) async {
     // these captures are definitely finished.
     let urls = getAudioFilesAscendingTimeOrder(fileExtension: fileExtension)
     for url in urls {
-        guard let captureID = AudioFileWriter.getCaptureID(from: url) else {
+        guard let id = AudioFileWriter.getCaptureUUID(from: url) else {
             deleteFile(url) // remove files with ill-formatted names
             continue
         }
-        markCaptureComplete(captureID)
+        markCaptureComplete(id)
     }
 
     while true {
         try? await Task.sleep(for: .seconds(5))
         guard _uploadAllowed else { continue }
 
-        // Sample current files on disk and capture IDs known to be complete
+        // Sample current files on disk and capture UUIDs known to be complete
         let completedChunkURLs = getAudioFilesAscendingTimeOrder(fileExtension: fileExtension)
         let allInProgressURLs = completedChunkURLs + getAudioFilesAscendingTimeOrder(fileExtension: "\(fileExtension)-wip")
-        let completedCaptureIDs = getCompletedCaptureIDs()
+        let completedCaptureUUIDs = getCompletedCaptureUUIDs()
 
         // Process any completed captures that have been completely uploaded
         guard _uploadAllowed else { continue }
         let processed = await tryProcessUploadedCaptures(
             existingURLs: allInProgressURLs,
-            completedCaptureIDs: completedCaptureIDs
+            completedCaptureUUIDs: completedCaptureUUIDs
         )
-        for captureID in processed {
-            deleteCaptureCompletionFile(captureID)
+        for id in processed {
+            deleteCaptureCompletionFile(id)
         }
 
-        // Upload each. Need to group by capture ID because if any chunk fails, we need to skip all
-        // subsequent files in capture to prevent chunks from being sent out of order. We sorted
-        // by time earlier, files will remain in this order.
+        // Upload each. Need to group by capture UUID because if any chunk fails, we need to skip
+        // all subsequent files in capture to prevent chunks from being sent out of order. We
+        // sorted by time earlier, files will remain in this order.
         guard _uploadAllowed else { continue }
-        var urlsByCaptureID: [String: [URL]] = [:]
+        var urlsByCaptureUUID: [String: [URL]] = [:]
         for url in completedChunkURLs {
-            guard let captureID = AudioFileWriter.getCaptureID(from: url) else {
+            guard let id = AudioFileWriter.getCaptureUUID(from: url) else {
                 deleteFile(url)
                 continue
             }
-            var urls = urlsByCaptureID[captureID] == nil ? [] : urlsByCaptureID[captureID]!
+            var urls = urlsByCaptureUUID[id] == nil ? [] : urlsByCaptureUUID[id]!
             urls.append(url)
-            urlsByCaptureID[captureID] = urls
+            urlsByCaptureUUID[id] = urls
         }
-        for (_, urls) in urlsByCaptureID {
+        for (_, urls) in urlsByCaptureUUID {
             for url in urls {
                 let succeeded = await uploadFile(url, contentType: contentType)
                 if succeeded {
@@ -140,51 +140,51 @@ func setUploadAllowed(to allowed: Bool) {
     }
 }
 
-func markCaptureComplete(_ captureID: String) {
-    // Mark completed captures by creating empty file named {capture_id}.end
-    let url = URL.documents.appendingPathComponent("\(captureID).end")
+func markCaptureComplete(_ captureUUID: String) {
+    // Mark completed captures by creating empty file named {capture_uuid}.end
+    let url = URL.documents.appendingPathComponent("\(captureUUID).end")
     if !FileManager.default.createFile(atPath: url.path(percentEncoded: true), contents: nil, attributes: nil) {
-        log("Failed to create completion file for capture: \(captureID)")
+        log("Failed to create completion file for capture: \(captureUUID)")
         return
     }
-    log("Added \(captureID) to completed queue")
+    log("Added \(captureUUID) to completed queue")
 }
 
-fileprivate func deleteCaptureCompletionFile(_ captureID: String) {
-    let url = URL.documents.appendingPathComponent("\(captureID).end")
+fileprivate func deleteCaptureCompletionFile(_ captureUUID: String) {
+    let url = URL.documents.appendingPathComponent("\(captureUUID).end")
     deleteFile(url)
 }
 
-fileprivate func tryProcessUploadedCaptures(existingURLs urls: [URL], completedCaptureIDs: [String]) async -> [String] {
+fileprivate func tryProcessUploadedCaptures(existingURLs urls: [URL], completedCaptureUUIDs: [String]) async -> [String] {
     // Once we have uploaded files that were marked completed, process them
-    var captureIDsToProcess: [String] = []
-    for captureID in completedCaptureIDs {
-        let moreToUpload = urls.contains { AudioFileWriter.getCaptureID(from: $0) == captureID }
+    var captureUUIDsToProcess: [String] = []
+    for id in completedCaptureUUIDs {
+        let moreToUpload = urls.contains { AudioFileWriter.getCaptureUUID(from: $0) == id }
         if moreToUpload {
-            log("Cannot process \(captureID) yet, there is more to upload")
+            log("Cannot process \(id) yet, there is more to upload")
             continue
         }
 
         // No matches on the file system, we've finished uploading this file completely. Process!
-        log("Ready to process \(captureID)")
-        captureIDsToProcess.append(captureID)
+        log("Ready to process \(id)")
+        captureUUIDsToProcess.append(id)
     }
 
-    var captureIDsSuccessfullyProcessed: [String] = []
-    for captureID in captureIDsToProcess {
-        log("Processing \(captureID)...")
-        if await processCapture(captureID) {
-            captureIDsSuccessfullyProcessed.append(captureID)
+    var captureUUIDsSuccessfullyProcessed: [String] = []
+    for id in captureUUIDsToProcess {
+        log("Processing \(id)...")
+        if await processCapture(id) {
+            captureUUIDsSuccessfullyProcessed.append(id)
         }
     }
 
     // Return what was processed
-    return captureIDsSuccessfullyProcessed
+    return captureUUIDsSuccessfullyProcessed
 }
 
 fileprivate func uploadFile(_ url: URL, contentType: String) async -> Bool {
     guard let fileData = try? Data(contentsOf: url),
-          let captureID = AudioFileWriter.getCaptureID(from: url),
+          let captureUUID = AudioFileWriter.getCaptureUUID(from: url),
           let timestamp = AudioFileWriter.getTimestamp(from: url) else {
         log("Error: Failed to load \(url) from disk")
         return false
@@ -196,7 +196,7 @@ fileprivate func uploadFile(_ url: URL, contentType: String) async -> Bool {
     // Create form data
     let fields: [MultipartForm.Field] = [
         .init(name: "file", filename: filename, contentType: contentType, data: fileData),
-        .init(name: "capture_id", text: captureID),
+        .init(name: "capture_uuid", text: captureUUID),
         .init(name: "timestamp", text: timestamp),
         .init(name: "device_type", text: "apple_watch")
     ]
@@ -234,10 +234,10 @@ fileprivate func uploadFile(_ url: URL, contentType: String) async -> Bool {
     return false
 }
 
-fileprivate func processCapture(_ captureID: String) async -> Bool {
+fileprivate func processCapture(_ captureUUID: String) async -> Bool {
     // Create form data
     let fields: [MultipartForm.Field] = [
-        .init(name: "capture_id", text: captureID)
+        .init(name: "capture_uuid", text: captureUUID)
     ]
     let form = MultipartForm(fields: fields)
 
@@ -260,7 +260,7 @@ fileprivate func processCapture(_ captureID: String) async -> Bool {
             }
             return true
         }
-        log("Processed capture \(captureID) successfully")
+        log("Processed capture \(captureUUID) successfully")
         return true
     } catch {
         log("Error: Upload failed: \(error.localizedDescription)")
@@ -269,7 +269,7 @@ fileprivate func processCapture(_ captureID: String) async -> Bool {
     return false
 }
 
-fileprivate func getCompletedCaptureIDs() -> [String] {
+fileprivate func getCompletedCaptureUUIDs() -> [String] {
     do {
         let documentDirectory = try FileManager.default.url(
             for: .documentDirectory,
@@ -286,10 +286,10 @@ fileprivate func getCompletedCaptureIDs() -> [String] {
         return directoryContents
             .compactMap {
                 if $0.pathExtension == "end" {
-                    let captureID = $0.deletingPathExtension().lastPathComponent
-                    if captureID.count == 32 {
-                        // Valid capture ID is a 32-digit UUID
-                        return captureID
+                    let captureUUID = $0.deletingPathExtension().lastPathComponent
+                    if captureUUID.count == 32 {
+                        // Valid capture UUID is a 32-digit UUID
+                        return captureUUID
                     }
                     return nil
                 }

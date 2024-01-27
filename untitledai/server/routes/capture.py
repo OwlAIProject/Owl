@@ -20,54 +20,54 @@ import traceback
 from datetime import datetime, timezone
 
 from .. import AppState
-from ...files import CaptureFile, create_wav_header, wav_header_size
+from ...files import CaptureFile, append_to_wav_file
 from ..streaming_capture_handler import StreamingCaptureHandler
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
-def find_audio_filepath(audio_directory: str, capture_id: str) -> str | None:
+def find_audio_filepath(audio_directory: str, capture_uuid: str) -> str | None:
     # Files stored as: {audio_directory}/{date}/{device}/{files}.{ext}
     filepaths = glob(os.path.join(audio_directory, "*/*/*"))
-    capture_ids = [ CaptureFile.get_capture_id(filepath=filepath) for filepath in filepaths ]
-    file_idx = capture_ids.index(capture_id)
+    capture_uuids = [ CaptureFile.get_capture_uuid(filepath=filepath) for filepath in filepaths ]
+    file_idx = capture_uuids.index(capture_uuid)
     if file_idx < 0:
         return None
     return filepaths[file_idx]
 
 supported_upload_file_extensions = set([ "pcm", "aac", "m4a" ])
 
-@router.post("/capture/streaming_post/{capture_id}")
-async def streaming_post(request: Request, capture_id: str, device_type: str, app_state = Depends(AppState.get_from_request)):
+@router.post("/capture/streaming_post/{capture_uuid}")
+async def streaming_post(request: Request, capture_uuid: str, device_type: str, app_state = Depends(AppState.get_from_request)):
     logger.info('Client connected')
     try:
-        if capture_id not in app_state.capture_handlers:
-            app_state.capture_handlers[capture_id] = StreamingCaptureHandler(
-                app_state, device_type, capture_id, file_extension = "wav", stream_format={
+        if capture_uuid not in app_state.capture_handlers:
+            app_state.capture_handlers[capture_uuid] = StreamingCaptureHandler(
+                app_state, device_type, capture_uuid, file_extension = "wav", stream_format={
                     "sample_rate": 16000,
                     "encoding": "linear16"
                 }
             )
 
-        capture_handler = app_state.capture_handlers[capture_id]
+        capture_handler = app_state.capture_handlers[capture_uuid]
 
         async for chunk in request.stream():
             await capture_handler.handle_audio_data(chunk)
 
     except ClientDisconnect:
-        logger.info(f"Client disconnected while streaming {capture_id}.")
+        logger.info(f"Client disconnected while streaming {capture_uuid}.")
 
     return JSONResponse(content={"message": f"Audio received"})
 
 
-@router.post("/capture/streaming_post/{capture_id}/complete")
-async def complete_audio(request: Request, background_tasks: BackgroundTasks, capture_id: str, app_state = Depends(AppState.get_from_request)):
-    logger.info(f"Completing audio capture for {capture_id}")
-    if capture_id not in app_state.capture_handlers:
-        logger.error(f"Capture session not found: {capture_id}")
+@router.post("/capture/streaming_post/{capture_uuid}/complete")
+async def complete_audio(request: Request, background_tasks: BackgroundTasks, capture_uuid: str, app_state = Depends(AppState.get_from_request)):
+    logger.info(f"Completing audio capture for {capture_uuid}")
+    if capture_uuid not in app_state.capture_handlers:
+        logger.error(f"Capture session not found: {capture_uuid}")
         raise HTTPException(status_code=500, detail="Capture session not found")
-    capture_handler = app_state.capture_handlers[capture_id]
+    capture_handler = app_state.capture_handlers[capture_uuid]
     capture_handler.finish_capture_session()
 
     return JSONResponse(content={"message": f"Audio processed"})
@@ -75,7 +75,7 @@ async def complete_audio(request: Request, background_tasks: BackgroundTasks, ca
 @router.post("/capture/upload_chunk")
 async def upload_chunk(request: Request,
                        file: UploadFile,
-                       capture_id: Annotated[str, Form()],
+                       capture_uuid: Annotated[str, Form()],
                        timestamp: Annotated[str, Form()],
                        device_type: Annotated[str, Form()],
                        app_state = Depends(AppState.get_from_request)):
@@ -92,48 +92,37 @@ async def upload_chunk(request: Request,
 
         # Look up capture session or create a new one
         capture_file: CaptureFile = None
-        if capture_id in app_state.capture_sessions_by_id:
-            capture_file = app_state.capture_sessions_by_id[capture_id]
+        if capture_uuid in app_state.capture_sessions_by_id:
+            capture_file = app_state.capture_sessions_by_id[capture_uuid]
         else:
             # Create new capture session
             capture_file = CaptureFile(
                 audio_directory=app_state.get_audio_directory(),
-                capture_id=capture_id,
+                capture_uuid=capture_uuid,
                 device_type=device_type,
                 timestamp=timestamp,
                 file_extension=file_extension
             )
-            app_state.capture_sessions_by_id[capture_id] = capture_file
+            app_state.capture_sessions_by_id[capture_uuid] = capture_file
 
         # First chunk or are we appending?
         first_chunk = not os.path.exists(path=capture_file.filepath)
         write_mode = "wb" if first_chunk else "r+b"
         
-        # Open and write file
-        with open(file=capture_file.filepath, mode=write_mode) as fp:
-            # Get uploaded bytes
-            content = await file.read()
-            
-            # Write or update the WAV header if needed
-            if file_extension == "wav":
-                if first_chunk:
-                    header = create_wav_header(sample_bytes=len(content), sample_rate=16000)
-                    fp.write(header)
-                else:
-                    fp.seek(0, 2)       # seek to end to get size
-                    existing_sample_bytes = fp.tell() - wav_header_size
-                    added_sample_bytes = len(content)
-                    header = create_wav_header(sample_bytes=existing_sample_bytes + added_sample_bytes, sample_rate=16000)
-                    fp.seek(0)          # beginning of file
-                    fp.write(header)    # overwrite header with new
-                    fp.seek(0, 2)       # to end of file so we can append
+        # Get uploaded data
+        content = await file.read()
+        
+        # Append to file
+        bytes_written = 0
+        if file_extension == "wav":
+            bytes_written = append_to_wav_file(filepath=capture_file.filepath, sample_bytes=content, sample_rate=16000)
+        else:
+            with open(file=capture_file.filepath, mode="ab") as fp:
+                bytes_written = fp.write(content)
+        logging.info(f"{capture_file.filepath}: {bytes_written} bytes appended")
 
-            # Append file data 
-            bytes_written = fp.write(content)
-            logging.info(f"{capture_file.filepath}: {bytes_written} bytes appended")
-
-            # Success
-            return JSONResponse(content={"message": f"Audio processed"})
+        # Success
+        return JSONResponse(content={"message": f"Audio processed"})
 
     except Exception as e:
         logging.error(f"Failed to upload chunk: {e}")
@@ -142,9 +131,9 @@ async def upload_chunk(request: Request,
 
     
 @router.post("/capture/process_capture")
-async def process_capture(request: Request, capture_id: Annotated[str, Form()], app_state = Depends(AppState.get_from_request)):
+async def process_capture(request: Request, capture_uuid: Annotated[str, Form()], app_state = Depends(AppState.get_from_request)):
     try:
-        filepath = find_audio_filepath(audio_directory=app_state.get_audio_directory(), capture_id = capture_id)
+        filepath = find_audio_filepath(audio_directory=app_state.get_audio_directory(), capture_uuid = capture_uuid)
         logger.info(f"Found file to process: {filepath}")
         capture_file = CaptureFile.from_filepath(filepath=filepath)
         if capture_file is None:

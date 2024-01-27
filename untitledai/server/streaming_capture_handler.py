@@ -11,10 +11,10 @@ from pydub import AudioSegment
 logger = logging.getLogger(__name__)
 
 class StreamingCaptureHandler:
-    def __init__(self, app_state, device_name, capture_id, file_extension="aac", stream_format=None):
+    def __init__(self, app_state, device_name, capture_uuid, file_extension="aac", stream_format=None):
         self.app_state = app_state
         self.device_name = device_name
-        self.capture_id = capture_id
+        self.capture_uuid = capture_uuid
         self.file_extension = file_extension
         self.segment_file = None
         self.segment_counter = 0
@@ -33,7 +33,7 @@ class StreamingCaptureHandler:
     def _init_capture_session(self):
         self.capture_file = CaptureFile(
             audio_directory=self.app_state.get_audio_directory(),
-            capture_id=self.capture_id,
+            capture_uuid=self.capture_uuid,
             device_type=self.device_name,
             timestamp=datetime.now(timezone.utc),
             file_extension=self.file_extension
@@ -44,16 +44,16 @@ class StreamingCaptureHandler:
         self.start_new_segment()
 
     async def on_endpoint(self):
-        logger.info(f"Endpoint detected for capture_id {self.capture_id}")
+        logger.info(f"Endpoint detected for capture_uuid {self.capture_uuid}")
         if self.capture_file and self.segment_file:
-            self.process_conversation(self.capture_file, self.segment_file)
+            self._process_conversation(self.capture_file, self.segment_file)
         self.start_new_segment()
 
-    def process_conversation(self, capture_file, segment_file):
+    def _process_conversation(self, capture_file, segment_file):
         if self.file_extension == "wav":
             self.convert_pcm_to_wav(segment_file)
         
-        logger.info(f"Processing conversation for capture_id {capture_file.capture_id} ({segment_file})")
+        logger.info(f"Processing conversation for capture_uuid {capture_file.capture_uuid} ({segment_file})")
 
         task = (capture_file, segment_file)
         self.app_state.conversation_task_queue.put(task)
@@ -88,14 +88,14 @@ class StreamingCaptureHandler:
 
     def finish_capture_session(self):
         if self.segment_file:
-            self.process_conversation(self.capture_file, self.segment_file)
+            self._process_conversation(self.capture_file, self.segment_file)
        
-        capture_file = self.app_state.capture_sessions_by_id.pop(self.capture_id, None)
+        capture_file = self.app_state.capture_sessions_by_id.pop(self.capture_uuid, None)
         if self.file_extension == "wav" and self.temp_pcm_file:
             self.convert_pcm_to_wav(self.temp_pcm_file)
         if self.endpointing_service:
             self.endpointing_service.stop()
-        logger.info(f"Finishing capture: {self.capture_id}")
+        logger.info(f"Finishing capture: {self.capture_uuid}")
         if capture_file:
             try:
                 with open(capture_file.filepath, "a"):

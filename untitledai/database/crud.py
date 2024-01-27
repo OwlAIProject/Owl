@@ -24,8 +24,8 @@ def create_capture_file_ref(db: Session, capture_file_ref: CaptureFileRef) -> Ca
     db.refresh(capture_file_ref)
     return capture_file_ref
 
-def get_capture_file_ref(db: Session, capture_id: str) -> Optional[CaptureFileRef]:
-    statement = select(CaptureFileRef).where(CaptureFileRef.id == capture_id)
+def get_capture_file_ref(db: Session, capture_uuid: str) -> Optional[CaptureFileRef]:
+    statement = select(CaptureFileRef).where(CaptureFileRef.id == capture_uuid)
     result = db.execute(statement).first()
     return result[0] if result else None
 

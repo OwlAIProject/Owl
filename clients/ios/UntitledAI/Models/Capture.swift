@@ -8,11 +8,11 @@
 import Foundation
 
 class Capture {
-    let captureId: String
+    let captureUUID: String
     let deviceName: String
 
-    init(deviceName: String, captureId: String? = nil) {
-        self.captureId = captureId ?? UUID().uuidString
+    init(deviceName: String, captureUUID: String? = nil) {
+        self.captureUUID = captureUUID ?? UUID().uuidString
         self.deviceName = deviceName
     }
 }

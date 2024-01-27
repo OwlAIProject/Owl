@@ -56,10 +56,10 @@ class ConversationService:
         with next(self.database.get_db()) as db:
             try:
                 # Create and save capture file reference
-                saved_capture_file_ref = get_capture_file_ref(db, capture_file.capture_id)
+                saved_capture_file_ref = get_capture_file_ref(db, capture_file.capture_uuid)
                 if not saved_capture_file_ref:
                     saved_capture_file_ref = create_capture_file_ref(db, CaptureFileRef(
-                        capture_id=capture_file.capture_id,
+                        capture_uuid=capture_file.capture_uuid,
                         file_path=capture_file.filepath,
                         duration=capture_audio_duration,
                         device_type=capture_file.device_type.value,

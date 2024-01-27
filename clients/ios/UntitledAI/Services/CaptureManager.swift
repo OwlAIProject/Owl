@@ -28,7 +28,7 @@ class CaptureManager: ObservableObject {
 
     func createCapture(capture: Capture) {
         currentCapture = capture
-        print("Started new capture session with ID: \(capture.captureId) and device: \(capture.deviceName)")
+        print("Started new capture session with ID: \(capture.captureUUID) and device: \(capture.deviceName)")
     }
 
     func endCapture() {
@@ -36,7 +36,7 @@ class CaptureManager: ObservableObject {
             print("No active capture session to end.")
             return
         }
-        print("Ending capture session with ID: \(capture.captureId) and device: \(capture.deviceName)")
+        print("Ending capture session with ID: \(capture.captureUUID) and device: \(capture.deviceName)")
         currentCapture = nil
     }
 

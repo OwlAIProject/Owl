@@ -3,6 +3,19 @@
 #
 # CaptureFile encapsulates an audio capture's storage location and metadata associated with it.
 #
+# Capture directory structure:
+#
+#   {capture_dir}/
+#       {date}/
+#           {device}/
+#               {capture_timestamp}_{capture_uuid}.{ext} <-- complete capture audio file
+#               {capture_timestamp}_{capture_uuid}/      <-- capture segments (conversations) directory
+#                   {conversation1_timestamp}_{conversation1_uuid}.{ext}
+#                   ...
+#                   {conversation2_timestamp}_{conversation2_uuid}.{ext}
+#
+# Timestamp format: YYYYYmmdd-HHMMSS.fff (millisecond resolution).
+#
 
 from __future__ import annotations 
 import os
@@ -17,26 +30,26 @@ class CaptureFile:
     Encapsulates a file on disk containing a capture. Includes only the limited metadata embedded in
     the filepath and filename so that the object can be created from metadata or from a filepath.
     """
-    capture_id: str
+    capture_uuid: str
     device_type: DeviceType
     timestamp: datetime
     filepath: str
 
-    def get_capture_id(filepath: str) -> str | None:
+    def get_capture_uuid(filepath: str) -> str | None:
         """
         Extracts the capture ID from a capture file stored on disk.
 
         Parameters
         ----------
         filepath : str
-            Either a filename of format {timestamp}_{capture_id}.{ext} or a complete filepath.
+            Either a filename of format {timestamp}_{capture_uuid}.{ext} or a complete filepath.
         
         Returns
         -------
         str | None
             The capture ID or None of it is missing/malformed.
         """
-        # {timestamp}_{capture_id}.{ext} -> {capture_id}
+        # {timestamp}_{capture_uuid}.{ext} -> {capture_uuid}
         filename = os.path.basename(filepath)
         rootname = os.path.splitext(filename)[0]
         parts = rootname.split("_")
@@ -52,7 +65,7 @@ class CaptureFile:
         Parameters
         ----------
         filepath : str
-            Full filepath: {audio_dir}/{date}/{device}/{timestamp}_{capture_id}.{ext}. The audio
+            Full filepath: {audio_dir}/{date}/{device}/{timestamp}_{capture_uuid}.{ext}. The audio
             directory is reconstructed from this path.
 
         Returns
@@ -70,8 +83,8 @@ class CaptureFile:
         file_parts = rootname.split("_")
         if len(file_parts) != 2:
             return None
-        timestamp, capture_id = file_parts
-        if len(capture_id) != 32:
+        timestamp, capture_uuid = file_parts
+        if len(capture_uuid) != 32:
             return None
         try:
             print(timestamp)
@@ -81,7 +94,7 @@ class CaptureFile:
             return None
         return CaptureFile(
             audio_directory=audio_directory,
-            capture_id=capture_id,
+            capture_uuid=capture_uuid,
             device_type=device_type,
             timestamp=timestamp,
             file_extension=file_extension
@@ -95,29 +108,29 @@ class CaptureFile:
         ----------
         audio_directory : str
             The base audio capture directory. Files stored as:
-            {audio_dir}/{date}/{device}/{timestamp}_{capture_id}.{ext}
-        capture_id : str | None
+            {audio_dir}/{date}/{device}/{timestamp}_{capture_uuid}.{ext}
+        capture_uuid : str | None
             Capture ID. If not specified, a new random ID is assigned.
         device_type : DeviceType | str | None
             Device type corresponding to DeviceType enum. If not a valid string, DeviceType.UNKNOWN
             will be assigned.
         timestamp : str | datetime | None
-            Timestamp of beginning of capture in format %Y%m%d-%H%M%S.%f (YYYYmmdd-hhmm.sss) or as a
-            datetime object. If None or if a string was supplied that could not be parsed,
+            Timestamp of beginning of capture in format %Y%m%d-%H%M%S.%f (YYYYmmdd-HHMMSS.fff) or as
+            a datetime object. If None or if a string was supplied that could not be parsed,
             datetime.now(timezone.utc) will be used.
         file_extension : str | None
             File extension (e.g., "wav"). If not provided, "bin" will be used.
         """
-        self.capture_id = kwargs["capture_id"] if "capture_id" in kwargs else uuid.uuid1().hex
+        self.capture_uuid = kwargs["capture_uuid"] if "capture_uuid" in kwargs else uuid.uuid1().hex
         self.device_type = kwargs["device_type"] if "device_type" in kwargs else "unknown"
         if isinstance(self.device_type, str):
             self.device_type = DeviceType(self.device_type) if self.device_type in DeviceType else DeviceType.UNKNOWN
 
-        # Timestamp may be correctly-formatted string or struct_time
+        # Timestamp may be correctly-formatted string or datetime
         if "timestamp" in kwargs:
             ts = kwargs["timestamp"]
             if isinstance(ts, str):
-                # Ensure timestamp is consistent format by internalizing to struct_time
+                # Ensure timestamp is consistent format by internalizing to datetime
                 try:
                     self.timestamp = datetime.strptime(ts, "%Y%m%d-%H%M%S.%f")
                 except:
@@ -129,10 +142,10 @@ class CaptureFile:
                 #TODO: log error
                 self.timestamp = datetime.now(timezone.utc)
 
-        # Filepath: {audio_dir}/{date}/{device}/{timestamp}_{capture_id}.{ext}
+        # Filepath: {audio_dir}/{date}/{device}/{timestamp}_{capture_uuid}.{ext}
         ext = (kwargs["file_extension"] if "file_extension" in kwargs else "bin").lstrip(".")
         dir = os.path.join(audio_directory, self.date_string(), self.device_type.value)
-        filename = f"{self.timestamp_string()}_{self.capture_id}.{ext}"
+        filename = f"{self.timestamp_string()}_{self.capture_uuid}.{ext}"
         self.filepath = os.path.join(dir, filename)
 
         # Create the directory
