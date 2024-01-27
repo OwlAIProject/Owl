@@ -20,7 +20,7 @@ import traceback
 from datetime import datetime, timezone
 
 from .. import AppState
-from ...files import CaptureFile, create_wav_header, wav_header_size
+from ...files import CaptureFile, append_to_wav_file
 from ..streaming_capture_handler import StreamingCaptureHandler
 
 logger = logging.getLogger(__name__)
@@ -109,31 +109,20 @@ async def upload_chunk(request: Request,
         first_chunk = not os.path.exists(path=capture_file.filepath)
         write_mode = "wb" if first_chunk else "r+b"
         
-        # Open and write file
-        with open(file=capture_file.filepath, mode=write_mode) as fp:
-            # Get uploaded bytes
-            content = await file.read()
-            
-            # Write or update the WAV header if needed
-            if file_extension == "wav":
-                if first_chunk:
-                    header = create_wav_header(sample_bytes=len(content), sample_rate=16000)
-                    fp.write(header)
-                else:
-                    fp.seek(0, 2)       # seek to end to get size
-                    existing_sample_bytes = fp.tell() - wav_header_size
-                    added_sample_bytes = len(content)
-                    header = create_wav_header(sample_bytes=existing_sample_bytes + added_sample_bytes, sample_rate=16000)
-                    fp.seek(0)          # beginning of file
-                    fp.write(header)    # overwrite header with new
-                    fp.seek(0, 2)       # to end of file so we can append
+        # Get uploaded data
+        content = await file.read()
+        
+        # Append to file
+        bytes_written = 0
+        if file_extension == "wav":
+            bytes_written = append_to_wav_file(filepath=capture_file.filepath, sample_bytes=content, sample_rate=16000)
+        else:
+            with open(file=capture_file.filepath, mode="ab") as fp:
+                bytes_written = fp.write(content)
+        logging.info(f"{capture_file.filepath}: {bytes_written} bytes appended")
 
-            # Append file data 
-            bytes_written = fp.write(content)
-            logging.info(f"{capture_file.filepath}: {bytes_written} bytes appended")
-
-            # Success
-            return JSONResponse(content={"message": f"Audio processed"})
+        # Success
+        return JSONResponse(content={"message": f"Audio processed"})
 
     except Exception as e:
         logging.error(f"Failed to upload chunk: {e}")
