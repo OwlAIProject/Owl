@@ -8,11 +8,12 @@ logger = logging.getLogger(__name__)
 
 class StreamingDeepgramTranscriptionService(AbstractStreamingTranscriptionService):
 
-    def __init__(self, config, callback):
+    def __init__(self, config, callback, stream_format=None):
         self.config = config
         self.websocket_url = "wss://api.deepgram.com/v1/listen"
         self.websocket = None
         self.on_utterance_callback = callback
+        self.stream_format = stream_format
         self.connection_lock = asyncio.Lock()
         self.is_receiving = False
 
@@ -26,6 +27,8 @@ class StreamingDeepgramTranscriptionService(AbstractStreamingTranscriptionServic
         try:
             headers = {"Authorization": f"Token {self.config.api_key}"}
             query_params = f"model={self.config.model}&language={self.config.language}"
+            if self.stream_format:
+                query_params += f"&sample_rate={self.stream_format['sample_rate']}&encoding={self.stream_format['encoding']}"
             self.websocket = await websockets.connect(f"{self.websocket_url}?{query_params}", extra_headers=headers)
             logger.info("Connected to Deepgram.")
             if not self.is_receiving:

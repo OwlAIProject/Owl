@@ -23,9 +23,10 @@ from ..database.database import Database
 from ..services.stt.asynchronous.async_transcription_service_factory import AsyncTranscriptionServiceFactory
 import ray
 import logging
-import logging
+import asyncio
 from colorama import init, Fore, Style, Back
 
+logger = logging.getLogger(__name__)
 
 # TODO: How to handle logging configuration?
 class ColorfulLogger(logging.StreamHandler):
@@ -53,6 +54,19 @@ def setup_logging():
      logging.root.setLevel(logging.INFO)
      handler = ColorfulLogger()
      logging.root.addHandler(handler)
+
+async def process_queue(app_state: AppState):
+    logger.info("Starting conversation processing queue...")
+    while True:
+        if not app_state.conversation_task_queue.empty():
+            capture_file, segment_file = app_state.conversation_task_queue.get()
+            try:
+                await app_state.conversation_service.process_conversation_from_audio(capture_file, segment_file)
+            except Exception as e:
+                logging.error(f"Error processing conversation: {e}")
+            app_state.conversation_task_queue.task_done()
+        else:
+            await asyncio.sleep(1)
 
 def running_local_models(config: Configuration):
     return config.async_transcription.provider == "whisper"
@@ -85,7 +99,7 @@ def create_server_app(config: Configuration) -> FastAPI:
             ray.init()
         # Initialize the database
         app.state._app_state.database.init_db()
-
+        asyncio.create_task(process_queue(app.state._app_state))
 
     @app.on_event("shutdown")
     async def shutdown_event():

@@ -7,8 +7,10 @@ from fastapi import FastAPI, Request
 
 from ..core.config import Configuration
 from ..services import ConversationService, LLMService
+from .streaming_capture_handler import StreamingCaptureHandler
 from ..database.database import Database
 from ..files import CaptureFile
+from queue import Queue
 
 @dataclass
 class AppState:
@@ -23,6 +25,9 @@ class AppState:
     llm_service: LLMService
     
     capture_sessions_by_id: Dict[str, CaptureFile] = field(default_factory=lambda: {})
+    capture_handlers: Dict[str, StreamingCaptureHandler] = field(default_factory=lambda: {})
+
+    conversation_task_queue = Queue()
 
     @staticmethod
     def get(from_obj: FastAPI | Request) -> AppState:

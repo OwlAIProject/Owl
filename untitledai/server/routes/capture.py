@@ -21,6 +21,7 @@ from datetime import datetime, timezone
 
 from .. import AppState
 from ...files import CaptureFile, create_wav_header, wav_header_size
+from ..streaming_capture_handler import StreamingCaptureHandler
 
 logger = logging.getLogger(__name__)
 
@@ -36,63 +37,38 @@ def find_audio_filepath(audio_directory: str, capture_id: str) -> str | None:
     return filepaths[file_idx]
 
 supported_upload_file_extensions = set([ "pcm", "aac", "m4a" ])
-    
+
 @router.post("/capture/streaming_post/{capture_id}")
 async def streaming_post(request: Request, capture_id: str, device_type: str, app_state = Depends(AppState.get_from_request)):
     logger.info('Client connected')
     try:
-        capture_file: CaptureFile = None
-        if capture_id in app_state.capture_sessions_by_id:
-            capture_file = app_state.capture_sessions_by_id[capture_id]
-        else:
-            # Create new capture session
-            capture_file = CaptureFile(
-                audio_directory=app_state.get_audio_directory(),
-                capture_id=capture_id,
-                device_type=device_type,
-                timestamp=datetime.now(timezone.utc),
-                file_extension="wav"  # Keep WAV extension in CaptureFile
+        if capture_id not in app_state.capture_handlers:
+            app_state.capture_handlers[capture_id] = StreamingCaptureHandler(
+                app_state, device_type, capture_id, file_extension = "wav", stream_format={
+                    "sample_rate": 16000,
+                    "encoding": "linear16"
+                }
             )
-            app_state.capture_sessions_by_id[capture_id] = capture_file
 
-        # Temporary PCM file path
-        pcm_file_path = os.path.splitext(capture_file.filepath)[0] + ".pcm"
-        file_mode = "ab" if os.path.exists(pcm_file_path) else "wb"
+        capture_handler = app_state.capture_handlers[capture_id]
 
-        with open(pcm_file_path, file_mode) as file:
-            async for chunk in request.stream():
-                file.write(chunk)
-                file.flush()
+        async for chunk in request.stream():
+            await capture_handler.handle_audio_data(chunk)
 
     except ClientDisconnect:
         logger.info(f"Client disconnected while streaming {capture_id}.")
 
     return JSONResponse(content={"message": f"Audio received"})
 
+
 @router.post("/capture/streaming_post/{capture_id}/complete")
 async def complete_audio(request: Request, background_tasks: BackgroundTasks, capture_id: str, app_state = Depends(AppState.get_from_request)):
     logger.info(f"Completing audio capture for {capture_id}")
-    capture_file: CaptureFile = None
-    if capture_id in app_state.capture_sessions_by_id:
-        capture_file = app_state.capture_sessions_by_id[capture_id]
-    else:
-        logger.error(f"Capture session not found for ID: {capture_id}")
-        raise HTTPException(status_code=500, detail="Internal error: Capture session not found")
-
-    pcm_file_path = os.path.splitext(capture_file.filepath)[0] + ".pcm"
-    if not os.path.exists(pcm_file_path):
-        raise HTTPException(status_code=404, detail="PCM file not found")
-
-    try:
-        audio_data = AudioSegment.from_file(pcm_file_path, format="raw", frame_rate=16000, channels=1, sample_width=2)
-        audio_data.export(capture_file.filepath, format="wav")
-        os.remove(pcm_file_path)
-    except Exception as e:
-        logger.error(f"Error processing audio file: {e}")
-        raise HTTPException(status_code=500, detail=f"Error processing audio file: {e}")
-
-    logger.info(f"Audio file processed: {capture_file.filepath}")
-    background_tasks.add_task(app_state.conversation_service.process_conversation_from_audio, capture_file=capture_file)
+    if capture_id not in app_state.capture_handlers:
+        logger.error(f"Capture session not found: {capture_id}")
+        raise HTTPException(status_code=500, detail="Capture session not found")
+    capture_handler = app_state.capture_handlers[capture_id]
+    capture_handler.finish_capture_session()
 
     return JSONResponse(content={"message": f"Audio processed"})
 

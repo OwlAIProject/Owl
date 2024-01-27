@@ -35,6 +35,11 @@ class AsyncTranscriptionConfiguration(BaseModel):
 class DatabaseConfiguration(BaseModel):
     url: str
 
+# Temporary! To be replaced by the parameters for the actual endpointing service
+class ConversationEndpointingConfiguration(BaseModel):
+    time_out: int
+    min_utterances: int # The minimum number of utterances required to trigger an endpoint
+
 class Configuration(BaseModel):
     transcription: TranscriptionConfiguration
     llm: LLMConfiguration
@@ -44,3 +49,4 @@ class Configuration(BaseModel):
     async_transcription: AsyncTranscriptionConfiguration
     user: UserConfiguration
     database: DatabaseConfiguration
+    conversation_endpointing: ConversationEndpointingConfiguration
