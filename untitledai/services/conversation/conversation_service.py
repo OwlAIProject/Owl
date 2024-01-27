@@ -3,7 +3,7 @@ from ..conversation.transcript_summarizer import TranscriptionSummarizer
 from ...database.crud import create_transcription, create_conversation, find_most_common_location, create_capture_file_ref, create_segmented_capture_file,get_capture_file_ref  
 from ...database.database import Database
 from ...core.config import Configuration
-from ...models.schemas import Transcription, Conversation, CaptureFileRef, SegmentedCaptureFile
+from ...models.schemas import Transcription, Conversation, CaptureFileRef, SegmentedCaptureFile, TranscriptionRead, ConversationRead
 from ...files import CaptureFile
 import asyncio
 import os
@@ -87,6 +87,25 @@ class ConversationService:
 
                 # Link transcription to conversation
                 saved_transcription.conversation_id = conversation.id
+                
+                # Save files for easy debugging
+                # TODO file paths
+                segment_file_base_name = os.path.splitext(os.path.basename(segment_file_path))[0]
+                transcription_data = TranscriptionRead.from_orm(saved_transcription)
+                conversation_data = ConversationRead.from_orm(conversation)
+
+                transcription_json = transcription_data.model_dump_json(indent=2)
+                conversation_json = conversation_data.model_dump_json(indent=2)
+
+                capture_file_directory = os.path.dirname(capture_file.filepath)
+                transcription_file_path = os.path.join(capture_file_directory, f"{segment_file_base_name}_transcription.json")
+                conversation_file_path = os.path.join(capture_file_directory, f"{segment_file_base_name}_conversation.json")
+
+                with open(transcription_file_path, 'w') as file:
+                    file.write(transcription_json)
+
+                with open(conversation_file_path, 'w') as file:
+                    file.write(conversation_json)
                 db.commit()
                 return transcription, conversation
             except Exception as e:

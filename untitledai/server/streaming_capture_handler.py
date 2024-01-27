@@ -73,6 +73,7 @@ class StreamingCaptureHandler:
         asyncio.create_task(self.endpointing_service.utterance_detected())
 
     def start_new_segment(self):
+         # TODO file paths
         segment_number = self.segment_counter + 1
         self.segment_counter = segment_number
         capture_file_dir = os.path.dirname(self.capture_file.filepath)
