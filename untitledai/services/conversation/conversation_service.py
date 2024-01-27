@@ -76,7 +76,7 @@ class ConversationService:
                 transcription.segmented_capture_id = saved_segmented_capture.id
                 saved_transcription = create_transcription(db, transcription)
                 # Create and save conversation
-                most_common_location = find_most_common_location(db, conversation_start_time, conversation_end_time, capture_file.capture_id)
+                most_common_location = find_most_common_location(db, conversation_start_time, conversation_end_time, capture_file.capture_uuid)
                 if most_common_location:
                     logger.info(f"Identified conversation primary location: {most_common_location}")
 
@@ -115,5 +115,5 @@ class ConversationService:
                 db.commit()
                 return transcription, conversation
             except Exception as e:
-                logging.error(f"Error in database operations: {e}")
+                logger.error(f"Error in database operations: {e}")
         
