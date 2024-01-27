@@ -6,7 +6,7 @@ from typing import Dict
 from fastapi import FastAPI, Request
 
 from ..core.config import Configuration
-from ..services import ConversationService, LLMService
+from ..services import ConversationService, LLMService, NotificationService
 from .streaming_capture_handler import StreamingCaptureHandler
 from ..database.database import Database
 from ..files import CaptureFile
@@ -23,6 +23,7 @@ class AppState:
     database: Database
     conversation_service: ConversationService
     llm_service: LLMService
+    notification_service: NotificationService
     
     capture_sessions_by_id: Dict[str, CaptureFile] = field(default_factory=lambda: {})
     capture_handlers: Dict[str, StreamingCaptureHandler] = field(default_factory=lambda: {})

@@ -40,6 +40,9 @@ class ConversationEndpointingConfiguration(BaseModel):
     timeout_interval: int
     min_utterances: int # The minimum number of utterances required to trigger an endpoint
 
+class NotificationConfiguration(BaseModel):
+    apn_team_id: str | None
+
 class Configuration(BaseModel):
     transcription: TranscriptionConfiguration
     llm: LLMConfiguration
@@ -50,3 +53,4 @@ class Configuration(BaseModel):
     user: UserConfiguration
     database: DatabaseConfiguration
     conversation_endpointing: ConversationEndpointingConfiguration
+    notification: NotificationConfiguration

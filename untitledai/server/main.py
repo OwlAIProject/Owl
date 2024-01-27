@@ -17,8 +17,7 @@ from .app_state import AppState
 from .routes.capture import router as capture_router
 from .routes.conversations import router as conversations_router
 from .capture_socket import CaptureSocketApp
-from ..services import LLMService
-from ..services import ConversationService
+from ..services import LLMService, ConversationService, NotificationService
 from ..database.database import Database
 from ..services.stt.asynchronous.async_transcription_service_factory import AsyncTranscriptionServiceFactory
 import ray
@@ -78,7 +77,8 @@ def create_server_app(config: Configuration) -> FastAPI:
     # Services
     llm_service = LLMService(config=config.llm)
     transcription_service = AsyncTranscriptionServiceFactory.get_service(config)
-    conversation_service = ConversationService(config, database, transcription_service)
+    notification_service = NotificationService(config.notification)
+    conversation_service = ConversationService(config, database, transcription_service, notification_service)
 
     # Create server app
     app = FastAPI()
@@ -86,10 +86,12 @@ def create_server_app(config: Configuration) -> FastAPI:
         config=config,
         database=database,
         conversation_service=conversation_service,
-        llm_service=llm_service
+        llm_service=llm_service,
+        notification_service=notification_service
     )
     socket_app = CaptureSocketApp(app_state = AppState.get(from_obj=app))
     socket_app.mount_to(app=app, at_path="/socket.io")
+    notification_service.socket_app = socket_app
     app.include_router(capture_router)
     app.include_router(conversations_router)
 

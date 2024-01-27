@@ -62,3 +62,7 @@ class CaptureSocketApp(socketio.AsyncNamespace):
             return
         capture_handler = self._app_state.capture_handlers[capture_id]
         capture_handler.finish_capture_session()
+    
+    async def emit_message(self, event, message):
+        print(f"emit_message message: {event} {message}")
+        await self._sio.emit(event, message)

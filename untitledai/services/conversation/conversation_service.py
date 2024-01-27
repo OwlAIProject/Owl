@@ -1,5 +1,6 @@
 from ..stt.asynchronous.abstract_async_transcription_service import AbstractAsyncTranscriptionService
 from ..conversation.transcript_summarizer import TranscriptionSummarizer  
+
 from ...database.crud import create_transcription, create_conversation, find_most_common_location, create_capture_file_ref, create_segmented_capture_file,get_capture_file_ref  
 from ...database.database import Database
 from ...core.config import Configuration
@@ -16,10 +17,11 @@ import logging
 logger = logging.getLogger(__name__)
 
 class ConversationService:
-    def __init__(self, config: Configuration, database: Database, transcription_service: AbstractAsyncTranscriptionService):
+    def __init__(self, config: Configuration, database: Database, transcription_service: AbstractAsyncTranscriptionService, notification_service):
         self.config = config
         self.database = database
         self.transcription_service = transcription_service
+        self.notification_service = notification_service
         self.summarizer = TranscriptionSummarizer(config)
    
     async def process_conversation_from_audio(self, capture_file: CaptureFile, segment_file_path: str = None, voice_sample_filepath: str = None, speaker_name: str = None):
@@ -106,6 +108,10 @@ class ConversationService:
 
                 with open(conversation_file_path, 'w') as file:
                     file.write(conversation_json)
+                    
+                summary_snippet = summary_text[:100] + (summary_text[100:] and '...')
+                await self.notification_service.send_notification("New Conversation", summary_snippet, "new_conversation", payload=conversation_json)
+                
                 db.commit()
                 return transcription, conversation
             except Exception as e:
