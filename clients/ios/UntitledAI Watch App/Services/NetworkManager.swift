@@ -10,21 +10,21 @@ class NetworkManager : NSObject, URLSessionDataDelegate {
     static var shared = NetworkManager()
     private let bufferQueue = DispatchQueue(label: "com.untitledai.networkManagerBufferQueue")
     private var urlSession: URLSession! = nil
-    private var captureID: String?
+    private var captureUUID: String?
     private var streamingTask: URLSessionDataTask? = nil
     
     var isStreaming: Bool { return self.streamingTask != nil }
     
-    func connect(captureID: String?) {
-        guard let captureID else {
-            print("Capture ID is nil")
+    func connect(captureUUID: String?) {
+        guard let captureUUID else {
+            print("Capture UUID is nil")
             return
         }
         let config = URLSessionConfiguration.default
         config.requestCachePolicy = .reloadIgnoringLocalCacheData
         self.urlSession = URLSession(configuration: config, delegate: self, delegateQueue: .main)
-        let url = URL(string: "\(AppConstants.apiBaseURL)/capture/streaming_post/\(captureID)")!
-        var components = URLComponents(string: "\(AppConstants.apiBaseURL)/capture/streaming_post/\(captureID)")
+        let url = URL(string: "\(AppConstants.apiBaseURL)/capture/streaming_post/\(captureUUID)")!
+        var components = URLComponents(string: "\(AppConstants.apiBaseURL)/capture/streaming_post/\(captureUUID)")
         components?.queryItems = [
             URLQueryItem(name: "device_type", value: "apple_watch")
         ]
@@ -42,23 +42,23 @@ class NetworkManager : NSObject, URLSessionDataDelegate {
     func startStreaming() {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyyMMdd_HHmmss_ZZZ"
-        captureID = "watch_\(formatter.string(from: Date()))"
-        connect(captureID: captureID)
+        captureUUID = "watch_\(formatter.string(from: Date()))"
+        connect(captureUUID: captureUUID)
     }
     
     func stopStreaming() {
         guard let task = self.streamingTask else {
             return
         }
-        guard let captureID else {
-            print("Capture ID is nil")
+        guard let captureUUID else {
+            print("Capture UUID is nil")
             return
         }
         self.streamingTask = nil
         task.cancel()
         self.closeStream()
         self.urlSession = nil
-        let url = URL(string: "\(AppConstants.apiBaseURL)/capture/streaming_post/\(captureID)/complete")!
+        let url = URL(string: "\(AppConstants.apiBaseURL)/capture/streaming_post/\(captureUUID)/complete")!
         
         // Signal end
         var request = URLRequest(url: url)
@@ -73,7 +73,7 @@ class NetworkManager : NSObject, URLSessionDataDelegate {
             print("Completion signal sent successfully.")
         }
         postTask.resume()
-        self.captureID = nil
+        self.captureUUID = nil
     }
     
     var outputStream: OutputStream? = nil

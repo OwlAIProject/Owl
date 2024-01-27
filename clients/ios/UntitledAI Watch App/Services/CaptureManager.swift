@@ -39,8 +39,8 @@ class CaptureManager: NSObject {
         if _isStreaming {
             NetworkManager.shared.stopStreaming()
         }
-        if let captureID = _fileWriter?.captureID {
-            markCaptureComplete(captureID)
+        if let id = _fileWriter?.captureUUID {
+            markCaptureComplete(id)
         }
         _fileWriter = nil
     }
