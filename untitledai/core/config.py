@@ -37,7 +37,7 @@ class DatabaseConfiguration(BaseModel):
 
 # Temporary! To be replaced by the parameters for the actual endpointing service
 class ConversationEndpointingConfiguration(BaseModel):
-    time_out: int
+    timeout_interval: int
     min_utterances: int # The minimum number of utterances required to trigger an endpoint
 
 class Configuration(BaseModel):
