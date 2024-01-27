@@ -6,7 +6,7 @@ import logging
 from ..services.stt.streaming.streaming_transcription_service_factory import StreamingTranscriptionServiceFactory
 from ..services.endpointing.streaming.streaming_endpointing_service import StreamingEndpointingService
 from ..files import CaptureFile
-from pydub import AudioSegment
+from ..files.wav_file import append_to_wav_file
 
 logger = logging.getLogger(__name__)
 
@@ -38,9 +38,6 @@ class StreamingCaptureHandler:
             timestamp=datetime.now(timezone.utc),
             file_extension=self.file_extension
         )
-        self.temp_pcm_file = None 
-        if self.file_extension == "wav":
-            self.temp_pcm_file = os.path.splitext(self.capture_file.filepath)[0] + ".pcm"
         self.start_new_segment()
 
     async def on_endpoint(self):
@@ -50,22 +47,35 @@ class StreamingCaptureHandler:
         self.start_new_segment()
 
     def _process_conversation(self, capture_file, segment_file):
-        if self.file_extension == "wav":
-            self.convert_pcm_to_wav(segment_file)
-        
         logger.info(f"Processing conversation for capture_uuid {capture_file.capture_uuid} ({segment_file})")
 
         task = (capture_file, segment_file)
         self.app_state.conversation_task_queue.put(task)
 
     async def handle_audio_data(self, binary_data):
-        with open(self.temp_pcm_file if self.file_extension == "wav" else self.capture_file.filepath, "ab") as file:
-            file.write(binary_data)
-
-        if self.segment_file:
-            with open(self.segment_file, "ab") as file:
+        if self.file_extension == "wav":
+            append_to_wav_file(
+                filepath=self.capture_file.filepath, 
+                sample_bytes=binary_data, 
+                sample_rate=16000,
+                sample_bits=16,
+                num_channels=1
+            )
+            if self.segment_file:
+                append_to_wav_file(
+                    filepath=self.segment_file, 
+                    sample_bytes=binary_data, 
+                    sample_rate=16000, 
+                    sample_bits=16, 
+                    num_channels=1
+                )
+        else:
+            with open(self.capture_file.filepath, "ab") as file:
                 file.write(binary_data)
 
+            if self.segment_file:
+                with open(self.segment_file, "ab") as file:
+                    file.write(binary_data)
         await self.transcription_service.send_audio(binary_data)
 
     async def handle_utterance(self, utterance):
@@ -81,8 +91,6 @@ class StreamingCaptureHandler:
         segment_file_name = f"{base_name}-{segment_number}.{self.file_extension}"
         segment_file_path = os.path.join(capture_file_dir, segment_file_name)
         self.segment_file = segment_file_path
-        if self.file_extension == "wav":
-            self.segment_file = f"{os.path.splitext(self.segment_file)[0]}.pcm"
         with open(segment_file_path, "wb") as file:
             pass  # Creating an empty segment file
 
@@ -91,8 +99,6 @@ class StreamingCaptureHandler:
             self._process_conversation(self.capture_file, self.segment_file)
        
         capture_file = self.app_state.capture_sessions_by_id.pop(self.capture_uuid, None)
-        if self.file_extension == "wav" and self.temp_pcm_file:
-            self.convert_pcm_to_wav(self.temp_pcm_file)
         if self.endpointing_service:
             self.endpointing_service.stop()
         logger.info(f"Finishing capture: {self.capture_uuid}")
@@ -102,10 +108,3 @@ class StreamingCaptureHandler:
                     pass  # Finalize the capture file
             except Exception as e:
                 logger.error(f"Error closing file {capture_file.filepath}: {e}")
-
-    @staticmethod
-    def convert_pcm_to_wav(pcm_file_path):
-        wav_file_path = f"{os.path.splitext(pcm_file_path)[0]}.wav"
-        audio = AudioSegment.from_file(pcm_file_path, format="raw", frame_rate=16000, channels=1, sample_width=2)
-        audio.export(wav_file_path, format="wav")
-        os.remove(pcm_file_path)
