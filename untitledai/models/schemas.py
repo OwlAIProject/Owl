@@ -62,7 +62,7 @@ class Conversation(CreatedAtMixin, table=True):
 
 class CaptureFileRef(CreatedAtMixin, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
-    capture_id: str
+    capture_uuid: str
     file_path: str = Field(...)
     start_time: datetime 
     device_type: str

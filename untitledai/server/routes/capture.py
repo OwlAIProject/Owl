@@ -27,47 +27,47 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
-def find_audio_filepath(audio_directory: str, capture_id: str) -> str | None:
+def find_audio_filepath(audio_directory: str, capture_uuid: str) -> str | None:
     # Files stored as: {audio_directory}/{date}/{device}/{files}.{ext}
     filepaths = glob(os.path.join(audio_directory, "*/*/*"))
-    capture_ids = [ CaptureFile.get_capture_id(filepath=filepath) for filepath in filepaths ]
-    file_idx = capture_ids.index(capture_id)
+    capture_uuids = [ CaptureFile.get_capture_uuid(filepath=filepath) for filepath in filepaths ]
+    file_idx = capture_uuids.index(capture_uuid)
     if file_idx < 0:
         return None
     return filepaths[file_idx]
 
 supported_upload_file_extensions = set([ "pcm", "aac", "m4a" ])
 
-@router.post("/capture/streaming_post/{capture_id}")
-async def streaming_post(request: Request, capture_id: str, device_type: str, app_state = Depends(AppState.get_from_request)):
+@router.post("/capture/streaming_post/{capture_uuid}")
+async def streaming_post(request: Request, capture_uuid: str, device_type: str, app_state = Depends(AppState.get_from_request)):
     logger.info('Client connected')
     try:
-        if capture_id not in app_state.capture_handlers:
-            app_state.capture_handlers[capture_id] = StreamingCaptureHandler(
-                app_state, device_type, capture_id, file_extension = "wav", stream_format={
+        if capture_uuid not in app_state.capture_handlers:
+            app_state.capture_handlers[capture_uuid] = StreamingCaptureHandler(
+                app_state, device_type, capture_uuid, file_extension = "wav", stream_format={
                     "sample_rate": 16000,
                     "encoding": "linear16"
                 }
             )
 
-        capture_handler = app_state.capture_handlers[capture_id]
+        capture_handler = app_state.capture_handlers[capture_uuid]
 
         async for chunk in request.stream():
             await capture_handler.handle_audio_data(chunk)
 
     except ClientDisconnect:
-        logger.info(f"Client disconnected while streaming {capture_id}.")
+        logger.info(f"Client disconnected while streaming {capture_uuid}.")
 
     return JSONResponse(content={"message": f"Audio received"})
 
 
-@router.post("/capture/streaming_post/{capture_id}/complete")
-async def complete_audio(request: Request, background_tasks: BackgroundTasks, capture_id: str, app_state = Depends(AppState.get_from_request)):
-    logger.info(f"Completing audio capture for {capture_id}")
-    if capture_id not in app_state.capture_handlers:
-        logger.error(f"Capture session not found: {capture_id}")
+@router.post("/capture/streaming_post/{capture_uuid}/complete")
+async def complete_audio(request: Request, background_tasks: BackgroundTasks, capture_uuid: str, app_state = Depends(AppState.get_from_request)):
+    logger.info(f"Completing audio capture for {capture_uuid}")
+    if capture_uuid not in app_state.capture_handlers:
+        logger.error(f"Capture session not found: {capture_uuid}")
         raise HTTPException(status_code=500, detail="Capture session not found")
-    capture_handler = app_state.capture_handlers[capture_id]
+    capture_handler = app_state.capture_handlers[capture_uuid]
     capture_handler.finish_capture_session()
 
     return JSONResponse(content={"message": f"Audio processed"})
@@ -75,7 +75,7 @@ async def complete_audio(request: Request, background_tasks: BackgroundTasks, ca
 @router.post("/capture/upload_chunk")
 async def upload_chunk(request: Request,
                        file: UploadFile,
-                       capture_id: Annotated[str, Form()],
+                       capture_uuid: Annotated[str, Form()],
                        timestamp: Annotated[str, Form()],
                        device_type: Annotated[str, Form()],
                        app_state = Depends(AppState.get_from_request)):
@@ -92,18 +92,18 @@ async def upload_chunk(request: Request,
 
         # Look up capture session or create a new one
         capture_file: CaptureFile = None
-        if capture_id in app_state.capture_sessions_by_id:
-            capture_file = app_state.capture_sessions_by_id[capture_id]
+        if capture_uuid in app_state.capture_sessions_by_id:
+            capture_file = app_state.capture_sessions_by_id[capture_uuid]
         else:
             # Create new capture session
             capture_file = CaptureFile(
                 audio_directory=app_state.get_audio_directory(),
-                capture_id=capture_id,
+                capture_uuid=capture_uuid,
                 device_type=device_type,
                 timestamp=timestamp,
                 file_extension=file_extension
             )
-            app_state.capture_sessions_by_id[capture_id] = capture_file
+            app_state.capture_sessions_by_id[capture_uuid] = capture_file
 
         # First chunk or are we appending?
         first_chunk = not os.path.exists(path=capture_file.filepath)
@@ -142,9 +142,9 @@ async def upload_chunk(request: Request,
 
     
 @router.post("/capture/process_capture")
-async def process_capture(request: Request, capture_id: Annotated[str, Form()], app_state = Depends(AppState.get_from_request)):
+async def process_capture(request: Request, capture_uuid: Annotated[str, Form()], app_state = Depends(AppState.get_from_request)):
     try:
-        filepath = find_audio_filepath(audio_directory=app_state.get_audio_directory(), capture_id = capture_id)
+        filepath = find_audio_filepath(audio_directory=app_state.get_audio_directory(), capture_uuid = capture_uuid)
         logger.info(f"Found file to process: {filepath}")
         capture_file = CaptureFile.from_filepath(filepath=filepath)
         if capture_file is None:
