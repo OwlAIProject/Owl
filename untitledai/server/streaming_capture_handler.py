@@ -5,7 +5,7 @@ from queue import Queue
 import logging
 from ..services.stt.streaming.streaming_transcription_service_factory import StreamingTranscriptionServiceFactory
 from ..services.endpointing.streaming.streaming_endpointing_service import StreamingEndpointingService
-from ..files import CaptureFile
+from ..files import CaptureFile, CaptureSegmentFile
 from ..files.wav_file import append_to_wav_file
 
 logger = logging.getLogger(__name__)
@@ -17,7 +17,6 @@ class StreamingCaptureHandler:
         self.capture_uuid = capture_uuid
         self.file_extension = file_extension
         self.segment_file = None
-        self.segment_counter = 0
         self.transcription_service = StreamingTranscriptionServiceFactory.get_service(
             app_state.config, self.handle_utterance, stream_format=stream_format
         )
@@ -32,7 +31,7 @@ class StreamingCaptureHandler:
 
     def _init_capture_session(self):
         self.capture_file = CaptureFile(
-            audio_directory=self.app_state.get_audio_directory(),
+            capture_directory=self.app_state.config.captures.capture_dir,
             capture_uuid=self.capture_uuid,
             device_type=self.device_name,
             timestamp=datetime.now(timezone.utc),
@@ -46,8 +45,8 @@ class StreamingCaptureHandler:
             self._process_conversation(self.capture_file, self.segment_file)
         self.start_new_segment()
 
-    def _process_conversation(self, capture_file, segment_file):
-        logger.info(f"Processing conversation for capture_uuid {capture_file.capture_uuid} ({segment_file})")
+    def _process_conversation(self, capture_file: CaptureFile, segment_file: CaptureSegmentFile):
+        logger.info(f"Processing conversation for capture_uuid={capture_file.capture_uuid} (conversation_uuid={segment_file.conversation_uuid})")
 
         task = (capture_file, segment_file)
         self.app_state.conversation_task_queue.put(task)
@@ -83,20 +82,15 @@ class StreamingCaptureHandler:
         asyncio.create_task(self.endpointing_service.utterance_detected())
 
     def start_new_segment(self):
-         # TODO file paths
-        segment_number = self.segment_counter + 1
-        self.segment_counter = segment_number
-        capture_file_dir = os.path.dirname(self.capture_file.filepath)
-        base_name = os.path.splitext(os.path.basename(self.capture_file.filepath))[0]
-        segment_file_name = f"{base_name}-{segment_number}.{self.file_extension}"
-        segment_file_path = os.path.join(capture_file_dir, segment_file_name)
-        self.segment_file = segment_file_path
-        with open(segment_file_path, "wb") as file:
-            pass  # Creating an empty segment file
+        timestamp = datetime.now(timezone.utc)  # we are streaming in real-time, so we know start time
+        self.segment_file = self.capture_file.create_conversation_segment(
+            timestamp=timestamp,
+            file_extension=self.file_extension
+        )
 
     def finish_capture_session(self):
         if self.segment_file:
-            self._process_conversation(self.capture_file, self.segment_file)
+            self._process_conversation(capture_file=self.capture_file, segment_file=self.segment_file)
        
         capture_file = self.app_state.capture_sessions_by_id.pop(self.capture_uuid, None)
         if self.endpointing_service:

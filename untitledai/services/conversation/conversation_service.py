@@ -5,7 +5,7 @@ from ...database.crud import create_transcription, create_conversation, find_mos
 from ...database.database import Database
 from ...core.config import Configuration
 from ...models.schemas import Transcription, Conversation, CaptureFileRef, SegmentedCaptureFile, TranscriptionRead, ConversationRead
-from ...files import CaptureFile
+from ...files import CaptureFile, CaptureSegmentFile
 import asyncio
 import os
 import time
@@ -24,29 +24,32 @@ class ConversationService:
         self.notification_service = notification_service
         self.summarizer = TranscriptionSummarizer(config)
    
-    async def process_conversation_from_audio(self, capture_file: CaptureFile, segment_file_path: str = None, voice_sample_filepath: str = None, speaker_name: str = None):
-        if not segment_file_path:
-            segment_file_path = capture_file.filepath
-        logger.info(f"Processing capture from audio file: {segment_file_path}...")
+    #TODO: CatureFile duration is measured here but if already in database, not updated. If we are 
+    #      detecting endpoints in a streaming fashion, we don't yet know the length of the capture
+    #      file (only the length so far). So we should probably keep updating it and committing it
+    #      back to the DB?
+    async def process_conversation_from_audio(self, capture_file: CaptureFile, segment_file: CaptureSegmentFile, voice_sample_filepath: str = None, speaker_name: str = None):
+        logger.info(f"Processing capture from audio file: {segment_file.filepath}...")
 
-        # Measure audio duration using Pydub
-        audio = AudioSegment.from_file(segment_file_path)
+        # Segment audio and duration
+        audio = AudioSegment.from_file(segment_file.filepath)
         audio_duration = len(audio) / 1000.0  # Duration in seconds
 
+        # Total capture audio duration
         capture_audio = AudioSegment.from_file(capture_file.filepath)
         capture_audio_duration = len(capture_audio) / 1000.0  # Duration in seconds
 
         # Start transcription timer
         start_time = time.time()
 
-        transcription = await self.transcription_service.transcribe_audio(segment_file_path, voice_sample_filepath, speaker_name)
+        transcription = await self.transcription_service.transcribe_audio(segment_file.filepath, voice_sample_filepath, speaker_name)
         transcription.model = self.config.llm.model
         transcription.transcription_time = time.time() - start_time  # Transcription time
         logger.info(f"Transcription complete in {transcription.transcription_time:.2f} seconds")
         logger.info(f"Transcription: {transcription.utterances}")
                 
         # Conversation start and end time
-        conversation_start_time = capture_file.timestamp  #  todo: add offset
+        conversation_start_time = segment_file.timestamp
         conversation_end_time = conversation_start_time + timedelta(seconds=audio_duration)
 
         start_time = time.time()
@@ -68,13 +71,14 @@ class ConversationService:
 
                 # Create and save segmented capture file
                 saved_segmented_capture = create_segmented_capture_file(db,SegmentedCaptureFile(
-                    segment_path=segment_file_path,
+                    segment_path=segment_file.filepath,
                     source_capture_id=saved_capture_file_ref.id,
                     duration=audio_duration,
                 ))
 
                 transcription.segmented_capture_id = saved_segmented_capture.id
                 saved_transcription = create_transcription(db, transcription)
+    
                 # Create and save conversation
                 most_common_location = find_most_common_location(db, conversation_start_time, conversation_end_time, capture_file.capture_uuid)
                 if most_common_location:
@@ -90,23 +94,17 @@ class ConversationService:
                 # Link transcription to conversation
                 saved_transcription.conversation_id = conversation.id
                 
-                # Save files for easy debugging
-                # TODO file paths
-                segment_file_base_name = os.path.splitext(os.path.basename(segment_file_path))[0]
+                # Save files for easy debugging and inspection
                 transcription_data = TranscriptionRead.from_orm(saved_transcription)
                 conversation_data = ConversationRead.from_orm(conversation)
 
                 transcription_json = transcription_data.model_dump_json(indent=2)
                 conversation_json = conversation_data.model_dump_json(indent=2)
 
-                capture_file_directory = os.path.dirname(capture_file.filepath)
-                transcription_file_path = os.path.join(capture_file_directory, f"{segment_file_base_name}_transcription.json")
-                conversation_file_path = os.path.join(capture_file_directory, f"{segment_file_base_name}_conversation.json")
-
-                with open(transcription_file_path, 'w') as file:
+                with open(segment_file.get_transcription_filepath(), 'w') as file:
                     file.write(transcription_json)
 
-                with open(conversation_file_path, 'w') as file:
+                with open(segment_file.get_conversation_filepath(), 'w') as file:
                     file.write(conversation_json)
                     
                 summary_snippet = summary_text[:100] + (summary_text[100:] and '...')

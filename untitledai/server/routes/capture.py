@@ -6,6 +6,7 @@
 
 import os
 from glob import glob
+import shutil
 from typing import Annotated
 
 from fastapi import APIRouter, Request, HTTPException, BackgroundTasks, UploadFile, Form, Depends
@@ -97,7 +98,7 @@ async def upload_chunk(request: Request,
         else:
             # Create new capture session
             capture_file = CaptureFile(
-                audio_directory=app_state.get_audio_directory(),
+                capture_directory=app_state.config.captures.capture_dir,
                 capture_uuid=capture_uuid,
                 device_type=device_type,
                 timestamp=timestamp,
@@ -133,14 +134,27 @@ async def upload_chunk(request: Request,
 @router.post("/capture/process_capture")
 async def process_capture(request: Request, capture_uuid: Annotated[str, Form()], app_state = Depends(AppState.get_from_request)):
     try:
-        filepath = find_audio_filepath(audio_directory=app_state.get_audio_directory(), capture_uuid = capture_uuid)
+        # Get capture file
+        filepath = find_audio_filepath(audio_directory=app_state.config.captures.capture_dir, capture_uuid=capture_uuid)
         logger.info(f"Found file to process: {filepath}")
-        capture_file = CaptureFile.from_filepath(filepath=filepath)
+        capture_file: CaptureFile = CaptureFile.from_filepath(filepath=filepath)
         if capture_file is None:
             logger.error(f"Filepath does not conform to expected format and cannot be processed: {filepath}")
             raise HTTPException(status_code=500, detail="Internal error: File is incorrectly named on server")
-        await app_state.conversation_service.process_conversation_from_audio(capture_file=capture_file)
-        logger.info(f"Finished processing conversation: {capture_file.filepath}")
+        
+        # For now, endpointing not hooked up, so process this as one big conversation by creating a
+        # single segment out of it
+        segment_file = capture_file.create_conversation_segment(
+            timestamp=capture_file.timestamp,
+            file_extension=os.path.splitext(capture_file.filepath)[1]
+        )
+        shutil.copy2(src=capture_file.filepath, dst=segment_file.filepath)
+
+        # Enqueue for processing
+        task = (capture_file, segment_file)
+        app_state.conversation_task_queue.put(task)
+        
+        logger.info(f"Enqueued conversation capture for processing: {segment_file.filepath}")
         return JSONResponse(content={"message": "Conversation processed"})
     except Exception as e:
         logger.error(f"Failed to process: {e}")
@@ -158,8 +172,3 @@ async def receive_location(location: Location, db: Session = Depends(AppState.ge
         logger.error(f"Error processing location: {e}")
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
-
-
-
-
-    
