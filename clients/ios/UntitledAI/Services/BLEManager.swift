@@ -52,6 +52,7 @@ class BLEManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate, Obse
     
     func scanForPeripherals() {
         print("Starting scan for peripherals")
+        disconnectPeripheral()
         centralManager.scanForPeripherals(withServices: [serviceUUID], options: [CBCentralManagerScanOptionAllowDuplicatesKey: NSNumber(value: true)])
     }
     
@@ -64,17 +65,18 @@ class BLEManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate, Obse
               Identifier: \(peripheralId)
               RSSI: \(RSSI)
               """)
-        
-        if connectedPeripheral == nil {
+
+        if connectedPeripheral?.identifier != peripheral.identifier {
+            // New peripheral discovered, reset the old connection
+            if let connected = connectedPeripheral {
+                centralManager.cancelPeripheralConnection(connected)
+            }
             connectedPeripheral = peripheral
             connectedPeripheral!.delegate = self
-            centralManager.connect(connectedPeripheral!, options: nil)
-        } else if connectedPeripheral?.identifier == peripheral.identifier, connectedPeripheral?.state != .connected {
             centralManager.connect(connectedPeripheral!, options: nil)
         }
         centralManager.stopScan()
     }
-    
     func peripheral(_ peripheral: CBPeripheral, didDiscoverServices error: Error?) {
         print("Discovered services")
         guard let services = peripheral.services else { return }
@@ -153,18 +155,29 @@ class BLEManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate, Obse
         }
     }
     
+    func disconnectPeripheral() {
+        if let peripheral = connectedPeripheral {
+            centralManager.cancelPeripheralConnection(peripheral)
+            connectedPeripheral = nil
+        }
+    }
+    
     func centralManager(_ central: CBCentralManager, didDisconnectPeripheral peripheral: CBPeripheral, error: Error?) {
-        print("Peripheral disconnected, trying to reconnect")
+        print("Peripheral disconnected")
         if peripheral == connectedPeripheral {
             DispatchQueue.main.async {
                 self.connectedDeviceName = nil
             }
+            connectedPeripheral = nil
+
+            if let capture = CaptureManager.shared.getCurrentCapture() {
+                socketManager.finishAudio(capture: capture)
+                CaptureManager.shared.endCapture()
+            }
+            
+            // Restart scanning for other peripherals
+            scanForPeripherals()
         }
-        if let capture = CaptureManager.shared.getCurrentCapture() {
-            socketManager.finishAudio(capture: capture)
-            CaptureManager.shared.endCapture()
-        }
-        centralManager.connect(peripheral, options: nil)
     }
   
 }
