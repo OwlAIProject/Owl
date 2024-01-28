@@ -1,12 +1,14 @@
-#TODO: from_filepth() must load segments if any exist!
-
 #
-# capture_file.py
+# capture_files.py
 #
-# CaptureFile encapsulates an audio capture's storage location and metadata associated with it.
-# CaptureSementFile encapsulates a segmented audio capture that contains a single conversation.
-# Both refer to the audio files themselves and not e.g., transcripts or conversation JSON files
-# stored alongside. 
+# A "capture" is a complete end-to-end recording produced by a client device. Captures may contain
+# zero or more conversations. As conversations are discovered while the capture is in progress or 
+# after it is complete, they are segmented out into their own capture files: capture segments.
+#
+# The CaptureFile and CaptureSegmentFile objects encapsulate a file's storage location and metadata
+# associated with it. Both refer strictly to the audio files themselves and not e.g., transcript or
+# conversation JSON files stored alongside. However, the directory structure and filename
+# conventions for all of these are defined here.
 #
 # Capture directory structure:
 #
@@ -16,8 +18,12 @@
 #               {capture_timestamp}_{capture_uuid}.{ext} <-- complete capture audio file
 #               {capture_timestamp}_{capture_uuid}/      <-- capture segments (conversations) directory
 #                   {conversation1_timestamp}_{conversation1_uuid}.{ext}
+#                   {conversation1_timestamp}_{conversation1_uuid}_transcript.json      <-- transcript
+#                   {conversation1_timestamp}_{conversation1_uuid}_conversation.json    <-- conversation
 #                   ...
 #                   {conversation2_timestamp}_{conversation2_uuid}.{ext}
+#                   {conversation2_timestamp}_{conversation2_uuid}_transcript.json 
+#                   {conversation2_timestamp}_{conversation2_uuid}_conversation.json 
 #
 # Timestamp format: YYYYYmmdd-HHMMSS.fff (millisecond resolution).
 #
@@ -45,7 +51,7 @@ class CaptureSegmentFile:
     timestamp: datetime
     filepath: str
 
-    def _from_filename(filepath: str) -> CaptureSegmentFile:
+    def _from_filepath(filepath: str) -> CaptureSegmentFile:
         """
         Constructs the object from a capture segment filepath. If the filepath does not appear to be
         the correct type of file, returns None.
@@ -199,7 +205,7 @@ class CaptureFile:
                 # Try to create the object. If the filepath is incorrectly formatted (i.e., is a 
                 # different kind of file in that directory), None will be returned
                 filepath = os.path.join(segment_dir, filename)
-                segment_file = CaptureSegmentFile.from_filepath(filepath=filepath)
+                segment_file = CaptureSegmentFile._from_filepath(filepath=filepath)
                 if segment_file:
                     capture_file.conversation_segments[segment_file.conversation_uuid] = segment_file
 
