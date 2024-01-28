@@ -40,7 +40,7 @@ def append_to_wav_file(filepath: str, sample_bytes: bytes, sample_rate: int, sam
     Parameters
     ----------
     filepath : str
-        File to write to.
+        File to append to. A new file will be created if none exists.
     sample_bytes : bytes
         Sample bytes to append.
     sample_rate : int
@@ -63,7 +63,12 @@ def append_to_wav_file(filepath: str, sample_bytes: bytes, sample_rate: int, sam
 
         # Write a header that reflects existing samples and ones we are about to add
         added_sample_bytes = len(sample_bytes)
-        header = create_wav_header(num_sample_bytes=existing_sample_bytes + added_sample_bytes, sample_rate=16000)
+        header = create_wav_header(
+            num_sample_bytes=existing_sample_bytes + added_sample_bytes,
+            sample_rate=sample_rate,
+            sample_bits=sample_bits,
+            num_channels=num_channels
+        )
         fp.seek(0)          # beginning of file
         fp.write(header)    # overwrite header with new
 
