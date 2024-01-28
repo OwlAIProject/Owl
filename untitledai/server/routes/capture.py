@@ -37,7 +37,7 @@ def find_audio_filepath(audio_directory: str, capture_uuid: str) -> str | None:
         return None
     return filepaths[file_idx]
 
-supported_upload_file_extensions = set([ "pcm", "aac", "m4a" ])
+supported_upload_file_extensions = set([ "pcm", "wav", "aac", "m4a" ])
 
 @router.post("/capture/streaming_post/{capture_uuid}")
 async def streaming_post(request: Request, capture_uuid: str, device_type: str, app_state = Depends(AppState.get_from_request)):
@@ -88,8 +88,10 @@ async def upload_chunk(request: Request,
 
         # Raw PCM is automatically converted to wave format. We do this to prevent client from
         # having to worry about reliability of transmission (in case WAV header chunk is dropped).
+        write_wav_header = False
         if file_extension == "pcm":
-            file_extension = "wav"  
+            file_extension = "wav"
+            write_wav_header = True
 
         # Look up capture session or create a new one
         capture_file: CaptureFile = None
@@ -106,16 +108,12 @@ async def upload_chunk(request: Request,
             )
             app_state.capture_sessions_by_id[capture_uuid] = capture_file
 
-        # First chunk or are we appending?
-        first_chunk = not os.path.exists(path=capture_file.filepath)
-        write_mode = "wb" if first_chunk else "r+b"
-        
         # Get uploaded data
         content = await file.read()
         
         # Append to file
         bytes_written = 0
-        if file_extension == "wav":
+        if write_wav_header:
             bytes_written = append_to_wav_file(filepath=capture_file.filepath, sample_bytes=content, sample_rate=16000)
         else:
             with open(file=capture_file.filepath, mode="ab") as fp:

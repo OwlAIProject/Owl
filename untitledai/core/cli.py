@@ -122,6 +122,46 @@ def summarize(config: Configuration, main_audio_filepath: str, voice_sample_file
     console.log("[bold green]Summarization complete!")
 
 
+###################################################################################################
+# Send Audio
+###################################################################################################
+
+@cli.command()
+@click.option("--file", required=True, help="Audio file to send.")
+@click.option("--host", default="127.0.0.1", help="Address to send to.")
+@click.option('--port', default=8000, help="Port to use.")
+def upload(file: str, host: str, port: int):
+    print(f"Upload {file} to {host}:{port}")
+    from datetime import datetime, timezone
+    import os
+    import requests
+    import uuid
+
+    with open(file, "rb") as fp:
+        file_contents = fp.read()
+    
+    capture_uuid = uuid.uuid1().hex
+
+    data = {
+         "capture_uuid": capture_uuid,
+         "timestamp": datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S.%f")[:-3],
+         "device_type": "unknown"
+    }
+    
+    files = {
+        "file": (os.path.basename(file), file_contents)
+    }
+    
+    response = requests.post(url=f"http://{host}:{port}/capture/upload_chunk", files=files, data=data)
+    if response.status_code != 200:
+        print(f"Error {response.status_code}: {response.content}")
+    else:
+        response = requests.post(url=f"http://{host}:{port}/capture/process_capture", data={ "capture_uuid": capture_uuid })
+        if response.status_code != 200:
+            print(f"Error {response.status_code}: {response.content}")
+        print(response.content)
+
+
 ####################################################################################################
 # Server
 ####################################################################################################
