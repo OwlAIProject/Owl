@@ -67,6 +67,7 @@ class CaptureFileRef(CreatedAtMixin, table=True):
     file_path: str = Field(...)
     start_time: datetime 
     device_type: str
+    duration: float
 
     segmented_captures: List["SegmentedCaptureFile"] = Relationship(back_populates="source_capture")
 

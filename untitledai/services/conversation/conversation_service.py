@@ -24,10 +24,6 @@ class ConversationService:
         self._notification_service = notification_service
         self._summarizer = TranscriptionSummarizer(config)
    
-    #TODO: CatureFile duration is measured here but if already in database, not updated. If we are 
-    #      detecting endpoints in a streaming fashion, we don't yet know the length of the capture
-    #      file (only the length so far). So we should probably keep updating it and committing it
-    #      back to the DB?
     async def process_conversation_from_audio(self, capture_file: CaptureFile, segment_file: CaptureSegmentFile, voice_sample_filepath: str = None, speaker_name: str = None):
         logger.info(f"Processing capture from audio file: {segment_file.filepath}...")
 
@@ -58,7 +54,7 @@ class ConversationService:
         logger.info(f"Summary generated: {summary_text}")
         with next(self._database.get_db()) as db:
             try:
-                # Create and save capture file reference
+                # Create and save capture file reference if not exists or update duration if exists
                 saved_capture_file_ref = get_capture_file_ref(db, capture_file.capture_uuid)
                 if not saved_capture_file_ref:
                     saved_capture_file_ref = create_capture_file_ref(db, CaptureFileRef(
@@ -68,6 +64,8 @@ class ConversationService:
                         device_type=capture_file.device_type.value,
                         start_time=capture_file.timestamp
                     )) 
+                else:
+                    saved_capture_file_ref.duration = capture_audio_duration
 
                 # Create and save segmented capture file
                 saved_segmented_capture = create_segmented_capture_file(db,SegmentedCaptureFile(
