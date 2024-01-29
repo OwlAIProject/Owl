@@ -18,11 +18,11 @@ logger = logging.getLogger(__name__)
 
 class ConversationService:
     def __init__(self, config: Configuration, database: Database, transcription_service: AbstractAsyncTranscriptionService, notification_service):
-        self.config = config
-        self.database = database
-        self.transcription_service = transcription_service
-        self.notification_service = notification_service
-        self.summarizer = TranscriptionSummarizer(config)
+        self._config = config
+        self._database = database
+        self._transcription_service = transcription_service
+        self._notification_service = notification_service
+        self._summarizer = TranscriptionSummarizer(config)
    
     #TODO: CatureFile duration is measured here but if already in database, not updated. If we are 
     #      detecting endpoints in a streaming fashion, we don't yet know the length of the capture
@@ -42,8 +42,8 @@ class ConversationService:
         # Start transcription timer
         start_time = time.time()
 
-        transcription = await self.transcription_service.transcribe_audio(segment_file.filepath, voice_sample_filepath, speaker_name)
-        transcription.model = self.config.llm.model
+        transcription = await self._transcription_service.transcribe_audio(segment_file.filepath, voice_sample_filepath, speaker_name)
+        transcription.model = self._config.llm.model
         transcription.transcription_time = time.time() - start_time  # Transcription time
         logger.info(f"Transcription complete in {transcription.transcription_time:.2f} seconds")
         logger.info(f"Transcription: {transcription.utterances}")
@@ -53,10 +53,10 @@ class ConversationService:
         conversation_end_time = conversation_start_time + timedelta(seconds=audio_duration)
 
         start_time = time.time()
-        summary_text = await self.summarizer.summarize(transcription)
+        summary_text = await self._summarizer.summarize(transcription)
         logger.info(f"Summarization complete in {time.time() - start_time:.2f} seconds")
         logger.info(f"Summary generated: {summary_text}")
-        with next(self.database.get_db()) as db:
+        with next(self._database.get_db()) as db:
             try:
                 # Create and save capture file reference
                 saved_capture_file_ref = get_capture_file_ref(db, capture_file.capture_uuid)
@@ -108,7 +108,7 @@ class ConversationService:
                     file.write(conversation_json)
                     
                 summary_snippet = summary_text[:100] + (summary_text[100:] and '...')
-                await self.notification_service.send_notification("New Conversation", summary_snippet, "new_conversation", payload=conversation_json)
+                await self._notification_service.send_notification("New Conversation", summary_snippet, "new_conversation", payload=conversation_json)
                 
                 db.commit()
                 return transcription, conversation
