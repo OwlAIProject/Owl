@@ -1,35 +1,61 @@
-#
-# whisper_transcription_service.py
-#
-# Local Whisper model for audio transcription with diarization and speaker identification.
-#
+import ray
 
+from .abstract_async_transcription_service import AbstractAsyncTranscriptionService
+from ....models.schemas import Word, Utterance, Transcription
 import os
-from tempfile import NamedTemporaryFile
-
 import av
+from tempfile import NamedTemporaryFile
 import whisperx
+import asyncio
 from pydub import AudioSegment
 from speechbrain.pretrained import SpeakerRecognition
+import torch
+import logging
 
-from ...core.config import TranscriptionConfiguration
-from ...core.utils.suppress_output import suppress_output
-from ...models.schemas import Word, Utterance, Transcription
+logger = logging.getLogger(__name__)
 
+@ray.remote(max_concurrency=1, num_gpus=0 if not torch.cuda.is_available() else 1)
+class WhisperTranscriptionActor:
+    def __init__(self, config):
+            self._config = config
+            self._transcription_model, self._diarize_model, self._verification_model = self._load_models(config)
 
-class WhisperTranscriptionService:
-    def __init__(self, config: TranscriptionConfiguration):
-        self._config = config
-        self._transcription_model, self._diarize_model, self._verification_model = self._load_models(config)
+    def _load_models(self, config):
+        logger.info(f"Transcription model: {config.model}")
+        transcription_model = whisperx.load_model(config.model, config.device, compute_type=config.compute_type)
+        diarize_model = whisperx.DiarizationPipeline(use_auth_token=config.hf_token, device=config.device)
+        verification_model = SpeakerRecognition.from_hparams(source=config.verification_model_source, savedir=config.verification_model_savedir, run_opts={"device": config.device})
+        return transcription_model, diarize_model, verification_model
     
-    def transcribe_audio(self, main_audio_filepath: str, voice_sample_filepath: str = None, speaker_name: str = None) -> Transcription:
+    def _convert_to_wav(self, input_filepath):
+        temp_wav_file = NamedTemporaryFile(suffix='.wav', delete=False)
+        output_filepath = temp_wav_file.name
+        temp_wav_file.close()
+
+        input_container = av.open(input_filepath)
+        output_container = av.open(output_filepath, 'w')
+        stream = input_container.streams.audio[0]
+        output_stream = output_container.add_stream('pcm_s16le', rate=stream.rate)
+        for frame in input_container.decode(stream):
+            output_container.mux(output_stream.encode(frame))
+        output_container.close()
+        input_container.close()
+
+        return output_filepath
+
+    def _compare_with_voice_sample(self, voice_sample_path, file_path):
+        score, prediction = self._verification_model.verify_files(voice_sample_path, file_path)
+        return score, prediction
+    
+    async def transcribe_audio(self, main_audio_filepath, voice_sample_filepath=None, speaker_name=None):
         if not os.path.exists(main_audio_filepath):
             raise FileNotFoundError("Main audio file not found")
-
+        logger.info(f"Transcribing audio file: {main_audio_filepath}")
         # Transcription
         audio = whisperx.load_audio(main_audio_filepath)
         result = self._transcription_model.transcribe(audio, batch_size=self._config.batch_size)
         initial_transcription = result["segments"]
+        logger.info(f"Initial transcription complete. Total segments: {len(initial_transcription)}")
 
         # Align whisper output
         model_a, metadata = whisperx.load_align_model(language_code=result["language"], device=self._config.device)
@@ -39,7 +65,7 @@ class WhisperTranscriptionService:
         diarize_segments = self._diarize_model(audio)
         result = whisperx.assign_word_speakers(diarize_segments, result)
         final_transcription_data = result["segments"]
-
+        logger.info(f"Transcription complete. Total segments: {len(final_transcription_data)}")
         # Convert transcription data to Pydantic models
         utterances = []
         for segment in final_transcription_data:
@@ -65,7 +91,7 @@ class WhisperTranscriptionService:
             utterances.append(utterance)
 
         final_transcription = Transcription(utterances=utterances)
-
+        logger.info("Transcription converted to Pydantic model.")
         # Speaker verification (if voice sample file path provided)
         if voice_sample_filepath:
             # Ensure voice sample file exists
@@ -85,32 +111,10 @@ class WhisperTranscriptionService:
                             word.speaker = speaker_name if speaker_name else 'Verified Speaker'
 
         return final_transcription
-    
-    @staticmethod
-    def _load_models(config: TranscriptionConfiguration):
-        with suppress_output():
-            # WhisperX has noisy warnings but they don't matter
-            transcription_model = whisperx.load_model(config.model, config.device, compute_type=config.compute_type)
-        diarize_model = whisperx.DiarizationPipeline(use_auth_token=config.hf_token, device=config.device)
-        verification_model = SpeakerRecognition.from_hparams(source=config.verification_model_source, savedir=config.verification_model_savedir, run_opts={"device": config.device})
-        return transcription_model, diarize_model, verification_model
 
-    def _convert_to_wav(self, input_filepath: str) -> str:
-        temp_wav_file = NamedTemporaryFile(suffix='.wav', delete=False)
-        output_filepath = temp_wav_file.name
-        temp_wav_file.close()
+class AsyncWhisperTranscriptionService(AbstractAsyncTranscriptionService):
+    def __init__(self, config):
+        self._actor = WhisperTranscriptionActor.options(max_concurrency=1).remote(config) 
 
-        input_container = av.open(input_filepath)
-        output_container = av.open(output_filepath, 'w')
-        stream = input_container.streams.audio[0]
-        output_stream = output_container.add_stream('pcm_s16le', rate=stream.rate)
-        for frame in input_container.decode(stream):
-            output_container.mux(output_stream.encode(frame))
-        output_container.close()
-        input_container.close()
-
-        return output_filepath
-
-    def _compare_with_voice_sample(self, voice_sample_path: str, file_path: str):
-        score, prediction = self._verification_model.verify_files(voice_sample_path, file_path)
-        return score, prediction
+    async def transcribe_audio(self, main_audio_filepath, voice_sample_filepath=None, speaker_name=None):
+        return await self._actor.transcribe_audio.remote(main_audio_filepath, voice_sample_filepath, speaker_name)

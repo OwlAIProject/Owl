@@ -11,9 +11,10 @@ import SocketIO
 class SocketManager: ObservableObject {
     static let shared = SocketManager() // Singleton instance
 
+    var socket: SocketIOClient!
+    
     private let socketManager: SocketIO.SocketManager // Renamed to avoid naming conflict
-    private var socket: SocketIOClient!
-
+   
     private init() {
         socketManager = SocketIO.SocketManager(socketURL: URL(string: AppConstants.apiBaseURL)!, config: [
             .log(false),
@@ -38,12 +39,12 @@ class SocketManager: ObservableObject {
         }
     }
 
-    func sendAudioData(_ data: Data) {
-        socket.emit("audio_data", data)
+    func sendAudioData(_ data: Data, capture: Capture) {
+        socket.emit("audio_data", data, capture.deviceName, capture.captureUUID)
     }
     
-    func finishAudio() {
-        socket.emit("finish_audio")
+    func finishAudio(capture: Capture) {
+        socket.emit("finish_audio", capture.captureUUID)
     }
     
 }

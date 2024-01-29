@@ -11,6 +11,11 @@ class AppDelegate: NSObject, UIApplicationDelegate {
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         _ = SocketManager.shared
+        _ = WatchConnectivityManager.shared
+        if AppConstants.locationReportingEnabled {
+            let locationManager = LocationManager.shared
+            locationManager.startLocationUpdates()
+        }
         return true
     }
 }
@@ -18,8 +23,8 @@ class AppDelegate: NSObject, UIApplicationDelegate {
 
 @main
 struct UntitledAIApp: App {
-    @ObservedObject var ble = BLEManager.shared
     @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+    private var ble = BLEManager.shared
     var body: some Scene {
         WindowGroup {
             ContentView()

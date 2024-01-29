@@ -1,6 +1,9 @@
 # Local configuration files
 /*.yaml
 
+# Local database
+*.sqlite3
+
 # Local audio
 audio_cache/
 
@@ -9,6 +12,11 @@ pretrained_models/
 
 # Captures
 captures/
+
+# APN certificates
+*.p12
+*.pem
+*.p8
 
 # Ignore poetry lock for now
 poetry.lock

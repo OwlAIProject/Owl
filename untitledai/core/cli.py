@@ -4,11 +4,20 @@
 # Program entry points.
 #
 
+import asyncio
+from datetime import datetime, timezone
+import os
+import requests
 import time
+import uuid
 
 import click
 from rich.console import Console
 from pydantic_yaml import parse_yaml_raw_as
+
+from ..services.stt.asynchronous.async_transcription_service_factory import AsyncTranscriptionServiceFactory
+from ..services.conversation.transcript_summarizer import TranscriptionSummarizer
+
 import uvicorn
 
 from .config import Configuration
@@ -43,9 +52,9 @@ def cli():
     pass
 
 
-####################################################################################################
+###################################################################################################
 # Transcribe File
-####################################################################################################
+###################################################################################################
 
 @cli.command()
 @click.argument('main_audio_filepath', type=click.Path(exists=True))
@@ -56,28 +65,30 @@ def transcribe(config: Configuration, main_audio_filepath: str, voice_sample_fil
     """Transcribe an audio file."""
     console = Console()
 
-    # Model loading
-    console.log("[bold green]Loading models...")
+    console.log("[bold green]Loading transcription service...")
     start_time = time.time()
-    from ..services import WhisperTranscriptionService
-    end_time = time.time()
-    console.log(f"[bold green]Models loaded successfully! Time taken: {end_time - start_time:.2f} seconds")
 
-    # Transcription
-    start_transcription_time = time.time()
+    transcription_service = AsyncTranscriptionServiceFactory.get_service(config)
+
+    end_time = time.time()
+    console.log(f"[bold green]Transcription service loaded! Time taken: {end_time - start_time:.2f} seconds")
+
     console.log("[cyan]Transcribing audio...")
 
-    transcription = WhisperTranscriptionService(config=config.transcription).transcribe_audio(main_audio_filepath, voice_sample_filepath, speaker_name)
+    transcription = asyncio.run(
+        transcription_service.transcribe_audio(
+            main_audio_filepath, voice_sample_filepath, speaker_name
+        )
+    )
 
-    end_transcription_time = time.time()
-
-    console.print(transcription, style="bold yellow")
-    console.log(f"[bold green]Transcription complete! Time taken: {end_transcription_time - start_transcription_time:.2f} seconds")
+    console.print(transcription.utterances, style="bold yellow")
+    console.log(f"[bold green]Transcription complete! Time taken: {time.time() - start_time:.2f} seconds")
 
 
-####################################################################################################
+
+###################################################################################################
 # Summarize File
-####################################################################################################
+###################################################################################################
 
 @cli.command()
 @click.argument('main_audio_filepath', type=click.Path(exists=True))
@@ -89,34 +100,79 @@ def summarize(config: Configuration, main_audio_filepath: str, voice_sample_file
     from .. import prompts
     console = Console()
 
-    # Model loading
-    console.log("[bold green]Loading models...")
+    console.log("[bold green]Loading transcription service...")
     start_time = time.time()
-    from ..services import WhisperTranscriptionService
-    from ..services import LLMService
-    end_time = time.time()
-    console.log(f"[bold green]Models loaded successfully! Time taken: {end_time - start_time:.2f} seconds")
 
-    # Transcription
-    start_transcription_time = time.time()
+    transcription_service = AsyncTranscriptionServiceFactory.get_service(config)
+
+    end_time = time.time()
+    console.log(f"[bold green]Transcription service loaded! Time taken: {end_time - start_time:.2f} seconds")
+
     console.log("[cyan]Transcribing audio...")
 
-    transcription = WhisperTranscriptionService(config=config.transcription).transcribe_audio(main_audio_filepath, voice_sample_filepath, speaker_name)
+    transcription = asyncio.run(
+        transcription_service.transcribe_audio(
+            main_audio_filepath, voice_sample_filepath, speaker_name
+        )
+    )
 
-    end_transcription_time = time.time()
-
-    console.print(transcription, style="bold yellow")
-    console.log(f"[bold green]Transcription complete! Time taken: {end_transcription_time - start_transcription_time:.2f} seconds")
-
-    console.log("[bold green]Summarizing transcription...")
-
-    summary = LLMService(config=config.llm).summarize(
-        transcription=transcription,
-        system_message=prompts.summarization_system_message(config=config.user)
+    console.print(transcription.utterances, style="bold yellow")
+    console.log(f"[bold green]Transcription complete! Time taken: {time.time() - start_time:.2f} seconds")
+    summarizer = TranscriptionSummarizer(config)
+    summary = asyncio.run(
+        summarizer.summarize(transcription)
     )
 
     console.print(summary, style="bold yellow")
     console.log("[bold green]Summarization complete!")
+
+
+###################################################################################################
+# Send Audio
+###################################################################################################
+
+@cli.command()
+@click.option("--file", required=True, help="Audio file to send.")
+@click.option("--timestamp", help="Timestamp in YYYYmmdd-HHMMSS.fff format. If not specified, will use current time.")
+@click.option("--device-type", help="Capture device type otherwise 'unknown'.")
+@click.option("--host", default="127.0.0.1", help="Address to send to.")
+@click.option('--port', default=8000, help="Port to use.")
+def upload(file: str, timestamp: datetime | None, device_type: str | None, host: str, port: int):
+    # Load file
+    with open(file, "rb") as fp:
+        file_contents = fp.read()
+
+    # Create valid capture UUID
+    capture_uuid = uuid.uuid1().hex
+
+    # Timestamp
+    if timestamp is not None:
+        try:
+           timestamp = datetime.strptime(timestamp, "%Y%m%d-%H%M%S.%f")
+        except:
+           raise ValueError("'timestamp' string does not conform to YYYYmmdd-HHMMSS.fff format")
+    else:
+        timestamp = datetime.now(timezone.utc)
+
+    # Upload
+    data = {
+         "capture_uuid": capture_uuid,
+         "timestamp": timestamp.strftime("%Y%m%d-%H%M%S.%f")[:-3],
+         "device_type": device_type if device_type else "unknown"
+    }
+    files = {
+        "file": (os.path.basename(file), file_contents)
+    }
+    response = requests.post(url=f"http://{host}:{port}/capture/upload_chunk", files=files, data=data)
+    
+    # If successful, request processing
+    if response.status_code != 200:
+        print(f"Error {response.status_code}: {response.content}")
+    else:
+        response = requests.post(url=f"http://{host}:{port}/capture/process_capture", data={ "capture_uuid": capture_uuid })
+        if response.status_code != 200:
+            print(f"Error {response.status_code}: {response.content}")
+        print(response.content)
 
 
 ####################################################################################################
@@ -133,7 +189,7 @@ def serve(config: Configuration, host, port):
     console = Console()
     console.log(f"[bold green]Starting server at http://{host}:{port}...")
     app = server.create_server_app(config=config)
-    uvicorn.run(app, host=host, port=port, log_level="info")
+    uvicorn.run(app, host=host, port=port, log_level="info", ws_ping_interval=None, ws_ping_timeout=None)
 
 if __name__ == '__main__':
     cli()

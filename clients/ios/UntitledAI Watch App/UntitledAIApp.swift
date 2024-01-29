@@ -9,9 +9,15 @@ import SwiftUI
 
 @main
 struct UntitledAI_Watch_AppApp: App {
+    init() {
+        _ = WatchConnectivityManager.shared
+    }
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .task {
+                    await runFileUploadTask(fileExtension: "pcm")
+                }
         }
     }
 }

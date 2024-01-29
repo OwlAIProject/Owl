@@ -3,7 +3,7 @@ transcription:
   device: cpu
   compute_type: int8
   batch_size: 16
-  model: large-v2
+  model: tiny
   verification_threshold: 0.1
   verification_model_source: speechbrain/spkrec-ecapa-voxceleb
   verification_model_savedir: pretrained_models/spkrec-ecapa-voxceleb
@@ -18,3 +18,18 @@ captures:
 
 user:
   name: "Bob"
+
+deepgram:
+  api_key: ""
+  model: "nova-2"
+  language: "en-US"
+
+streaming_transcription:
+  provider: "deepgram"
+
+async_transcription:
+  #provider: "whisper"  
+  provider: "deepgram"
+
+database:
+  url: "sqlite:///./db.sqlite3" 
