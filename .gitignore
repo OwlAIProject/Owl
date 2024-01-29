@@ -13,6 +13,11 @@ pretrained_models/
 # Captures
 captures/
 
+# APN certificates
+*.p12
+*.pem
+*.p8
+
 # Ignore poetry lock for now
 poetry.lock
 # Byte-compiled / optimized / DLL files
