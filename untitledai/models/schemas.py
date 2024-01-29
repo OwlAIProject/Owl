@@ -127,8 +127,10 @@ class TranscriptionRead(BaseModel):
 
 class CaptureFileRefRead(BaseModel):
     id: Optional[int]
+    capture_uuid: str
     file_path: str
     start_time: datetime
+    duration: float
     device_type: str
     class Config:
         from_attributes = True
