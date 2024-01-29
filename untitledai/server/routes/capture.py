@@ -8,20 +8,19 @@ import os
 from glob import glob
 import shutil
 from typing import Annotated
+import uuid
 
 from fastapi import APIRouter, Request, HTTPException, BackgroundTasks, UploadFile, Form, Depends
 from fastapi.responses import JSONResponse
 from starlette.requests import ClientDisconnect
-from pydub import AudioSegment
-from ...models.schemas import Location
 from sqlmodel import Session
-from ...database.crud import create_location
 import logging
 import traceback
-from datetime import datetime, timezone
 
 from .. import AppState
+from ...database.crud import create_location
 from ...files import CaptureFile, append_to_wav_file
+from ...models.schemas import Location
 from ..streaming_capture_handler import StreamingCaptureHandler
 
 logger = logging.getLogger(__name__)
@@ -143,6 +142,7 @@ async def process_capture(request: Request, capture_uuid: Annotated[str, Form()]
         # For now, endpointing not hooked up, so process this as one big conversation by creating a
         # single segment out of it
         segment_file = capture_file.create_conversation_segment(
+            conversation_uuid=uuid.uuid1().hex,
             timestamp=capture_file.timestamp,
             file_extension=os.path.splitext(capture_file.filepath)[1]
         )

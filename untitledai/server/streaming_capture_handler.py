@@ -1,8 +1,9 @@
 import os
 import asyncio
 from datetime import datetime, timezone
-from queue import Queue
 import logging
+import uuid
+
 from ..services.stt.streaming.streaming_transcription_service_factory import StreamingTranscriptionServiceFactory
 from ..services.endpointing.streaming.streaming_endpointing_service import StreamingEndpointingService
 from ..files import CaptureFile, CaptureSegmentFile
@@ -62,7 +63,7 @@ class StreamingCaptureHandler:
             )
             if self.segment_file:
                 append_to_wav_file(
-                    filepath=self.segment_file, 
+                    filepath=self.segment_file.filepath, 
                     sample_bytes=binary_data, 
                     sample_rate=16000, 
                     sample_bits=16, 
@@ -73,7 +74,7 @@ class StreamingCaptureHandler:
                 file.write(binary_data)
 
             if self.segment_file:
-                with open(self.segment_file, "ab") as file:
+                with open(self.segment_file.filepath, "ab") as file:
                     file.write(binary_data)
         await self.transcription_service.send_audio(binary_data)
 
@@ -84,6 +85,7 @@ class StreamingCaptureHandler:
     def start_new_segment(self):
         timestamp = datetime.now(timezone.utc)  # we are streaming in real-time, so we know start time
         self.segment_file = self.capture_file.create_conversation_segment(
+            conversation_uuid=uuid.uuid1().hex,
             timestamp=timestamp,
             file_extension=self.file_extension
         )
