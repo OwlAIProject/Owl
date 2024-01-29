@@ -131,7 +131,6 @@ def summarize(config: Configuration, main_audio_filepath: str, voice_sample_file
 @click.option("--host", default="127.0.0.1", help="Address to send to.")
 @click.option('--port', default=8000, help="Port to use.")
 def upload(file: str, host: str, port: int):
-    print(f"Upload {file} to {host}:{port}")
     from datetime import datetime, timezone
     import os
     import requests
