@@ -6,21 +6,21 @@
 
 import os
 from glob import glob
+import shutil
 from typing import Annotated
+import uuid
 
 from fastapi import APIRouter, Request, HTTPException, BackgroundTasks, UploadFile, Form, Depends
 from fastapi.responses import JSONResponse
 from starlette.requests import ClientDisconnect
-from pydub import AudioSegment
-from ...models.schemas import Location
 from sqlmodel import Session
-from ...database.crud import create_location
 import logging
 import traceback
-from datetime import datetime, timezone
 
 from .. import AppState
+from ...database.crud import create_location
 from ...files import CaptureFile, append_to_wav_file
+from ...models.schemas import Location
 from ..streaming_capture_handler import StreamingCaptureHandler
 
 logger = logging.getLogger(__name__)
@@ -36,7 +36,7 @@ def find_audio_filepath(audio_directory: str, capture_uuid: str) -> str | None:
         return None
     return filepaths[file_idx]
 
-supported_upload_file_extensions = set([ "pcm", "aac", "m4a" ])
+supported_upload_file_extensions = set([ "pcm", "wav", "aac", "m4a" ])
 
 @router.post("/capture/streaming_post/{capture_uuid}")
 async def streaming_post(request: Request, capture_uuid: str, device_type: str, app_state = Depends(AppState.get_from_request)):
@@ -87,8 +87,10 @@ async def upload_chunk(request: Request,
 
         # Raw PCM is automatically converted to wave format. We do this to prevent client from
         # having to worry about reliability of transmission (in case WAV header chunk is dropped).
+        write_wav_header = False
         if file_extension == "pcm":
-            file_extension = "wav"  
+            file_extension = "wav"
+            write_wav_header = True
 
         # Look up capture session or create a new one
         capture_file: CaptureFile = None
@@ -97,7 +99,7 @@ async def upload_chunk(request: Request,
         else:
             # Create new capture session
             capture_file = CaptureFile(
-                audio_directory=app_state.get_audio_directory(),
+                capture_directory=app_state.config.captures.capture_dir,
                 capture_uuid=capture_uuid,
                 device_type=device_type,
                 timestamp=timestamp,
@@ -105,16 +107,12 @@ async def upload_chunk(request: Request,
             )
             app_state.capture_sessions_by_id[capture_uuid] = capture_file
 
-        # First chunk or are we appending?
-        first_chunk = not os.path.exists(path=capture_file.filepath)
-        write_mode = "wb" if first_chunk else "r+b"
-        
         # Get uploaded data
         content = await file.read()
         
         # Append to file
         bytes_written = 0
-        if file_extension == "wav":
+        if write_wav_header:
             bytes_written = append_to_wav_file(filepath=capture_file.filepath, sample_bytes=content, sample_rate=16000)
         else:
             with open(file=capture_file.filepath, mode="ab") as fp:
@@ -133,14 +131,28 @@ async def upload_chunk(request: Request,
 @router.post("/capture/process_capture")
 async def process_capture(request: Request, capture_uuid: Annotated[str, Form()], app_state = Depends(AppState.get_from_request)):
     try:
-        filepath = find_audio_filepath(audio_directory=app_state.get_audio_directory(), capture_uuid = capture_uuid)
+        # Get capture file
+        filepath = find_audio_filepath(audio_directory=app_state.config.captures.capture_dir, capture_uuid=capture_uuid)
         logger.info(f"Found file to process: {filepath}")
-        capture_file = CaptureFile.from_filepath(filepath=filepath)
+        capture_file: CaptureFile = CaptureFile.from_filepath(filepath=filepath)
         if capture_file is None:
             logger.error(f"Filepath does not conform to expected format and cannot be processed: {filepath}")
             raise HTTPException(status_code=500, detail="Internal error: File is incorrectly named on server")
-        await app_state.conversation_service.process_conversation_from_audio(capture_file=capture_file)
-        logger.info(f"Finished processing conversation: {capture_file.filepath}")
+        
+        # For now, endpointing not hooked up, so process this as one big conversation by creating a
+        # single segment out of it
+        segment_file = capture_file.create_conversation_segment(
+            conversation_uuid=uuid.uuid1().hex,
+            timestamp=capture_file.timestamp,
+            file_extension=os.path.splitext(capture_file.filepath)[1]
+        )
+        shutil.copy2(src=capture_file.filepath, dst=segment_file.filepath)
+
+        # Enqueue for processing
+        task = (capture_file, segment_file)
+        app_state.conversation_task_queue.put(task)
+        
+        logger.info(f"Enqueued conversation capture for processing: {segment_file.filepath}")
         return JSONResponse(content={"message": "Conversation processed"})
     except Exception as e:
         logger.error(f"Failed to process: {e}")
@@ -158,8 +170,3 @@ async def receive_location(location: Location, db: Session = Depends(AppState.ge
         logger.error(f"Error processing location: {e}")
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
-
-
-
-
-    

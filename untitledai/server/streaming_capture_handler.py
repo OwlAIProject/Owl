@@ -1,28 +1,28 @@
 import os
 import asyncio
 from datetime import datetime, timezone
-from queue import Queue
 import logging
+import uuid
+
 from ..services.stt.streaming.streaming_transcription_service_factory import StreamingTranscriptionServiceFactory
 from ..services.endpointing.streaming.streaming_endpointing_service import StreamingEndpointingService
-from ..files import CaptureFile
+from ..files import CaptureFile, CaptureSegmentFile
 from ..files.wav_file import append_to_wav_file
 
 logger = logging.getLogger(__name__)
 
 class StreamingCaptureHandler:
     def __init__(self, app_state, device_name, capture_uuid, file_extension="aac", stream_format=None):
-        self.app_state = app_state
-        self.device_name = device_name
-        self.capture_uuid = capture_uuid
-        self.file_extension = file_extension
-        self.segment_file = None
-        self.segment_counter = 0
-        self.transcription_service = StreamingTranscriptionServiceFactory.get_service(
-            app_state.config, self.handle_utterance, stream_format=stream_format
+        self._app_state = app_state
+        self._device_name = device_name
+        self._capture_uuid = capture_uuid
+        self._file_extension = file_extension
+        self._segment_file = None
+        self._transcription_service = StreamingTranscriptionServiceFactory.get_service(
+            app_state.config, self._handle_utterance, stream_format=stream_format
         )
         
-        self.endpointing_service = StreamingEndpointingService(
+        self._endpointing_service = StreamingEndpointingService(
             timeout_interval=app_state.config.conversation_endpointing.timeout_interval,
             min_utterances=app_state.config.conversation_endpointing.min_utterances,
             endpoint_callback=lambda: asyncio.create_task(self.on_endpoint())
@@ -32,28 +32,28 @@ class StreamingCaptureHandler:
 
     def _init_capture_session(self):
         self.capture_file = CaptureFile(
-            audio_directory=self.app_state.get_audio_directory(),
-            capture_uuid=self.capture_uuid,
-            device_type=self.device_name,
+            capture_directory=self._app_state.config.captures.capture_dir,
+            capture_uuid=self._capture_uuid,
+            device_type=self._device_name,
             timestamp=datetime.now(timezone.utc),
-            file_extension=self.file_extension
+            file_extension=self._file_extension
         )
-        self.start_new_segment()
+        self._start_new_segment()
 
     async def on_endpoint(self):
-        logger.info(f"Endpoint detected for capture_uuid {self.capture_uuid}")
-        if self.capture_file and self.segment_file:
-            self._process_conversation(self.capture_file, self.segment_file)
-        self.start_new_segment()
+        logger.info(f"Endpoint detected for capture_uuid {self._capture_uuid}")
+        if self.capture_file and self._segment_file:
+            self._process_conversation(self.capture_file, self._segment_file)
+        self._start_new_segment()
 
-    def _process_conversation(self, capture_file, segment_file):
-        logger.info(f"Processing conversation for capture_uuid {capture_file.capture_uuid} ({segment_file})")
+    def _process_conversation(self, capture_file: CaptureFile, segment_file: CaptureSegmentFile):
+        logger.info(f"Processing conversation for capture_uuid={capture_file.capture_uuid} (conversation_uuid={segment_file.conversation_uuid})")
 
         task = (capture_file, segment_file)
-        self.app_state.conversation_task_queue.put(task)
+        self._app_state.conversation_task_queue.put(task)
 
     async def handle_audio_data(self, binary_data):
-        if self.file_extension == "wav":
+        if self._file_extension == "wav":
             append_to_wav_file(
                 filepath=self.capture_file.filepath, 
                 sample_bytes=binary_data, 
@@ -61,9 +61,9 @@ class StreamingCaptureHandler:
                 sample_bits=16,
                 num_channels=1
             )
-            if self.segment_file:
+            if self._segment_file:
                 append_to_wav_file(
-                    filepath=self.segment_file, 
+                    filepath=self._segment_file.filepath, 
                     sample_bytes=binary_data, 
                     sample_rate=16000, 
                     sample_bits=16, 
@@ -73,35 +73,31 @@ class StreamingCaptureHandler:
             with open(self.capture_file.filepath, "ab") as file:
                 file.write(binary_data)
 
-            if self.segment_file:
-                with open(self.segment_file, "ab") as file:
+            if self._segment_file:
+                with open(self._segment_file.filepath, "ab") as file:
                     file.write(binary_data)
-        await self.transcription_service.send_audio(binary_data)
+        await self._transcription_service.send_audio(binary_data)
 
-    async def handle_utterance(self, utterance):
+    async def _handle_utterance(self, utterance):
         logger.info(f"Received utterance: {utterance}")
-        asyncio.create_task(self.endpointing_service.utterance_detected())
+        asyncio.create_task(self._endpointing_service.utterance_detected())
 
-    def start_new_segment(self):
-         # TODO file paths
-        segment_number = self.segment_counter + 1
-        self.segment_counter = segment_number
-        capture_file_dir = os.path.dirname(self.capture_file.filepath)
-        base_name = os.path.splitext(os.path.basename(self.capture_file.filepath))[0]
-        segment_file_name = f"{base_name}-{segment_number}.{self.file_extension}"
-        segment_file_path = os.path.join(capture_file_dir, segment_file_name)
-        self.segment_file = segment_file_path
-        with open(segment_file_path, "wb") as file:
-            pass  # Creating an empty segment file
+    def _start_new_segment(self):
+        timestamp = datetime.now(timezone.utc)  # we are streaming in real-time, so we know start time
+        self._segment_file = self.capture_file.create_conversation_segment(
+            conversation_uuid=uuid.uuid1().hex,
+            timestamp=timestamp,
+            file_extension=self._file_extension
+        )
 
     def finish_capture_session(self):
-        if self.segment_file:
-            self._process_conversation(self.capture_file, self.segment_file)
+        if self._segment_file:
+            self._process_conversation(capture_file=self.capture_file, segment_file=self._segment_file)
        
-        capture_file = self.app_state.capture_sessions_by_id.pop(self.capture_uuid, None)
-        if self.endpointing_service:
-            self.endpointing_service.stop()
-        logger.info(f"Finishing capture: {self.capture_uuid}")
+        capture_file = self._app_state.capture_sessions_by_id.pop(self._capture_uuid, None)
+        if self._endpointing_service:
+            self._endpointing_service.stop()
+        logger.info(f"Finishing capture: {self._capture_uuid}")
         if capture_file:
             try:
                 with open(capture_file.filepath, "a"):

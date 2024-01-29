@@ -40,12 +40,10 @@ class NetworkManager : NSObject, URLSessionDataDelegate {
     }
     
     func startStreaming() {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyyMMdd_HHmmss_ZZZ"
-        captureUUID = "watch_\(formatter.string(from: Date()))"
-        let message = ["event": "startedStreaming", "captureUUID": captureUUID ?? ""]
+        captureUUID = UUID().hex
+        let message = ["event": "startedStreaming", "captureUUID": captureUUID!]
         WatchConnectivityManager.shared.sendMessage(message)
-        connect(captureUUID: captureUUID)
+        connect(captureUUID: captureUUID!)
     }
     
     func stopStreaming() {

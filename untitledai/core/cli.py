@@ -4,11 +4,17 @@
 # Program entry points.
 #
 
-import time
 import asyncio
+from datetime import datetime, timezone
+import os
+import requests
+import time
+import uuid
+
 import click
 from rich.console import Console
 from pydantic_yaml import parse_yaml_raw_as
+
 from ..services.stt.asynchronous.async_transcription_service_factory import AsyncTranscriptionServiceFactory
 from ..services.conversation.transcript_summarizer import TranscriptionSummarizer
 
@@ -49,7 +55,6 @@ def cli():
 ###################################################################################################
 # Transcribe File
 ###################################################################################################
-
 
 @cli.command()
 @click.argument('main_audio_filepath', type=click.Path(exists=True))
@@ -120,6 +125,54 @@ def summarize(config: Configuration, main_audio_filepath: str, voice_sample_file
 
     console.print(summary, style="bold yellow")
     console.log("[bold green]Summarization complete!")
+
+
+###################################################################################################
+# Send Audio
+###################################################################################################
+
+@cli.command()
+@click.option("--file", required=True, help="Audio file to send.")
+@click.option("--timestamp", help="Timestamp in YYYYmmdd-HHMMSS.fff format. If not specified, will use current time.")
+@click.option("--device-type", help="Capture device type otherwise 'unknown'.")
+@click.option("--host", default="127.0.0.1", help="Address to send to.")
+@click.option('--port', default=8000, help="Port to use.")
+def upload(file: str, timestamp: datetime | None, device_type: str | None, host: str, port: int):
+    # Load file
+    with open(file, "rb") as fp:
+        file_contents = fp.read()
+
+    # Create valid capture UUID
+    capture_uuid = uuid.uuid1().hex
+
+    # Timestamp
+    if timestamp is not None:
+        try:
+           timestamp = datetime.strptime(timestamp, "%Y%m%d-%H%M%S.%f")
+        except:
+           raise ValueError("'timestamp' string does not conform to YYYYmmdd-HHMMSS.fff format")
+    else:
+        timestamp = datetime.now(timezone.utc)
+
+    # Upload
+    data = {
+         "capture_uuid": capture_uuid,
+         "timestamp": timestamp.strftime("%Y%m%d-%H%M%S.%f")[:-3],
+         "device_type": device_type if device_type else "unknown"
+    }
+    files = {
+        "file": (os.path.basename(file), file_contents)
+    }
+    response = requests.post(url=f"http://{host}:{port}/capture/upload_chunk", files=files, data=data)
+    
+    # If successful, request processing
+    if response.status_code != 200:
+        print(f"Error {response.status_code}: {response.content}")
+    else:
+        response = requests.post(url=f"http://{host}:{port}/capture/process_capture", data={ "capture_uuid": capture_uuid })
+        if response.status_code != 200:
+            print(f"Error {response.status_code}: {response.content}")
+        print(response.content)
 
 
 ####################################################################################################

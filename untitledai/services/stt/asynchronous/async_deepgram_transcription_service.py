@@ -1,21 +1,20 @@
-from .abstract_async_transcription_service import AbstractAsyncTranscriptionService
-from typing import Optional
-import asyncio
 from deepgram import (
     DeepgramClient,
-    DeepgramClientOptions,
     PrerecordedOptions,
     FileSource,
 )
+import httpx
 import logging
+
+from .abstract_async_transcription_service import AbstractAsyncTranscriptionService
 from ....models.schemas import Transcription, Utterance, Word
 
 logger = logging.getLogger(__name__)
 
 class AsyncDeepgramTranscriptionService(AbstractAsyncTranscriptionService):
     def __init__(self, config):
-        self.config = config
-        self.deepgram_client = DeepgramClient(api_key=config.api_key)
+        self._config = config
+        self._deepgram_client = DeepgramClient(api_key=config.api_key)
 
     async def transcribe_audio(self, main_audio_filepath, voice_sample_filepath=None, speaker_name=None) -> Transcription:
         with open(main_audio_filepath, 'rb') as audio:
@@ -31,19 +30,21 @@ class AsyncDeepgramTranscriptionService(AbstractAsyncTranscriptionService):
         }
 
         options = PrerecordedOptions(
-            model=self.config.model,
+            model=self._config.model,
             smart_format=True,
             utterances=True,
             punctuate=True,
             diarize=True,
         )
 
-        def synchronous_transcribe():
-            return self.deepgram_client.listen.prerecorded.v("1").transcribe_file(payload, options)
+        # Default timeout of 10 seconds to connect, 10 minutes for upload/download. We can also try
+        # Timeout(None, connect=10) for no timeout at all but this is risky. Better to eventually
+        # turn this into a proper retry loop.
+        timeout = httpx.Timeout(600.0, connect=10.0)
 
         try:
             logger.info("Transcribing with Deepgram...")
-            response = await asyncio.get_event_loop().run_in_executor(None, synchronous_transcribe)
+            response = await self._deepgram_client.listen.asyncprerecorded.v("1").transcribe_file(source=payload, options=options, timeout=timeout)
             logger.info("Deepgram transcription complete.")
             return response
         except Exception as e:
