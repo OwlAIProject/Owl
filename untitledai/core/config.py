@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from typing import Optional
 
 class TranscriptionConfiguration(BaseModel):
     hf_token: str
@@ -20,6 +21,7 @@ class CapturesConfiguration(BaseModel):
 
 class UserConfiguration(BaseModel):
     name: str
+    voice_sample_filepath: Optional[str] = None
 
 class DeepgramConfiguration(BaseModel):
     api_key: str

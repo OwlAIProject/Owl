@@ -7,6 +7,9 @@
 # Local audio
 audio_cache/
 
+# Local voice samples
+voice_samples/
+
 # Local models
 pretrained_models/
 

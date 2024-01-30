@@ -60,7 +60,7 @@ async def process_queue(app_state: AppState):
         if not app_state.conversation_task_queue.empty():
             capture_file, segment_file = app_state.conversation_task_queue.get()
             try:
-                await app_state.conversation_service.process_conversation_from_audio(capture_file=capture_file, segment_file=segment_file)
+                await app_state.conversation_service.process_conversation_from_audio(capture_file=capture_file, segment_file=segment_file, voice_sample_filepath=app_state.config.user.voice_sample_filepath, speaker_name=app_state.config.user.name)
             except Exception as e:
                 logging.error(f"Error processing conversation: {e}")
             app_state.conversation_task_queue.task_done()
