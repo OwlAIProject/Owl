@@ -23,7 +23,17 @@ class ConversationsViewModel: ObservableObject {
             }
         }
     }
-
+    
+    func deleteConversation(_ conversation: Conversation) {
+        apiService.deleteConversation(conversation.id) { [weak self] success in
+            DispatchQueue.main.async {
+                if success {
+                    self?.conversations.removeAll { $0.id == conversation.id }
+                }
+            }
+        }
+    }
+    
     private func setupSocketListeners() {
         socketManager.socket.on("new_conversation") { [weak self] data, ack in
             guard let self = self else { return }
