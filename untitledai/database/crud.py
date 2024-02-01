@@ -57,6 +57,15 @@ def create_conversation(db: Session, conversation: Conversation) -> Conversation
     db.refresh(conversation)
     return conversation
 
+def delete_conversation(db: Session, conversation_id: int) -> bool:
+    conversation = db.query(Conversation).filter(Conversation.id == conversation_id).first()
+    if not conversation:
+        return False
+
+    db.delete(conversation)
+    db.commit()
+    return True
+
 def get_all_conversations(db: Session, offset: int = 0, limit: int = 10) -> List[Conversation]:
     return db.query(Conversation).options(
         joinedload(Conversation.transcriptions).joinedload(Transcription.utterances).joinedload(Utterance.words)

@@ -18,20 +18,26 @@ struct ConversationsView: View {
                     ConversationCellView(conversation: conversation)
                 }
             }
+            .onDelete(perform: deleteConversation)
         }
         .refreshable {
             viewModel.fetchConversations()
         }
     }
+
+    private func deleteConversation(at offsets: IndexSet) {
+        guard let index = offsets.first else { return }
+        viewModel.deleteConversation(viewModel.conversations[index])
+    }
 }
 
 struct ConversationCellView: View {
     let conversation: Conversation
-
+    
     private var formattedStartTime: String {
         conversation.startTime.formatted(date: .long, time: .shortened)
     }
-
+    
     var body: some View {
         VStack(alignment: .leading, spacing: 5) {
             Text(formattedStartTime)
@@ -39,7 +45,7 @@ struct ConversationCellView: View {
                 .foregroundColor(.secondary)
                 .padding(.horizontal)
                 .padding(.top)
-
+            
             HStack(alignment: .top) {
                 Text(conversation.summary)
                     .font(.headline)
