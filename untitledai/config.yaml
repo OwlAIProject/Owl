@@ -28,8 +28,15 @@ streaming_transcription:
   provider: "deepgram"
 
 async_transcription:
-  #provider: "whisper"  
-  provider: "deepgram"
+  provider: "whisper"  
+  #provider: "deepgram"
 
 database:
   url: "sqlite:///./db.sqlite3" 
+
+conversation_endpointing:
+  timeout_interval: 10
+  min_utterances: 2
+
+notification:
+  apn_team_id: ""
