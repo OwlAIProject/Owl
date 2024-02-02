@@ -52,6 +52,13 @@ class ConversationService:
         summary_text = await self._summarizer.summarize(transcription)
         logger.info(f"Summarization complete in {time.time() - start_time:.2f} seconds")
         logger.info(f"Summary generated: {summary_text}")
+
+
+        start_time = time.time()
+        short_summary_text = await self._summarizer.short_summarize(transcription)
+        logger.info(f"Short summarization complete in {time.time() - start_time:.2f} seconds")
+        logger.info(f"Short summary generated: {short_summary_text}")
+
         with next(self._database.get_db()) as db:
             try:
                 # Create and save capture file reference if not exists or update duration if exists
@@ -83,7 +90,8 @@ class ConversationService:
                     logger.info(f"Identified conversation primary location: {most_common_location}")
 
                 conversation = create_conversation(db, Conversation(
-                    summary=summary_text, 
+                    summary=summary_text,
+                    short_summary=short_summary_text, 
                     start_time=conversation_start_time,
                     transcriptions=[saved_transcription],
                     primary_location_id=most_common_location.id if most_common_location else None

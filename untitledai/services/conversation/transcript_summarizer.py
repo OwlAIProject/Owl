@@ -21,3 +21,18 @@ class TranscriptionSummarizer:
         )
         
         return response.choices[0].message.content
+    
+    async def short_summarize(self, transcription: Transcription) -> str:
+        system_message = f"""You are an world's most advanced AI assistant. You are given the transcript of an interaction. One of the participants is your client. Their name is {self._config.user.name}. The transcript includes speaker ids, but unfortunately sometimes we don't know the specific person name and sometimes they can be mislabeled. Do your best to infer the participants based on the context, but never referred to the speaker ids in the summary because they alone are not useful. Your job is to return a one sentence summary of the interaction on behalf of {self._config.user.name}. It should capture the overall significance of the interaction but not exceed one sentence."""
+
+        utterances = [f"{utterance.speaker}: {utterance.text}" for utterance in transcription.utterances]
+        user_message = "Transcript:\n" + "\n".join(utterances)
+
+        response = await self._llm_service.async_llm_completion(
+            messages=[
+                {"content": system_message, "role": "system"},
+                {"content": user_message, "role": "user"}
+            ]
+        )
+        
+        return response.choices[0].message.content
