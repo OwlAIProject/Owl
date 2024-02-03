@@ -56,6 +56,7 @@ class Conversation(CreatedAtMixin, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     start_time: datetime = Field(...)
     summary: str  
+    short_summary: str  
     transcriptions: List[Transcription] = Relationship(back_populates="conversation")
 
     primary_location_id: Optional[int] = Field(default=None, foreign_key="location.id")
@@ -147,6 +148,7 @@ class ConversationRead(BaseModel):
     id: Optional[int]
     start_time: datetime
     summary: str  
+    short_summary: str
     transcriptions: List[TranscriptionRead] = []
     primary_location: Optional[LocationRead] = None
 
