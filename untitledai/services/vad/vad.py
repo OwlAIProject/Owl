@@ -18,6 +18,7 @@ import numpy as np
 import onnxruntime
 
 from ...core.config import Configuration
+from .time_segment import TimeSegment
 
 
 logger = logging.getLogger(__name__)
@@ -129,7 +130,7 @@ class VoiceActivityDetector:
         window_size_samples: int = 512,
         speech_pad_ms: int = 30,
         return_milliseconds: bool = False,
-        progress_tracking_callback: Callable[[float], None] = None):
+        progress_tracking_callback: Callable[[float], None] = None) -> List[TimeSegment]:
 
         """
         This method is used for splitting long audios into speech chunks using silero VAD
@@ -178,7 +179,7 @@ class VoiceActivityDetector:
 
         Returns
         ----------
-        speeches: list of dicts
+        speeches: List[TimeSegment]
             list containing ends and beginnings of speech chunks (samples or milliseconds based on
             return_milliseconds)
         """
@@ -236,7 +237,7 @@ class VoiceActivityDetector:
 
         triggered = False
         speeches = []
-        current_speech = {}
+        current_speech = TimeSegment(start=-1, end=-1)
         neg_threshold = threshold - 0.15
         temp_end = 0 # to save potential segment end (and tolerate some silence)
         prev_end = next_start = 0 # to save potential segment limits in case of maximum segment size reached
@@ -249,23 +250,23 @@ class VoiceActivityDetector:
 
             if (speech_prob >= threshold) and not triggered:
                 triggered = True
-                current_speech['start'] = window_size_samples * i
+                current_speech.start = window_size_samples * i
                 continue
 
-            if triggered and (window_size_samples * i) - current_speech['start'] > max_speech_samples:
+            if triggered and (window_size_samples * i) - current_speech.start > max_speech_samples:
                 if prev_end:
-                    current_speech['end'] = prev_end
+                    current_speech.end = prev_end
                     speeches.append(current_speech)
-                    current_speech = {}
+                    current_speech = TimeSegment(start=-1, end=-1)
                     if next_start < prev_end: # previously reached silence (< neg_thres) and is still not speech (< thres)
                         triggered = False
                     else:
-                        current_speech['start'] = next_start
+                        current_speech.start = next_start
                     prev_end = next_start = temp_end = 0
                 else:
-                    current_speech['end'] = window_size_samples * i
+                    current_speech.end = window_size_samples * i
                     speeches.append(current_speech)
-                    current_speech = {}
+                    current_speech = TimeSegment(start=-1, end=-1)
                     prev_end = next_start = temp_end = 0
                     triggered = False
                     continue
@@ -278,40 +279,41 @@ class VoiceActivityDetector:
                 if (window_size_samples * i) - temp_end < min_silence_samples:
                     continue
                 else:
-                    current_speech['end'] = temp_end
-                    if (current_speech['end'] - current_speech['start']) > min_speech_samples:
+                    current_speech.end = temp_end
+                    if (current_speech.end - current_speech.start) > min_speech_samples:
                         speeches.append(current_speech)
-                    current_speech = {}
+                    current_speech = TimeSegment(start=-1, end=-1)
                     prev_end = next_start = temp_end = 0
                     triggered = False
                     continue
 
-        if current_speech and (audio_length_samples - current_speech['start']) > min_speech_samples:
-            current_speech['end'] = audio_length_samples
+        have_current_speech = current_speech.start >= 0
+        if have_current_speech and (audio_length_samples - current_speech.start) > min_speech_samples:
+            current_speech.end = audio_length_samples
             speeches.append(current_speech)
 
         for i, speech in enumerate(speeches):
             if i == 0:
-                speech['start'] = int(max(0, speech['start'] - speech_pad_samples))
+                speech.start = int(max(0, speech.start - speech_pad_samples))
             if i != len(speeches) - 1:
-                silence_duration = speeches[i+1]['start'] - speech['end']
+                silence_duration = speeches[i+1].start - speech.end
                 if silence_duration < 2 * speech_pad_samples:
-                    speech['end'] += int(silence_duration // 2)
-                    speeches[i+1]['start'] = int(max(0, speeches[i+1]['start'] - silence_duration // 2))
+                    speech.end += int(silence_duration // 2)
+                    speeches[i+1].start = int(max(0, speeches[i+1].start - silence_duration // 2))
                 else:
-                    speech['end'] = int(min(audio_length_samples, speech['end'] + speech_pad_samples))
-                    speeches[i+1]['start'] = int(max(0, speeches[i+1]['start'] - speech_pad_samples))
+                    speech.end = int(min(audio_length_samples, speech.end + speech_pad_samples))
+                    speeches[i+1].start = int(max(0, speeches[i+1].start - speech_pad_samples))
             else:
-                speech['end'] = int(min(audio_length_samples, speech['end'] + speech_pad_samples))
+                speech.end = int(min(audio_length_samples, speech.end + speech_pad_samples))
 
         if return_milliseconds:
             samples_to_millis = (1000.0 / sampling_rate)
             for speech_dict in speeches:
-                speech_dict['start'] = int(floor(speech_dict['start'] * samples_to_millis + 0.5))
-                speech_dict['end'] = int(floor(speech_dict['end'] * samples_to_millis + 0.5))
+                speech_dict.start = int(floor(speech_dict.start * samples_to_millis + 0.5))
+                speech_dict.end = int(floor(speech_dict.end * samples_to_millis + 0.5))
         elif step > 1:
             for speech_dict in speeches:
-                speech_dict['start'] *= step
-                speech_dict['end'] *= step
+                speech_dict.start *= step
+                speech_dict.end *= step
 
         return speeches

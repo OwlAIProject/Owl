@@ -12,6 +12,7 @@ from pydub import AudioSegment
 import torch
 
 from ...core.config import Configuration
+from .time_segment import TimeSegment
 from .vad import VoiceActivityDetector
 
 
@@ -87,7 +88,7 @@ class StreamingVoiceActivityDetector(VoiceActivityDetector):
 
         # State preserved across calls to consume_samples()
         self._triggered = False
-        self._current_speech = {}
+        self._current_speech = TimeSegment(start=-1, end=-1)
         self._neg_threshold = threshold - 0.15
         self._temp_end = 0 # to save potential segment end (and tolerate some silence)
         self._prev_end = self._next_start = 0 # to save potential segment limits in case of maximum segment size reached
@@ -199,23 +200,23 @@ class StreamingVoiceActivityDetector(VoiceActivityDetector):
 
             if (speech_prob >= threshold) and not self._triggered:
                 self._triggered = True
-                self._current_speech['start'] = segment_start
+                self._current_speech.start = segment_start
                 continue
 
-            if self._triggered and segment_start - self._current_speech['start'] > max_speech_samples:
+            if self._triggered and segment_start - self._current_speech.start > max_speech_samples:
                 if self._prev_end:
-                    self._current_speech['end'] = self._prev_end
+                    self._current_speech.end = self._prev_end
                     speeches.append(self._current_speech)
-                    self._current_speech = {}
+                    self._current_speech = TimeSegment(start=-1, end=-1)
                     if self._next_start < self._prev_end:   # previously reached silence (< neg_thres) and is still not speech (< thres)
                         self._triggered = False
                     else:
-                        self._current_speech['start'] = self._next_start
+                        self._current_speech.start = self._next_start
                     self._prev_end = self._next_start = self._temp_end = 0
                 else:
-                    self._current_speech['end'] = segment_start
+                    self._current_speech.end = segment_start
                     speeches.append(self._current_speech)
-                    self._current_speech = {}
+                    self._current_speech = TimeSegment(start=-1, end=-1)
                     self._prev_end = self._next_start = self._temp_end = 0
                     self._triggered = False
                     continue
@@ -228,10 +229,10 @@ class StreamingVoiceActivityDetector(VoiceActivityDetector):
                 if segment_start - self._temp_end < min_silence_samples:
                     continue
                 else:
-                    self._current_speech['end'] = self._temp_end
-                    if (self._current_speech['end'] - self._current_speech['start']) > min_speech_samples:
+                    self._current_speech.end = self._temp_end
+                    if (self._current_speech.end - self._current_speech.start) > min_speech_samples:
                         speeches.append(self._current_speech)
-                    self._current_speech = {}
+                    self._current_speech = TimeSegment(start=-1, end=-1)
                     self._prev_end = self._next_start = self._temp_end = 0
                     self._triggered = False
                     continue
@@ -242,10 +243,11 @@ class StreamingVoiceActivityDetector(VoiceActivityDetector):
         # When the stream has ended, don't forget to handle the very last in-progress segment!
         audio_end = self._sample_offset
         if end_stream:
-            if self._current_speech and (audio_end - self._current_speech['start']) > min_speech_samples:
-                self._current_speech['end'] = audio_end
+            have_current_speech = self._current_speech.start >= 0
+            if have_current_speech and (audio_end - self._current_speech.start) > min_speech_samples:
+                self._current_speech.end = audio_end
                 speeches.append(self._current_speech)
-                self._current_speech = {}
+                self._current_speech = TimeSegment(start=-1, end=-1)
         
         # Add padding around speech segments. This is tricky do while streaming. We need to hang on
         # to the very last segment and re-insert it into the beginning of the list on the next call
@@ -256,22 +258,22 @@ class StreamingVoiceActivityDetector(VoiceActivityDetector):
     
         for i, speech in enumerate(speeches):
             if not self._found_first_speech_in_stream and i == 0:
-                speech['start'] = int(max(0, speech['start'] - speech_pad_samples))
+                speech.start = int(max(0, speech.start - speech_pad_samples))
             if i != len(speeches) - 1:
-                silence_duration = speeches[i+1]['start'] - speech['end']
+                silence_duration = speeches[i+1].start - speech.end
                 if silence_duration < 2 * speech_pad_samples:
-                    speech['end'] += int(silence_duration // 2)
-                    speeches[i+1]['start'] = int(max(0, speeches[i+1]['start'] - silence_duration // 2))
+                    speech.end += int(silence_duration // 2)
+                    speeches[i+1].start = int(max(0, speeches[i+1].start - silence_duration // 2))
                 else:
-                    speech['end'] = int(min(audio_end, speech['end'] + speech_pad_samples))
-                    speeches[i+1]['start'] = int(max(0, speeches[i+1]['start'] - speech_pad_samples))
+                    speech.end = int(min(audio_end, speech.end + speech_pad_samples))
+                    speeches[i+1].start = int(max(0, speeches[i+1].start - speech_pad_samples))
             else:
                 # This is the last speech segment in the array. We always pluck the last element 
                 # out and use it the next time this function is called. Therefore, the last segment
                 # of all may encounter this code twice. Therefore, we must take care to only run
                 # this *once*, at the *very end* of the stream.
                 if end_stream:
-                    speech['end'] = int(min(audio_end, speech['end'] + speech_pad_samples))
+                    speech.end = int(min(audio_end, speech.end + speech_pad_samples))
 
         self._found_first_speech_in_stream |= len(speeches) > 0
         if len(speeches) > 0 and not end_stream:
@@ -283,7 +285,7 @@ class StreamingVoiceActivityDetector(VoiceActivityDetector):
         if return_milliseconds:
             samples_to_millis = (1000.0 / self._sampling_rate)
             for speech_dict in speeches:
-                speech_dict['start'] = int(floor(speech_dict['start'] * samples_to_millis + 0.5))
-                speech_dict['end'] = int(floor(speech_dict['end'] * samples_to_millis + 0.5))
+                speech_dict.start = int(floor(speech_dict.start * samples_to_millis + 0.5))
+                speech_dict.end = int(floor(speech_dict.end * samples_to_millis + 0.5))
         
         return speeches

@@ -16,7 +16,9 @@ from pydub import AudioSegment
 from untitledai.services import VoiceActivityDetector, StreamingVoiceActivityDetector
 from untitledai.core.config import Configuration
 
-#TODO: instead of dicts, use dataclasses. These dict things are ridiculous. Shame on Silero.
+
+from untitledai.services.vad.time_segment import TimeSegment
+
 #TODO: because streaming VAD may not yield a segment-in-progress for a long time, we cannot do endpointing
 #      with timekeeping yet but we should add this ability. Should simply be a check of VAD state to see if
 #      if it is currently inside of a segment.
@@ -40,18 +42,18 @@ class ConversationEndpointDetector:
         for segment in segments:
             if not self._current_conversation_end:
                 # First segment we encounter is the start of a new conversation
-                 self._current_conversation_start = segment["start"]
+                 self._current_conversation_start = segment.start
             else:
                 # We are in a conversation now, detect the end point
-                silence_duration = segment["start"] - self._current_conversation_end
+                silence_duration = segment.start - self._current_conversation_end
                 if silence_duration >= conversation_endpoint_duration:
-                    conversations.append({ "start": self._current_conversation_start, "end": self._current_conversation_end })
-                    self._current_conversation_start = segment["start"]
-            self._current_conversation_end = segment["end"]
+                    conversations.append(TimeSegment(start=self._current_conversation_start, end=self._current_conversation_end))
+                    self._current_conversation_start = segment.start
+            self._current_conversation_end = segment.end
         
         # If stream is over, finish final conversation (if it exists)
         if end_stream and self._current_conversation_end:
-            conversations.append({ "start": self._current_conversation_start, "end": self._current_conversation_end })
+            conversations.append(TimeSegment(start=self._current_conversation_start, end=self._current_conversation_end))
             self._current_conversation_start = None
             self._current_conversation_end = None
             self._finished = True
@@ -81,7 +83,7 @@ if __name__ == "__main__":
     #  # Find longest silence
     # max_silence_duration = 0
     # for i in range(1, len(ts)):
-    #     silence_duration = ts[i]["start"] - ts[i-1]["end"]
+    #     silence_duration = ts[i].start - ts[i-1].end
     #     max_silence_duration = max(silence_duration, max_silence_duration)
     # print(f"Max silence = {max_silence_duration}")
     # exit()
@@ -110,8 +112,8 @@ if __name__ == "__main__":
     # Collect into single file using Torch
     # audio_segments = []
     # for segment in ts:
-    #     start = segment["start"]
-    #     end = segment["end"]
+    #     start = segment.start
+    #     end = segment.end
     #     audio_segments.append(samples[start:end])
     # voice = torch.cat(audio_segments)
     # torchaudio.save("voiced.wav", voice.unsqueeze(0), 16000, bits_per_sample=16)
@@ -120,8 +122,8 @@ if __name__ == "__main__":
     i = 0
     audio_segments = []
     for segment in ts:
-        start = segment["start"]
-        end = segment["end"]
+        start = segment.start
+        end = segment.end
         audio_segments.append(audio[start:end])
     for i in range(1, len(audio_segments)):
         audio_segments[0] = audio_segments[0] + audio_segments[i]
@@ -130,8 +132,8 @@ if __name__ == "__main__":
     # Split the file
     # i = 0
     # for segment in ts:
-    #     start = segment["start"]
-    #     end = segment["end"]
+    #     start = segment.start
+    #     end = segment.end
     #     filename = f"{i}.wav"
     #     audio[start:end].export(f"{i}.wav", "wav")
     #     print(f"Wrote {filename}")
@@ -142,14 +144,14 @@ if __name__ == "__main__":
     # print(f"  {len(ts_ref)} and {len(ts)}")
     # if len(ts_ref) == len(ts):
     #     for i in range(len(ts_ref)):
-    #         if ts_ref[i]["start"] != ts[i]["start"] or ts_ref[i]["end"] != ts[i]["end"]:
+    #         if ts_ref[i].start != ts[i].start or ts_ref[i].end != ts[i].end:
     #             print(f"  {i} - {ts_ref[i]}, {ts[i]}")
     # print("")
 
     # Find longest silence
     max_silence_duration = 0
     for i in range(1, len(ts)):
-        silence_duration = ts[i]["start"] - ts[i-1]["end"]
+        silence_duration = ts[i].start - ts[i-1].end
         max_silence_duration = max(silence_duration, max_silence_duration)
     print(f"Max silence = {max_silence_duration}")
         
@@ -166,8 +168,8 @@ if __name__ == "__main__":
     # Write out files 
     i = 0
     for convo in conversations:
-        start = convo["start"]
-        end = convo["end"]
+        start = convo.start
+        end = convo.end
         filename = f"convo-{i}.wav"
         audio[start:end].export(filename, "wav")
         print(f"Wrote {filename}")
