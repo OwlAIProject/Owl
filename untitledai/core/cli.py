@@ -13,7 +13,6 @@ import uuid
 
 import click
 from rich.console import Console
-from pydantic_yaml import parse_yaml_raw_as
 
 from ..services.stt.asynchronous.async_transcription_service_factory import AsyncTranscriptionServiceFactory
 from ..services.conversation.transcript_summarizer import TranscriptionSummarizer
@@ -28,7 +27,7 @@ from .config import Configuration
 ####################################################################################################
 
 def load_config_yaml(ctx, param, value) -> Configuration:
-    return parse_yaml_raw_as(Configuration, value)
+    return Configuration.load_config_yaml(value.name)
 
 def add_options(options):
     def _add_options(func):

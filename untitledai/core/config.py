@@ -1,4 +1,6 @@
 from pydantic import BaseModel
+import yaml
+import os
 from typing import Optional
 
 class TranscriptionConfiguration(BaseModel):
@@ -46,6 +48,25 @@ class NotificationConfiguration(BaseModel):
     apn_team_id: str | None
 
 class Configuration(BaseModel):
+
+    @classmethod
+    def load_config_yaml(cls, config_file_path: str) -> 'Configuration':
+        """
+        Load configuration from YAML file and apply environment variable overrides.
+        """
+        with open(config_file_path, 'r') as stream:
+            config_data = yaml.safe_load(stream)
+
+        # Apply environment variable overrides
+        for section, section_config in config_data.items():
+            for key, val in section_config.items():
+                env_var = os.environ.get(f"UNTITLEDAI_{section.upper()}_{key.upper()}")
+                if env_var:
+                    config_data[section][key] = env_var
+
+        return cls(**config_data)
+
+    
     transcription: TranscriptionConfiguration
     llm: LLMConfiguration
     captures: CapturesConfiguration
