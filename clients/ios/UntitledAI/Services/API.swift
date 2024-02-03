@@ -13,8 +13,9 @@ class API {
 
     func fetchConversations(completionHandler: @escaping (ConversationsResponse) -> Void) {
         guard let url = URL(string: "\(AppConstants.apiBaseURL)/conversations/") else { return }
-
-        let task = URLSession.shared.dataTask(with: url) { (data, response, error) in
+        var request = URLRequest(url: url)
+        request.addCommonHeaders()
+        let task = URLSession.shared.dataTask(with: request) { (data, response, error) in
             if let error = error {
                 print("Error: \(error)")
             } else if let data = data {
@@ -33,6 +34,7 @@ class API {
     func deleteConversation(_ id: Int, completion: @escaping (Bool) -> Void) {
         let url = URL(string: "\(AppConstants.apiBaseURL)/conversations/\(id)")!
         var request = URLRequest(url: url)
+        request.addCommonHeaders()
         request.httpMethod = "DELETE"
         URLSession.shared.dataTask(with: request) { data, response, error in
             if let error = error {
@@ -55,6 +57,7 @@ class API {
         }
 
         var request = URLRequest(url: url)
+        request.addCommonHeaders()
         request.httpMethod = "POST"
         request.addValue("application/json", forHTTPHeaderField: "Content-Type")
 

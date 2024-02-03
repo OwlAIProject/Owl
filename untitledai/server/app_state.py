@@ -2,9 +2,8 @@ from __future__ import annotations  # required for AppState annotation in AppSta
 from dataclasses import dataclass, field
 import os
 from typing import Dict
-
-from fastapi import FastAPI, Request
-
+from fastapi import FastAPI, HTTPException, Request, Depends, Header
+from typing import Optional
 from ..core.config import Configuration
 from ..services import ConversationService, LLMService, NotificationService
 from .streaming_capture_handler import StreamingCaptureHandler
@@ -38,14 +37,35 @@ class AppState:
             return from_obj.app.state._app_state
         else:
             raise TypeError("`from_obj` must be of type `FastAPI` or `Request`")
-        
-    @staticmethod
-    def get_from_request(request: Request) -> AppState:
-            return request.app.state._app_state  
-    
+ 
     @staticmethod
     def get_db(request: Request):
         app_state: AppState = AppState.get(request)
         return next(app_state.database.get_db())
 
-  
+    @staticmethod
+    async def _parse_and_verify_token(authorization: str, expected_token: str):
+        if not authorization:
+            raise HTTPException(status_code=401, detail="Authorization header missing")
+        
+        parts = authorization.split()
+        if len(parts) != 2 or parts[0].lower() != 'bearer':
+            raise HTTPException(status_code=401, detail="Invalid token type")
+        
+        token = parts[1]
+        if token != expected_token:
+            raise HTTPException(status_code=403, detail="Invalid or expired token")
+
+    @staticmethod
+    async def authenticate_request(request: Request, authorization: Optional[str] = Header(None)):
+        app_state = AppState.get(request)
+        await AppState._parse_and_verify_token(authorization, app_state.config.user.client_token)
+        return app_state
+
+    @staticmethod
+    async def authenticate_socket(environ: dict):
+        headers = {k.decode('utf-8').lower(): v.decode('utf-8') for k, v in environ.get('asgi.scope', {}).get('headers', [])}
+        authorization = headers.get('authorization')
+        app_state = AppState.get(environ['asgi.scope']['app'])
+        await AppState._parse_and_verify_token(authorization, app_state.config.user.client_token)
+        return app_state

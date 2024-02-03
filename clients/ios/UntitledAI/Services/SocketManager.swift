@@ -22,7 +22,8 @@ class SocketManager: ObservableObject {
             .reconnects(true),
             .reconnectAttempts(-1),
             .reconnectWait(1),
-            .reconnectWaitMax(5)
+            .reconnectWaitMax(5),
+            .extraHeaders(["Authorization": "Bearer \(AppConstants.clientToken)"])
         ])
         socket = socketManager.defaultSocket
 

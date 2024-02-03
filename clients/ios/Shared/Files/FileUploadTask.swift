@@ -205,6 +205,7 @@ fileprivate func uploadFile(_ url: URL, contentType: String) async -> Bool {
     // Request type
     let url = URL(string: "\(AppConstants.apiBaseURL)/capture/upload_chunk")!
     var request = URLRequest(url: url)
+    request.addCommonHeaders()
     request.httpMethod = "POST"
     request.setValue("multipart/form-data;boundary=\(form.boundary)", forHTTPHeaderField: "Content-Type")
 
@@ -244,6 +245,7 @@ fileprivate func processCapture(_ captureUUID: String) async -> Bool {
     // Request type
     let url = URL(string: "\(AppConstants.apiBaseURL)/capture/process_capture")!
     var request = URLRequest(url: url)
+    request.addCommonHeaders()
     request.httpMethod = "POST"
     request.setValue("multipart/form-data;boundary=\(form.boundary)", forHTTPHeaderField: "Content-Type")
 

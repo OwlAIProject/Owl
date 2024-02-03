@@ -24,15 +24,17 @@ def read_conversation(
 def read_conversations(
     offset: int = 0, 
     limit: int = Query(default=100), 
-    db: Session = Depends(AppState.get_db)
+    db: Session = Depends(AppState.get_db),
+    app_state: AppState = Depends(AppState.authenticate_request)
 ):
     conversations = get_all_conversations(db, offset, limit)
     return ConversationsResponse(conversations=conversations)
 
-@router.delete("/conversations/{conversation_id}/")
+@router.delete("/conversations/{conversation_id}")
 def delete_conversation_endpoint(
     conversation_id: int, 
-    db: Session = Depends(AppState.get_db)
+    db: Session = Depends(AppState.get_db),
+    app_state: AppState = Depends(AppState.authenticate_request)
 ):
     success = delete_conversation(db, conversation_id)
     if not success:
