@@ -19,6 +19,9 @@ captures:
 user:
   name: "Bob"
 
+vad:
+  vad_model_savedir: pretrained_models/vad
+
 deepgram:
   api_key: ""
   model: "nova-2"
@@ -40,3 +43,4 @@ conversation_endpointing:
 
 notification:
   apn_team_id: ""
+

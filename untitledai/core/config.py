@@ -40,6 +40,9 @@ class AsyncTranscriptionConfiguration(BaseModel):
 class DatabaseConfiguration(BaseModel):
     url: str
 
+class VADConfiguration(BaseModel):
+    vad_model_savedir: str
+
 # Temporary! To be replaced by the parameters for the actual endpointing service
 class ConversationEndpointingConfiguration(BaseModel):
     timeout_interval: int
@@ -71,6 +74,7 @@ class Configuration(BaseModel):
     transcription: TranscriptionConfiguration
     llm: LLMConfiguration
     captures: CapturesConfiguration
+    vad: VADConfiguration
     deepgram: DeepgramConfiguration
     streaming_transcription: StreamingTranscriptionConfiguration
     async_transcription: AsyncTranscriptionConfiguration
