@@ -39,8 +39,14 @@ class CaptureSocketApp(socketio.AsyncNamespace):
     def mount_to(self, app: FastAPI, at_path: str):
         app.mount(path=at_path, app=self._app)
 
-    async def on_connect(self, path, sid, *args):
+    async def on_connect(self, path, sid, environ):
         logger.info(f'Connected: {sid}')
+        try:
+            await self._app_state.authenticate_socket(environ)
+        except ValueError as e:
+            logger.error(f"Authentication failed for {sid}: {e}")
+            await self._sio.disconnect(sid)
+            return False 
 
     async def on_disconnect(self, path, sid, *args):
         logger.info(f'Disconnected: {sid}')

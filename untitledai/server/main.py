@@ -24,6 +24,7 @@ import ray
 import logging
 import asyncio
 from colorama import init, Fore, Style, Back
+from fastapi import Depends
 
 logger = logging.getLogger(__name__)
 
@@ -79,7 +80,6 @@ def create_server_app(config: Configuration) -> FastAPI:
     transcription_service = AsyncTranscriptionServiceFactory.get_service(config)
     notification_service = NotificationService(config.notification)
     conversation_service = ConversationService(config, database, transcription_service, notification_service)
-
     # Create server app
     app = FastAPI()
     app.state._app_state = AppState(
@@ -110,7 +110,7 @@ def create_server_app(config: Configuration) -> FastAPI:
             
     # Base routing
     @app.get("/")
-    def read_root():
+    async def read_root(app_state: AppState = Depends(AppState.authenticate_request)):
         return "UntitledAI is running!"
 
     return app

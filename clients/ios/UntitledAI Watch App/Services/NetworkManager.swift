@@ -32,6 +32,7 @@ class NetworkManager : NSObject, URLSessionDataDelegate {
             fatalError("Invalid URL")
         }
         var request = URLRequest(url: url)
+        request.addCommonHeaders()
         request.httpMethod = "POST"
         request.setValue("application/octet-stream", forHTTPHeaderField: "Content-Type")
         let task = self.urlSession.uploadTask(withStreamedRequest: request)
@@ -64,6 +65,7 @@ class NetworkManager : NSObject, URLSessionDataDelegate {
         
         // Signal end
         var request = URLRequest(url: url)
+        request.addCommonHeaders()
         request.httpMethod = "POST"
         let config = URLSessionConfiguration.default
         let session = URLSession(configuration: config)

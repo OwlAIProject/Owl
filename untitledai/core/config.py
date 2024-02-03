@@ -23,6 +23,7 @@ class CapturesConfiguration(BaseModel):
 
 class UserConfiguration(BaseModel):
     name: str
+    client_token: str
     voice_sample_filepath: Optional[str] = None
 
 class DeepgramConfiguration(BaseModel):

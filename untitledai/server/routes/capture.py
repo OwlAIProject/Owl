@@ -39,7 +39,7 @@ def find_audio_filepath(audio_directory: str, capture_uuid: str) -> str | None:
 supported_upload_file_extensions = set([ "pcm", "wav", "aac", "m4a" ])
 
 @router.post("/capture/streaming_post/{capture_uuid}")
-async def streaming_post(request: Request, capture_uuid: str, device_type: str, app_state = Depends(AppState.get_from_request)):
+async def streaming_post(request: Request, capture_uuid: str, device_type: str, app_state: AppState = Depends(AppState.authenticate_request)):
     logger.info('Client connected')
     try:
         if capture_uuid not in app_state.capture_handlers:
@@ -62,7 +62,7 @@ async def streaming_post(request: Request, capture_uuid: str, device_type: str, 
 
 
 @router.post("/capture/streaming_post/{capture_uuid}/complete")
-async def complete_audio(request: Request, background_tasks: BackgroundTasks, capture_uuid: str, app_state = Depends(AppState.get_from_request)):
+async def complete_audio(request: Request, background_tasks: BackgroundTasks, capture_uuid: str, app_state: AppState = Depends(AppState.authenticate_request)):
     logger.info(f"Completing audio capture for {capture_uuid}")
     if capture_uuid not in app_state.capture_handlers:
         logger.error(f"Capture session not found: {capture_uuid}")
@@ -78,7 +78,7 @@ async def upload_chunk(request: Request,
                        capture_uuid: Annotated[str, Form()],
                        timestamp: Annotated[str, Form()],
                        device_type: Annotated[str, Form()],
-                       app_state = Depends(AppState.get_from_request)):
+                       app_state: AppState = Depends(AppState.authenticate_request)):
     try:
         # Validate file format
         file_extension = os.path.splitext(file.filename)[1].lstrip(".")
@@ -129,7 +129,7 @@ async def upload_chunk(request: Request,
 
     
 @router.post("/capture/process_capture")
-async def process_capture(request: Request, capture_uuid: Annotated[str, Form()], app_state = Depends(AppState.get_from_request)):
+async def process_capture(request: Request, capture_uuid: Annotated[str, Form()], app_state: AppState = Depends(AppState.authenticate_request)):
     try:
         # Get capture file
         filepath = find_audio_filepath(audio_directory=app_state.config.captures.capture_dir, capture_uuid=capture_uuid)
@@ -161,7 +161,7 @@ async def process_capture(request: Request, capture_uuid: Annotated[str, Form()]
 
 
 @router.post("/capture/location")
-async def receive_location(location: Location, db: Session = Depends(AppState.get_db)):
+async def receive_location(location: Location, db: Session = Depends(AppState.get_db), app_state: AppState = Depends(AppState.authenticate_request)):
     try:
         logger.info(f"Received location: {location}")
         new_location = create_location(db, location)
