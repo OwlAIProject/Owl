@@ -13,7 +13,8 @@ router = APIRouter()
 @router.get("/conversations/{conversation_id}", response_model=ConversationRead)
 def read_conversation(
     conversation_id: int, 
-    db: Session = Depends(AppState.get_db)
+    db: Session = Depends(AppState.get_db),
+    app_state: AppState = Depends(AppState.authenticate_request)
 ):
     conversation = get_conversation(db, conversation_id)
     if not conversation:
