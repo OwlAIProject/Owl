@@ -8,6 +8,7 @@
 from math import floor
 from typing import Dict, List
 
+from pydub import AudioSegment
 import torch
 
 from ...core.config import Configuration
@@ -96,7 +97,7 @@ class StreamingVoiceActivityDetector(VoiceActivityDetector):
         self._last_speech = None
         self._found_first_speech_in_stream = False
             
-    def consume_samples(self, samples: torch.Tensor, end_stream: bool = False, return_milliseconds: bool = False) -> List[Dict[str, int]]:
+    def consume_samples(self, samples: torch.Tensor | AudioSegment, end_stream: bool = False, return_milliseconds: bool = False) -> List[Dict[str, int]]:
         """
         Injest samples from an audio stream and process them if there are enough. Any leftover
         samples that do not fill a complete window will be retained until a subsequent call unless
@@ -104,8 +105,9 @@ class StreamingVoiceActivityDetector(VoiceActivityDetector):
 
         Parameters
         ----------
-        samples : torch.Tensor
-            One-dimensional tensor containing a single channel of audio samples.
+        samples : torch.Tensor | pydub.AudioSegment
+            One-dimensional tensor containing a single channel of audio samples. Also accepts a
+            Pydub AudioSegment (must be in 16-bit 16KHz format).
         
         end_stream : bool
             Set this to true when the stream is finished and there will be no subsequent calls. A
@@ -122,7 +124,14 @@ class StreamingVoiceActivityDetector(VoiceActivityDetector):
             stamps are global (relative to the very beginning of the stream). Segments will be
             returned in-order but may not be finalized until a subsequent call.
         """
-        assert samples.dim() == 1
+        # Convert samples to tensor if needed
+        if isinstance(samples, torch.Tensor):
+            assert samples.dim() == 1
+        elif isinstance(samples, AudioSegment):
+            assert samples.frame_rate == 16000 and samples.sample_width == 2
+            samples = torch.Tensor(samples.get_array_of_samples()) * (1.0 / 65535.0)
+        else:
+            raise TypeError("'samples' must be either torch.Tensor or pydub.AudioSegment")
 
         # For now, we have not implemented state reset and this object cannot be reused
         if self._finished:
