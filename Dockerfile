@@ -21,10 +21,9 @@ RUN pip install --no-cache-dir --upgrade pip && \
 
 ENV PATH="/root/.local/bin:$PATH"
 
-ARG GITHUB_PAT
-RUN git clone https://$GITHUB_PAT@github.com/untitledaiproject/UntitledAI.git
+WORKDIR /app
 
-WORKDIR /UntitledAI
+COPY . /app
 
 RUN poetry config virtualenvs.create false && \
     poetry install -vvv
@@ -34,7 +33,6 @@ RUN poetry run python -c "print('Poetry and project dependencies are installed c
 ARG CONFIG_FILE
 ENV CONFIG_FILE=${CONFIG_FILE}
 
-# Create entrypoint script
 RUN echo '#!/bin/sh\n\
 if [ -z "$CONFIG_FILE" ]; then\n\
   poetry run untitledai serve --host 0.0.0.0\n\
