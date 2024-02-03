@@ -39,3 +39,5 @@ bun dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) 
+
+IMPORTANT: Currently the webapp just passes the token for authentication there is no way to log in so do not expose this to the internet!
