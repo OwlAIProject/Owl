@@ -97,7 +97,7 @@ class StreamingCaptureHandler:
         if self._segment_file:
             self._process_conversation(capture_file=self.capture_file, segment_file=self._segment_file)
        
-        capture_file = self._app_state.capture_sessions_by_id.pop(self._capture_uuid, None)
+        capture_file = self._app_state.capture_files_by_id.pop(self._capture_uuid, None)
         if self._endpointing_service:
             self._endpointing_service.stop()
         logger.info(f"Finishing capture: {self._capture_uuid}")

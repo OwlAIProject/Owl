@@ -9,6 +9,7 @@ from ..services import ConversationService, LLMService, NotificationService
 from .streaming_capture_handler import StreamingCaptureHandler
 from ..database.database import Database
 from ..files import CaptureFile
+from ..services import ConversationEndpointDetector
 from queue import Queue
 
 @dataclass
@@ -24,10 +25,13 @@ class AppState:
     llm_service: LLMService
     notification_service: NotificationService
     
-    capture_sessions_by_id: Dict[str, CaptureFile] = field(default_factory=lambda: {})
+    capture_files_by_id: Dict[str, CaptureFile] = field(default_factory=lambda: {})
     capture_handlers: Dict[str, StreamingCaptureHandler] = field(default_factory=lambda: {})
 
+    conversation_endpoint_detectors_by_id: Dict[str, ConversationEndpointDetector] = field(default_factory=lambda: {})
+
     conversation_task_queue = Queue()
+    conversation_detection_task_queue = Queue()
 
     @staticmethod
     def get(from_obj: FastAPI | Request) -> AppState:
