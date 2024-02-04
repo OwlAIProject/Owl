@@ -18,7 +18,7 @@ import logging
 import traceback
 
 from .. import AppState
-from ..conversation_detection import ConversationDetectionTask
+from ..conversation_detection import submit_conversation_detection_task
 from ...database.crud import create_location
 from ...files import CaptureFile, append_to_wav_file
 from ...models.schemas import Location
@@ -39,25 +39,6 @@ def find_audio_filepath(audio_directory: str, capture_uuid: str) -> str | None:
     if file_idx < 0:
         return None
     return filepaths[file_idx]
-
-def submit_conversation_detection_task(app_state: AppState, capture_uuid: str, samples: AudioSegment | None, capture_finished: bool = False):
-    # There should be a capture session with associated data 
-    capture_file = app_state.capture_files_by_id.get(capture_uuid)
-    detector = app_state.conversation_endpoint_detectors_by_id.get(capture_uuid)
-    if not capture_file:
-        raise RuntimeError(f"No capture file in memory for capture_uuid={capture_uuid}")
-    if not detector:
-        raise RuntimeError(f"No conversation endpoint detector for capture_uuid={capture_uuid}")
-    
-    # Enqueue task
-    task = ConversationDetectionTask(
-        capture_file=capture_file,
-        conversation_endpoint_detector=detector,
-        samples=samples,
-        capture_finished=capture_finished
-    )
-    app_state.conversation_detection_task_queue.put(task)
-    logger.info(f"Enqueued audio for conversation endpointing and processing: capture_uuid={capture_uuid}")
 
 @router.post("/capture/streaming_post/{capture_uuid}")
 async def streaming_post(request: Request, capture_uuid: str, device_type: str, app_state: AppState = Depends(AppState.authenticate_request)):

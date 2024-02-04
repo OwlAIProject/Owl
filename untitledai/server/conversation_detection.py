@@ -13,6 +13,7 @@ import uuid
 
 from pydub import AudioSegment
 
+from .app_state import AppState
 from ..files import CaptureFile
 from ..services import ConversationEndpointDetector
 
@@ -26,7 +27,26 @@ class ConversationDetectionTask:
     samples: AudioSegment | None
     capture_finished: bool
 
-def detect_and_extract_conversations(task: ConversationDetectionTask, conversation_task_queue: Queue):
+def submit_conversation_detection_task(app_state: AppState, capture_uuid: str, samples: AudioSegment | None, capture_finished: bool = False):
+    # There should be a capture session with associated data 
+    capture_file = app_state.capture_files_by_id.get(capture_uuid)
+    detector = app_state.conversation_endpoint_detectors_by_id.get(capture_uuid)
+    if not capture_file:
+        raise RuntimeError(f"No capture file in memory for capture_uuid={capture_uuid}")
+    if not detector:
+        raise RuntimeError(f"No conversation endpoint detector for capture_uuid={capture_uuid}")
+    
+    # Enqueue task
+    task = ConversationDetectionTask(
+        capture_file=capture_file,
+        conversation_endpoint_detector=detector,
+        samples=samples,
+        capture_finished=capture_finished
+    )
+    app_state.conversation_detection_task_queue.put(task)
+    logger.info(f"Enqueued audio for conversation endpointing and processing: capture_uuid={capture_uuid}")
+
+def run_conversation_detection_task(task: ConversationDetectionTask, conversation_task_queue: Queue):
     # Unpack data we need
     capture_file = task.capture_file
     file_extension = os.path.splitext(capture_file.filepath)[1].lstrip(".")
@@ -55,3 +75,5 @@ def detect_and_extract_conversations(task: ConversationDetectionTask, conversati
             processing_task = (capture_file, segment_file)
             conversation_task_queue.put(processing_task)
             logger.info(f"Enqueued conversation capture for processing: {segment_file.filepath}")
+    else:
+        logger.info(f"No conversations detected in last samples for capture_uuid={capture_file.capture_uuid}")

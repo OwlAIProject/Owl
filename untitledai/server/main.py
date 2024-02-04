@@ -17,7 +17,7 @@ from .app_state import AppState
 from .routes.capture import router as capture_router
 from .routes.conversations import router as conversations_router
 from .capture_socket import CaptureSocketApp
-from .conversation_detection import ConversationDetectionTask, detect_and_extract_conversations
+from .conversation_detection import run_conversation_detection_task
 from ..services import LLMService, ConversationService, NotificationService
 from ..database.database import Database
 from ..services.stt.asynchronous.async_transcription_service_factory import AsyncTranscriptionServiceFactory
@@ -66,7 +66,7 @@ async def process_queue(app_state: AppState):
         while not app_state.conversation_detection_task_queue.empty():
             task = app_state.conversation_detection_task_queue.get()
             try:
-                detect_and_extract_conversations(task=task, conversation_task_queue=app_state.conversation_task_queue)
+                run_conversation_detection_task(task=task, conversation_task_queue=app_state.conversation_task_queue)
             except Exception as e:
                 logging.error(f"Error detecting conversation endpoints: {e}")
             app_state.conversation_detection_task_queue.task_done()
