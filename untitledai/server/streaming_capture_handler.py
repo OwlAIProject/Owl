@@ -24,7 +24,6 @@ class StreamingCaptureHandler:
         self._capture_uuid = capture_uuid
         self._file_extension = file_extension
         self._receive_buffer = bytes()
-        self._min_buffer_size = 4096    # for PCM data, should be multiple of VAD window size (512)
         
         self._transcription_service = StreamingTranscriptionServiceFactory.get_service(
             app_state.config, self._handle_utterance, stream_format=stream_format
@@ -49,7 +48,7 @@ class StreamingCaptureHandler:
         #TODO: this only works for PCM; need to implement AAC handling (i.e., wait for complete frames)
         self._receive_buffer += binary_data
         num_usable_bytes = len(self._receive_buffer) & ~1
-        if num_usable_bytes < 4096:
+        if num_usable_bytes < 4096: # for PCM data, should be multiple of VAD window size (512)
             return
         sample_bytes = self._receive_buffer[0:num_usable_bytes]
         self._receive_buffer = self._receive_buffer[num_usable_bytes:]
