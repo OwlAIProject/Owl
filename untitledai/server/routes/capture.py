@@ -96,8 +96,10 @@ async def upload_chunk(request: Request,
 
         # Look up capture session or create a new one
         capture_file: CaptureFile = None
+        detector: ConversationEndpointDetector = None
         if capture_uuid in app_state.capture_files_by_id:
             capture_file = app_state.capture_files_by_id[capture_uuid]
+            detector = app_state.conversation_endpoint_detectors_by_id.get(capture_uuid)
         else:
             # Create new capture session
             capture_file = CaptureFile(
@@ -110,8 +112,10 @@ async def upload_chunk(request: Request,
             app_state.capture_files_by_id[capture_uuid] = capture_file
 
             # ... and associated conversation endpoint detector
-            conversation_endpoint_detector = ConversationEndpointDetector(config=app_state.config, sampling_rate=16000)
-            app_state.conversation_endpoint_detectors_by_id[capture_uuid] = conversation_endpoint_detector
+            detector = ConversationEndpointDetector(config=app_state.config, sampling_rate=16000)
+            app_state.conversation_endpoint_detectors_by_id[capture_uuid] = detector
+        if detector is None:
+            raise HTTPException(status_code=500, detail=f"No conversation endpoint detector for capture_uuid={capture_uuid}")
 
         # Get uploaded data
         content = await file.read()
@@ -144,7 +148,13 @@ async def upload_chunk(request: Request,
             return JSONResponse(content={"message": f"Failed to process because file extension is unsupported: {file_extension}"})
 
         # Conversation detection and extraction
-        submit_conversation_detection_task(app_state=app_state, capture_uuid=capture_uuid, samples=audio_chunk)
+        submit_conversation_detection_task(
+            task_queue=app_state.conversation_detection_task_queue,
+            capture_file=capture_file,
+            detector=detector,
+            capture_uuid=capture_uuid,
+            samples=audio_chunk
+        )
 
         # Success
         return JSONResponse(content={"message": f"Audio processed"})
@@ -174,7 +184,17 @@ async def process_capture(request: Request, capture_uuid: Annotated[str, Form()]
         # everything associated with the capture, remove everything from DB, and then regenerate 
         # everything. It is a brute force solution but conceptually simple and should be reasonably
         # robust.
-        submit_conversation_detection_task(app_state=app_state, capture_uuid=capture_uuid, samples=None, capture_finished=True)
+        detector = app_state.conversation_endpoint_detectors_by_id.get(capture_uuid)
+        if detector is None:
+            raise HTTPException(status_code=500, detail=f"No conversation endpoint detector for capture_uuid={capture_uuid}")
+        submit_conversation_detection_task(
+            task_queue=app_state.conversation_detection_task_queue,
+            capture_file=capture_file,
+            detector=detector,
+            capture_uuid=capture_uuid,
+            samples=None,
+            capture_finished=True
+        )
 
         # Remove from app state
         if capture_uuid in app_state.capture_files_by_id:

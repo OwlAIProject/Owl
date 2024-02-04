@@ -4,16 +4,18 @@
 # Conversation detection and extraction logic. 
 #
 
+from __future__ import annotations
 from dataclasses import dataclass
 from datetime import timedelta
 import logging
 import os
 from queue import Queue
+from typing import TYPE_CHECKING
 import uuid
 
 from pydub import AudioSegment
 
-from .app_state import AppState
+#if TYPE_CHECKING:   # see: https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
 from ..files import CaptureFile
 from ..services import ConversationEndpointDetector
 
@@ -27,15 +29,14 @@ class ConversationDetectionTask:
     samples: AudioSegment | None
     capture_finished: bool
 
-def submit_conversation_detection_task(app_state: AppState, capture_uuid: str, samples: AudioSegment | None, capture_finished: bool = False):
-    # There should be a capture session with associated data 
-    capture_file = app_state.capture_files_by_id.get(capture_uuid)
-    detector = app_state.conversation_endpoint_detectors_by_id.get(capture_uuid)
-    if not capture_file:
-        raise RuntimeError(f"No capture file in memory for capture_uuid={capture_uuid}")
-    if not detector:
-        raise RuntimeError(f"No conversation endpoint detector for capture_uuid={capture_uuid}")
-    
+def submit_conversation_detection_task(
+    task_queue: Queue,
+    capture_file: CaptureFile,
+    detector: ConversationEndpointDetector,
+    capture_uuid: str,
+    samples: AudioSegment | None,
+    capture_finished: bool = False
+):
     # Enqueue task
     task = ConversationDetectionTask(
         capture_file=capture_file,
@@ -43,8 +44,8 @@ def submit_conversation_detection_task(app_state: AppState, capture_uuid: str, s
         samples=samples,
         capture_finished=capture_finished
     )
-    app_state.conversation_detection_task_queue.put(task)
-    logger.info(f"Enqueued audio for conversation endpointing and processing: capture_uuid={capture_uuid}")
+    task_queue.put(task)
+    # logger.info(f"Enqueued audio for conversation endpointing and processing: capture_uuid={capture_uuid}")
 
 def run_conversation_detection_task(task: ConversationDetectionTask, conversation_task_queue: Queue):
     # Unpack data we need
@@ -75,5 +76,5 @@ def run_conversation_detection_task(task: ConversationDetectionTask, conversatio
             processing_task = (capture_file, segment_file)
             conversation_task_queue.put(processing_task)
             logger.info(f"Enqueued conversation capture for processing: {segment_file.filepath}")
-    else:
-        logger.info(f"No conversations detected in last samples for capture_uuid={capture_file.capture_uuid}")
+    # else:
+    #    logger.info(f"No conversations detected in last samples for capture_uuid={capture_file.capture_uuid}")

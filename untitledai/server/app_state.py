@@ -1,6 +1,5 @@
 from __future__ import annotations  # required for AppState annotation in AppState.get()
 from dataclasses import dataclass, field
-import os
 from typing import Dict
 from fastapi import FastAPI, HTTPException, Request, Depends, Header
 from typing import Optional

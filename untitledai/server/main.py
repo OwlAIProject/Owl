@@ -65,10 +65,10 @@ async def process_queue(app_state: AppState):
         # Conversation detection queue
         while not app_state.conversation_detection_task_queue.empty():
             task = app_state.conversation_detection_task_queue.get()
-            try:
-                run_conversation_detection_task(task=task, conversation_task_queue=app_state.conversation_task_queue)
-            except Exception as e:
-                logging.error(f"Error detecting conversation endpoints: {e}")
+            #try:
+            run_conversation_detection_task(task=task, conversation_task_queue=app_state.conversation_task_queue)
+            #except Exception as e:
+            #    logging.error(f"Error detecting conversation endpoints: {e}")
             app_state.conversation_detection_task_queue.task_done()
             processed_task = True
 
