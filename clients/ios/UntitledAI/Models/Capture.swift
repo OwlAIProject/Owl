@@ -12,7 +12,7 @@ class Capture {
     let deviceName: String
 
     init(deviceName: String, captureUUID: String? = nil) {
-        self.captureUUID = captureUUID ?? UUID().uuidString
+        self.captureUUID = captureUUID ?? UUID().hex
         self.deviceName = deviceName
     }
 }
