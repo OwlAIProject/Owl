@@ -45,7 +45,7 @@ class VADConfiguration(BaseModel):
 
 # Temporary! To be replaced by the parameters for the actual endpointing service
 class ConversationEndpointingConfiguration(BaseModel):
-    timeout_interval: int
+    timeout_seconds: int
     min_utterances: int # The minimum number of utterances required to trigger an endpoint
 
 class NotificationConfiguration(BaseModel):

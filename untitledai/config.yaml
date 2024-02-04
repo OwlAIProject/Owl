@@ -38,7 +38,7 @@ database:
   url: "sqlite:///./db.sqlite3" 
 
 conversation_endpointing:
-  timeout_interval: 10
+  timeout_seconds: 300
   min_utterances: 2
 
 notification:

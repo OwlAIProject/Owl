@@ -2,8 +2,8 @@ import asyncio
 from .abstract_streaming_endpointing_service import AbstractStreamingEndpointingService
 
 class StreamingEndpointingService(AbstractStreamingEndpointingService):
-    def __init__(self, timeout_interval: int, min_utterances: int, endpoint_callback=None):
-        self.timeout_interval = timeout_interval
+    def __init__(self, timeout_seconds: int, min_utterances: int, endpoint_callback=None):
+        self.timeout_seconds = timeout_seconds
         self.min_utterances = min_utterances
         self.endpoint_callback = endpoint_callback
         self._utterance_count = 0
@@ -25,7 +25,7 @@ class StreamingEndpointingService(AbstractStreamingEndpointingService):
             current_time = asyncio.get_event_loop().time()
             time_elapsed_since_last = current_time - self._last_utterance_time
 
-            if (time_elapsed_since_last >= self.timeout_interval and
+            if (time_elapsed_since_last >= self.timeout_seconds and
                 self._utterance_count >= self.min_utterances and
                 not self._endpoint_called):
                 if self.endpoint_callback:

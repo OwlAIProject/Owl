@@ -24,7 +24,7 @@ class StreamingCaptureHandler:
         )
         
         self._endpointing_service = StreamingEndpointingService(
-            timeout_interval=app_state.config.conversation_endpointing.timeout_interval,
+            timeout_seconds=app_state.config.conversation_endpointing.timeout_seconds,
             min_utterances=app_state.config.conversation_endpointing.min_utterances,
             endpoint_callback=lambda: asyncio.create_task(self.on_endpoint())
         )
