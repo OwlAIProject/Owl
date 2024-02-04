@@ -98,6 +98,27 @@ class StreamingVoiceActivityDetector(VoiceActivityDetector):
         self._last_speech = None
         self._found_first_speech_in_stream = False
             
+    def is_inside_speech(self) -> bool:
+        """
+        Returns
+        -------
+        bool
+            Whether the VAD is currently processing and inside of a speech segment that has not yet
+            been terminated.
+        """
+        return not self._finished and self._triggered
+    
+    def is_speech_pending(self) -> bool:
+        """
+        Returns
+        -------
+        bool
+            Whether a speech segment has not yet been returned and is pending (waiting for more
+            audio samples to be finalized.) This can happen with speech segments that are too close
+            to the end of a sample buffer.
+        """
+        return not self._finished and self._last_speech is not None
+
     def consume_samples(self, samples: torch.Tensor | AudioSegment, end_stream: bool = False, return_milliseconds: bool = False) -> List[Dict[str, int]]:
         """
         Injest samples from an audio stream and process them if there are enough. Any leftover
@@ -252,12 +273,20 @@ class StreamingVoiceActivityDetector(VoiceActivityDetector):
         # Add padding around speech segments. This is tricky do while streaming. We need to hang on
         # to the very last segment and re-insert it into the beginning of the list on the next call
         # to this function.
+        first_speech_is_from_prev_call = False
         if self._last_speech:
             speeches.insert(0, self._last_speech)
             self._last_speech = None
+            first_speech_is_from_prev_call = True
     
+        return_last_speech = False
         for i, speech in enumerate(speeches):
-            if not self._found_first_speech_in_stream and i == 0:
+            if i == 0 and not first_speech_is_from_prev_call:
+                # This is the first speech segment for this call and it was *not* carried forward
+                # from the previous one. Because of how we handle the last segment near the audio 
+                # buffer boundary, we would have adjusted the start time of that sample already. In
+                # this case, we can be assured that the sample will not overlap with any previous 
+                # one.
                 speech.start = int(max(0, speech.start - speech_pad_samples))
             if i != len(speeches) - 1:
                 silence_duration = speeches[i+1].start - speech.end
@@ -268,16 +297,20 @@ class StreamingVoiceActivityDetector(VoiceActivityDetector):
                     speech.end = int(min(audio_end, speech.end + speech_pad_samples))
                     speeches[i+1].start = int(max(0, speeches[i+1].start - speech_pad_samples))
             else:
-                # This is the last speech segment in the array. We always pluck the last element 
-                # out and use it the next time this function is called. Therefore, the last segment
-                # of all may encounter this code twice. Therefore, we must take care to only run
-                # this *once*, at the *very end* of the stream.
-                if end_stream:
+                # This is the last speech segment in the array. We can only pad it out if we know
+                # for sure that there will be no speech segment starting within < 
+                # 2*speech_pad_samples of its endpoint. And to know that, we have to have enough
+                # audio buffer remaining after it or be sure the stream has ended. If these
+                # conditions are not true and we cannot look ahead far enough, we will *not* return
+                # this sample and will instead process it on the next go around.
+                samples_remaining_until_audio_end = audio_end - speech.end
+                if end_stream or samples_remaining_until_audio_end >= (2 * speech_pad_samples):
+                    return_last_speech = True
                     speech.end = int(min(audio_end, speech.end + speech_pad_samples))
 
         self._found_first_speech_in_stream |= len(speeches) > 0
-        if len(speeches) > 0 and not end_stream:
-            # Save that last speech for now unless we are completely finished
+        if len(speeches) > 0 and not return_last_speech:
+            # We were unable to pad the last speech sample and have to save it until next time
             self._last_speech = speeches[-1]
             speeches = speeches[:-1]
 
