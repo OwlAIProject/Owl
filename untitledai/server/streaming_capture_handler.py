@@ -46,6 +46,7 @@ class StreamingCaptureHandler:
     async def handle_audio_data(self, binary_data):
         # Append to receive buffer until we have minimum required number of bytes, then take an even
         # number of bytes to ensure a whole number of 16-bit samples when format is raw PCM
+        #TODO: this only works for PCM; need to implement AAC handling (i.e., wait for complete frames)
         self._receive_buffer += binary_data
         num_usable_bytes = len(self._receive_buffer) & ~1
         if num_usable_bytes < 4096:
