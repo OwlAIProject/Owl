@@ -1,10 +1,13 @@
 #TODO: remove streaming endpointing service and min_utterances from config
+#TODO: tasks can be unified -- no need to re-enqueue
+#TODO: detect ffmpeg sub-process errors and kill socket/finalize conversation?
 
 from __future__ import annotations
 from datetime import datetime, timezone
 from io import BytesIO
 import logging
-from typing import TYPE_CHECKING
+import subprocess
+from typing import Tuple, TYPE_CHECKING
 
 from pydub import AudioSegment
 
@@ -16,6 +19,8 @@ from ..services import ConversationEndpointDetector
 from ..files import CaptureFile
 from ..files.wav_file import append_to_wav_file
 from ..database.crud import create_utterance
+from ..core.utils.hexdump import hexdump
+from ..files import AACFrameSequencer
 
 logger = logging.getLogger(__name__)
 
@@ -26,6 +31,7 @@ class StreamingCaptureHandler:
         self._capture_uuid = capture_uuid
         self._file_extension = file_extension
         self._receive_buffer = bytes()
+        self._aac_frame_sequencer = AACFrameSequencer()
         
         self._transcription_service = StreamingTranscriptionServiceFactory.get_service(
             app_state.config, self._handle_utterance, stream_format=stream_format
@@ -47,12 +53,11 @@ class StreamingCaptureHandler:
     async def handle_audio_data(self, binary_data):
         # Append to receive buffer until we have minimum required number of bytes, then take an even
         # number of bytes to ensure a whole number of 16-bit samples when format is raw PCM
-        #TODO: this only works for PCM; need to implement AAC handling (i.e., wait for complete frames)
         self._receive_buffer += binary_data
         num_usable_bytes = len(self._receive_buffer) & ~1
         if num_usable_bytes < 4096: # for PCM data, should be multiple of VAD window size (512)
             return
-        sample_bytes = self._receive_buffer[0:num_usable_bytes]
+        received_bytes = self._receive_buffer[0:num_usable_bytes]
         self._receive_buffer = self._receive_buffer[num_usable_bytes:]
                 
         # Append to file on disk and create AudioSegment
@@ -60,28 +65,44 @@ class StreamingCaptureHandler:
         if self._file_extension == "wav":
             append_to_wav_file(
                 filepath=self._capture_file.filepath, 
-                sample_bytes=sample_bytes, 
+                sample_bytes=received_bytes, 
                 sample_rate=16000,
                 sample_bits=16,
                 num_channels=1
             )
             audio_chunk = AudioSegment.from_file(
-                file=BytesIO(sample_bytes),
+                file=BytesIO(received_bytes),
                 sample_width=2, # 16-bit (little endian implied)
                 channels=1,
                 frame_rate=16000,
                 format="pcm"    # pcm/raw
             )
-        else:
+        elif self._file_extension == "aac":
+            # Write to disk directly
             with open(self._capture_file.filepath, "ab") as file:
-                file.write(sample_bytes)
-            audio_chunk = AudioSegment.from_file(
-                file=BytesIO(sample_bytes),
-                format="aac"
-            )
+                file.write(received_bytes)
+
+            # Extract complete AAC frames
+            complete_frames = self._aac_frame_sequencer.get_next_frames(received_bytes=received_bytes)
+            if len(complete_frames) == 0:
+                return
+            
+            # Create an audio object
+            try:
+                audio_chunk = AudioSegment.from_file(
+                    file=BytesIO(complete_frames),
+                    format="aac"
+                )
+            except Exception:
+                #hexdump(complete_frames)
+                # with open("broken.aac", "wb") as fp:
+                #     fp.write(complete_frames)
+                return
+        else:
+            raise ValueError(f"Unsupported audio format: {self._file_extension}")
 
         # Real-time transcription
-        await self._transcription_service.send_audio(sample_bytes)
+        await self._transcription_service.send_audio(received_bytes)
 
         # Conversation detection
         submit_conversation_detection_task(
