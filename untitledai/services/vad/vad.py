@@ -123,7 +123,8 @@ class VoiceActivityDetector:
                 raise RuntimeError("Failed to download VAD model")
         return model_filepath
     
-    def get_speech_timestamps(self, 
+    def get_speech_timestamps(
+        self,
         audio: torch.Tensor,
         threshold: float = 0.5,
         sampling_rate: int = 16000,
@@ -133,7 +134,8 @@ class VoiceActivityDetector:
         window_size_samples: int = 512,
         speech_pad_ms: int = 30,
         return_milliseconds: bool = False,
-        progress_tracking_callback: Callable[[float], None] = None) -> List[TimeSegment]:
+        progress_tracking_callback: Callable[[float], None] = None
+    ) -> List[TimeSegment]:
 
         """
         This method is used for splitting long audios into speech chunks using silero VAD
