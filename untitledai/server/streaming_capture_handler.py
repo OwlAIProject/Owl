@@ -39,7 +39,7 @@ class StreamingCaptureHandler:
         self._file_extension = file_extension
         self._segment_file = None
         self._transcription_service = StreamingTranscriptionServiceFactory.get_service(
-            app_state.config, self._handle_utterance, stream_format=stream_format
+            app_state.config, self.handle_utterance, stream_format=stream_format
         )
         
         self._endpointing_service = StreamingEndpointingService(
@@ -98,7 +98,7 @@ class StreamingCaptureHandler:
                     file.write(binary_data)
         await self._transcription_service.send_audio(binary_data)
 
-    async def _handle_utterance(self, utterance):
+    async def handle_utterance(self, utterance):
         logger.info(f"Received utterance: {utterance}")
         asyncio.create_task(self._endpointing_service.utterance_detected())
         with next(self._app_state.database.get_db()) as db:
