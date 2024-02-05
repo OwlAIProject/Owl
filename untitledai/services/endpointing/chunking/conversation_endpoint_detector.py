@@ -9,9 +9,9 @@ from typing import Dict, List
 from pydub import AudioSegment
 import torch
 
-from ...core.config import Configuration
-from ..vad.vad import StreamingVoiceActivityDetector
-from ..vad.time_segment import TimeSegment
+from ....core.config import Configuration
+from ...vad.vad import StreamingVoiceActivityDetector
+from ...vad.time_segment import TimeSegment
 
 
 class ConversationEndpointDetector:

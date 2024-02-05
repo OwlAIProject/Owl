@@ -4,41 +4,36 @@
 # Capture endpoints: streaming and chunked file uploads via HTTP handled here.
 #
 
-import os
+from datetime import timedelta
 from glob import glob
-from io import BytesIO
+import os
 from typing import Annotated
+import uuid
 
 from fastapi import APIRouter, Request, HTTPException, BackgroundTasks, UploadFile, Form, Depends
 from fastapi.responses import JSONResponse
-from pydub import AudioSegment
 from starlette.requests import ClientDisconnect
 from sqlmodel import Session
 import logging
 import traceback
 
 from .. import AppState
-from ..conversation_detection import submit_conversation_detection_task
+from ..task import Task
 from ...database.crud import create_location
 from ...files import CaptureFile, append_to_wav_file
 from ...models.schemas import Location
 from ..streaming_capture_handler import StreamingCaptureHandler
-from ...services import ConversationEndpointDetector
+from ...services import ConversationDetectionService
+
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
-supported_upload_file_extensions = set([ "pcm", "wav", "aac" ])
 
-def find_audio_filepath(audio_directory: str, capture_uuid: str) -> str | None:
-    # Files stored as: {audio_directory}/{date}/{device}/{files}.{ext}
-    filepaths = glob(os.path.join(audio_directory, "*/*/*"))
-    capture_uuids = [ CaptureFile.get_capture_uuid(filepath=filepath) for filepath in filepaths ]
-    file_idx = capture_uuids.index(capture_uuid)
-    if file_idx < 0:
-        return None
-    return filepaths[file_idx]
+####################################################################################################
+# Stream API
+####################################################################################################
 
 @router.post("/capture/streaming_post/{capture_uuid}")
 async def streaming_post(request: Request, capture_uuid: str, device_type: str, app_state: AppState = Depends(AppState.authenticate_request)):
@@ -74,13 +69,89 @@ async def complete_audio(request: Request, background_tasks: BackgroundTasks, ca
 
     return JSONResponse(content={"message": f"Audio processed"})
 
+
+####################################################################################################
+# Chunk API
+####################################################################################################
+
+supported_upload_file_extensions = set([ "pcm", "wav", "aac" ])
+
+class ProcessAudioChunkTask(Task):
+    """
+    Processes the newest chunk of audio in a capture. Detects conversations incrementally and
+    processes any that are found.
+    """
+
+    def __init__(
+        self,
+        capture_file: CaptureFile,
+        detection_service: ConversationDetectionService,
+        format: str,
+        audio_data: bytes | None = None
+    ):
+        self._capture_file = capture_file
+        self._detection_service = detection_service
+        self._audio_data = audio_data
+        self._format = format
+        assert format == "wav" or format == "aac"
+
+    async def run(self, app_state: AppState):
+        # Data we need
+        capture_file = self._capture_file
+        audio_data = self._audio_data
+        capture_finished = audio_data is None
+        format = self._format
+        detection_service = self._detection_service
+        
+        # Run conversation detection stage (finds conversations thus far)
+        convos = await detection_service.detect_conversations(audio_data=audio_data, format=format, capture_finished=capture_finished)
+
+        # Create conversation segment files and store extracted conversations there
+        convo_filepaths = []
+        segment_files = []
+        for convo in convos:
+            timestamp = capture_file.timestamp + timedelta(milliseconds=convo.start)
+            segment_file = capture_file.create_conversation_segment(
+                conversation_uuid=uuid.uuid1().hex,
+                timestamp=timestamp,
+                file_extension=format
+            )
+            convo_filepaths.append(segment_file.filepath)
+            segment_files.append(segment_file)
+        await detection_service.extract_conversations(conversations=convos, conversation_filepaths=convo_filepaths)
+
+        # Process each conversation
+        try:
+            for segment_file in segment_files:
+                await app_state.conversation_service.process_conversation_from_audio(
+                    capture_file=capture_file,
+                    segment_file=segment_file,
+                    voice_sample_filepath=app_state.config.user.voice_sample_filepath,
+                    speaker_name=app_state.config.user.name
+                )
+        except Exception as e:
+            logging.error(f"Error processing conversation: {e}")
+
+Task.register(ProcessAudioChunkTask)
+
+def find_audio_filepath(audio_directory: str, capture_uuid: str) -> str | None:
+    # Files stored as: {audio_directory}/{date}/{device}/{files}.{ext}
+    filepaths = glob(os.path.join(audio_directory, "*/*/*"))
+    capture_uuids = [ CaptureFile.get_capture_uuid(filepath=filepath) for filepath in filepaths ]
+    file_idx = capture_uuids.index(capture_uuid)
+    if file_idx < 0:
+        return None
+    return filepaths[file_idx]
+
 @router.post("/capture/upload_chunk")
-async def upload_chunk(request: Request,
-                       file: UploadFile,
-                       capture_uuid: Annotated[str, Form()],
-                       timestamp: Annotated[str, Form()],
-                       device_type: Annotated[str, Form()],
-                       app_state: AppState = Depends(AppState.authenticate_request)):
+async def upload_chunk(
+    request: Request,
+    file: UploadFile,
+    capture_uuid: Annotated[str, Form()],
+    timestamp: Annotated[str, Form()],
+    device_type: Annotated[str, Form()],
+    app_state: AppState = Depends(AppState.authenticate_request)
+):
     try:
         # Validate file format
         file_extension = os.path.splitext(file.filename)[1].lstrip(".")
@@ -96,10 +167,13 @@ async def upload_chunk(request: Request,
 
         # Look up capture session or create a new one
         capture_file: CaptureFile = None
-        detector: ConversationEndpointDetector = None
+        detection_service: ConversationDetectionService = None
         if capture_uuid in app_state.capture_files_by_id:
             capture_file = app_state.capture_files_by_id[capture_uuid]
-            detector = app_state.conversation_endpoint_detectors_by_id.get(capture_uuid)
+            detection_service = app_state.conversation_detection_service_by_id.get(capture_uuid)
+            if detection_service is None:
+                logger.error(f"Internal error: No conversation detection service exists for capture_uuid={capture_uuid}")
+                raise HTTPException(status_Code=500, detail="Internal error: Lost conversation service")
         else:
             # Create new capture session
             capture_file = CaptureFile(
@@ -111,12 +185,10 @@ async def upload_chunk(request: Request,
             )
             app_state.capture_files_by_id[capture_uuid] = capture_file
 
-            # ... and associated conversation endpoint detector
-            detector = ConversationEndpointDetector(config=app_state.config, sampling_rate=16000)
-            app_state.conversation_endpoint_detectors_by_id[capture_uuid] = detector
-        if detector is None:
-            raise HTTPException(status_code=500, detail=f"No conversation endpoint detector for capture_uuid={capture_uuid}")
-
+            # ... and associated conversation detection service
+            detection_service = ConversationDetectionService(config=app_state.config, capture_filepath=capture_file.filepath)
+            app_state.conversation_detection_service_by_id[capture_uuid] = detection_service
+        
         # Get uploaded data
         content = await file.read()
         
@@ -129,32 +201,14 @@ async def upload_chunk(request: Request,
                 bytes_written = fp.write(content)
         logging.info(f"{capture_file.filepath}: {bytes_written} bytes appended")
 
-        # Load audio data
-        audio_chunk: AudioSegment = None
-        if file_extension == "wav":
-            audio_chunk = AudioSegment.from_file(
-                file=BytesIO(content),
-                sample_width=2, # 16-bit (little endian implied)
-                channels=1,
-                frame_rate=16000,
-                format="pcm"    # pcm/raw
-            )
-        elif file_extension == "aac":
-            audio_chunk = AudioSegment.from_file(
-                file=BytesIO(content),
-                format="aac"
-            )
-        else:
-            return JSONResponse(content={"message": f"Failed to process because file extension is unsupported: {file_extension}"})
-
-        # Conversation detection and extraction
-        submit_conversation_detection_task(
-            task_queue=app_state.conversation_detection_task_queue,
+        # Conversation processing task
+        task = ProcessAudioChunkTask(
             capture_file=capture_file,
-            detector=detector,
-            capture_uuid=capture_uuid,
-            samples=audio_chunk
+            detection_service=detection_service,
+            audio_data=content,
+            format=file_extension
         )
+        app_state.task_queue.put(task)
 
         # Success
         return JSONResponse(content={"message": f"Audio processed"})
@@ -176,6 +230,12 @@ async def process_capture(request: Request, capture_uuid: Annotated[str, Form()]
             logger.error(f"Filepath does not conform to expected format and cannot be processed: {filepath}")
             raise HTTPException(status_code=500, detail="Internal error: File is incorrectly named on server")
         
+        # Conversation detection service
+        detection_service: ConversationDetectionService = app_state.conversation_detection_service_by_id.get(capture_uuid)
+        if detection_service is None:
+            logger.error(f"Internal error: No conversation detection service exists for capture_uuid={capture_uuid}")
+            raise HTTPException(status_Code=500, detail="Internal error: Lost conversation service")
+        
         # Finish the conversation extraction.
         # TODO: If the server dies in the middle of an upload or before /process_capture is called,
         # we will not be able to do this because the in-memory session data will have been lost. A
@@ -184,23 +244,19 @@ async def process_capture(request: Request, capture_uuid: Annotated[str, Form()]
         # everything associated with the capture, remove everything from DB, and then regenerate 
         # everything. It is a brute force solution but conceptually simple and should be reasonably
         # robust.
-        detector = app_state.conversation_endpoint_detectors_by_id.get(capture_uuid)
-        if detector is None:
-            raise HTTPException(status_code=500, detail=f"No conversation endpoint detector for capture_uuid={capture_uuid}")
-        submit_conversation_detection_task(
-            task_queue=app_state.conversation_detection_task_queue,
+        # Conversation processing task
+        task = ProcessAudioChunkTask(
             capture_file=capture_file,
-            detector=detector,
-            capture_uuid=capture_uuid,
-            samples=None,
-            capture_finished=True
+            detection_service=detection_service,
+            format=os.path.splitext(capture_file.filepath)[1].lstrip(".")
         )
+        app_state.task_queue.put(task)
 
         # Remove from app state
         if capture_uuid in app_state.capture_files_by_id:
             del app_state.capture_files_by_id[capture_uuid]
-        if capture_uuid in app_state.conversation_endpoint_detectors_by_id:
-            del app_state.conversation_endpoint_detectors_by_id[capture_uuid]
+        if capture_uuid in app_state.conversation_detection_service_by_id:
+            del app_state.conversation_detection_service_by_id[capture_uuid]
         
         return JSONResponse(content={"message": "Conversation processed"})
     except Exception as e:

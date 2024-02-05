@@ -17,10 +17,10 @@ from .app_state import AppState
 from .routes.capture import router as capture_router
 from .routes.conversations import router as conversations_router
 from .capture_socket import CaptureSocketApp
-from .conversation_detection import run_conversation_detection_task
 from ..services import LLMService, ConversationService, NotificationService
 from ..database.database import Database
 from ..services.stt.asynchronous.async_transcription_service_factory import AsyncTranscriptionServiceFactory
+from .task import Task
 import ray
 import logging
 import asyncio
@@ -56,33 +56,17 @@ def setup_logging():
      handler = ColorfulLogger()
      logging.root.addHandler(handler)
 
-#TODO: unify this into a single task queue that takes task objects
 async def process_queue(app_state: AppState):
-    logger.info("Starting conversation processing queue...")
+    logger.info("Starting server task processing queue...")
     while True:
-        processed_task = False
-
-        # Conversation detection queue
-        while not app_state.conversation_detection_task_queue.empty():
-            task = app_state.conversation_detection_task_queue.get()
+        if not app_state.task_queue.empty():
+            task: Task = app_state.task_queue.get()
             try:
-                run_conversation_detection_task(task=task, conversation_task_queue=app_state.conversation_task_queue)
+                await task.run(app_state=app_state)
             except Exception as e:
-                logging.error(f"Error detecting conversation endpoints: {e}")
-            app_state.conversation_detection_task_queue.task_done()
-            processed_task = True
-
-        # Conversation processing (transcription, summarization) queue
-        while not app_state.conversation_task_queue.empty():
-            capture_file, segment_file = app_state.conversation_task_queue.get()
-            try:
-                await app_state.conversation_service.process_conversation_from_audio(capture_file=capture_file, segment_file=segment_file, voice_sample_filepath=app_state.config.user.voice_sample_filepath, speaker_name=app_state.config.user.name)
-            except Exception as e:
-                logging.error(f"Error processing conversation: {e}")
-            app_state.conversation_task_queue.task_done()
-            processed_task = True
-
-        if not processed_task:
+                logging.error(f"Error processing task: {e}")
+            app_state.task_queue.task_done()
+        else:
             await asyncio.sleep(1)
 
 def running_local_models(config: Configuration):

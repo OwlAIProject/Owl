@@ -1,130 +1,128 @@
-#TODO: remove streaming endpointing service and min_utterances from config
-#TODO: tasks can be unified -- no need to re-enqueue
-#TODO: detect ffmpeg sub-process errors and kill socket/finalize conversation?
-
 from __future__ import annotations
+import asyncio
 from datetime import datetime, timezone
-from io import BytesIO
 import logging
-import subprocess
-from typing import Tuple, TYPE_CHECKING
+import uuid
+from typing import TYPE_CHECKING
 
-from pydub import AudioSegment
-
-if TYPE_CHECKING:
-    from .app_state import AppState
-from .conversation_detection import submit_conversation_detection_task
 from ..services.stt.streaming.streaming_transcription_service_factory import StreamingTranscriptionServiceFactory
-from ..services import ConversationEndpointDetector
-from ..files import CaptureFile
+from ..services.endpointing.streaming.streaming_endpointing_service import StreamingEndpointingService
+from ..files import CaptureFile, CaptureSegmentFile
 from ..files.wav_file import append_to_wav_file
 from ..database.crud import create_utterance
 from ..core.utils.hexdump import hexdump
 from ..files import AACFrameSequencer
+from .task import Task
+if TYPE_CHECKING:
+    from .app_state import AppState
 
 logger = logging.getLogger(__name__)
 
+class ProcessConversationTask(Task):
+    def __init__(self, capture_file: CaptureFile, segment_file: CaptureSegmentFile):
+        self._capture_file = capture_file
+        self._segment_file = segment_file
+
+    async def run(self, app_state: AppState):
+        await app_state.conversation_service.process_conversation_from_audio(
+            capture_file=self._capture_file,
+            segment_file=self._segment_file,
+            voice_sample_filepath=app_state.config.user.voice_sample_filepath,
+            speaker_name=app_state.config.user.name
+        )
+
+Task.register(ProcessConversationTask)
+
 class StreamingCaptureHandler:
-    def __init__(self, app_state: AppState, device_name: str, capture_uuid: str, file_extension: str = "aac", stream_format=None):
+    def __init__(self, app_state, device_name, capture_uuid, file_extension="aac", stream_format=None):
         self._app_state = app_state
         self._device_name = device_name
         self._capture_uuid = capture_uuid
         self._file_extension = file_extension
-        self._receive_buffer = bytes()
-        self._aac_frame_sequencer = AACFrameSequencer()
-        
+        self._segment_file = None
         self._transcription_service = StreamingTranscriptionServiceFactory.get_service(
             app_state.config, self._handle_utterance, stream_format=stream_format
         )
         
-        self._conversation_endpoint_detector = ConversationEndpointDetector(
-            config=app_state.config,
-            sampling_rate=16000
+        self._endpointing_service = StreamingEndpointingService(
+            timeout_seconds=app_state.config.conversation_endpointing.timeout_seconds,
+            min_utterances=app_state.config.conversation_endpointing.min_utterances,
+            endpoint_callback=lambda: asyncio.create_task(self.on_endpoint())
         )
 
-        self._capture_file = CaptureFile(
+        self._init_capture_session()
+
+    def _init_capture_session(self):
+        self.capture_file = CaptureFile(
             capture_directory=self._app_state.config.captures.capture_dir,
             capture_uuid=self._capture_uuid,
             device_type=self._device_name,
             timestamp=datetime.now(timezone.utc),
             file_extension=self._file_extension
         )
+        self._start_new_segment()
+
+    async def on_endpoint(self):
+        logger.info(f"Endpoint detected for capture_uuid {self._capture_uuid}")
+        if self.capture_file and self._segment_file:
+            self._process_conversation(self.capture_file, self._segment_file)
+        self._start_new_segment()
+
+    def _process_conversation(self, capture_file: CaptureFile, segment_file: CaptureSegmentFile):
+        logger.info(f"Processing conversation for capture_uuid={capture_file.capture_uuid} (conversation_uuid={segment_file.conversation_uuid})")
+
+        task = ProcessConversationTask(capture_file=capture_file, segment_file=segment_file)
+        self._app_state.task_queue.put(task)
 
     async def handle_audio_data(self, binary_data):
-        # Append to receive buffer until we have minimum required number of bytes, then take an even
-        # number of bytes to ensure a whole number of 16-bit samples when format is raw PCM
-        self._receive_buffer += binary_data
-        num_usable_bytes = len(self._receive_buffer) & ~1
-        if num_usable_bytes < 4096: # for PCM data, should be multiple of VAD window size (512)
-            return
-        received_bytes = self._receive_buffer[0:num_usable_bytes]
-        self._receive_buffer = self._receive_buffer[num_usable_bytes:]
-                
-        # Append to file on disk and create AudioSegment
-        audio_chunk: AudioSegment = None
         if self._file_extension == "wav":
             append_to_wav_file(
-                filepath=self._capture_file.filepath, 
-                sample_bytes=received_bytes, 
+                filepath=self.capture_file.filepath, 
+                sample_bytes=binary_data, 
                 sample_rate=16000,
                 sample_bits=16,
                 num_channels=1
             )
-            audio_chunk = AudioSegment.from_file(
-                file=BytesIO(received_bytes),
-                sample_width=2, # 16-bit (little endian implied)
-                channels=1,
-                frame_rate=16000,
-                format="pcm"    # pcm/raw
-            )
-        elif self._file_extension == "aac":
-            # Write to disk directly
-            with open(self._capture_file.filepath, "ab") as file:
-                file.write(received_bytes)
-
-            # Extract complete AAC frames
-            complete_frames = self._aac_frame_sequencer.get_next_frames(received_bytes=received_bytes)
-            if len(complete_frames) == 0:
-                return
-            
-            # Create an audio object
-            try:
-                audio_chunk = AudioSegment.from_file(
-                    file=BytesIO(complete_frames),
-                    format="aac"
+            if self._segment_file:
+                append_to_wav_file(
+                    filepath=self._segment_file.filepath, 
+                    sample_bytes=binary_data, 
+                    sample_rate=16000, 
+                    sample_bits=16, 
+                    num_channels=1
                 )
-            except Exception:
-                #hexdump(complete_frames)
-                # with open("broken.aac", "wb") as fp:
-                #     fp.write(complete_frames)
-                return
         else:
-            raise ValueError(f"Unsupported audio format: {self._file_extension}")
+            with open(self.capture_file.filepath, "ab") as file:
+                file.write(binary_data)
 
-        # Real-time transcription
-        await self._transcription_service.send_audio(received_bytes)
-
-        # Conversation detection
-        submit_conversation_detection_task(
-            task_queue=self._app_state.conversation_detection_task_queue,
-            capture_file=self._capture_file,
-            detector=self._conversation_endpoint_detector,
-            capture_uuid=self._capture_file.capture_uuid,
-            samples=audio_chunk
-        )
+            if self._segment_file:
+                with open(self._segment_file.filepath, "ab") as file:
+                    file.write(binary_data)
+        await self._transcription_service.send_audio(binary_data)
 
     async def _handle_utterance(self, utterance):
-        #logger.info(f"Received utterance: {utterance}")
-        pass
+        logger.info(f"Received utterance: {utterance}")
+        asyncio.create_task(self._endpointing_service.utterance_detected())
+
+    def _start_new_segment(self):
+        timestamp = datetime.now(timezone.utc)  # we are streaming in real-time, so we know start time
+        self._segment_file = self.capture_file.create_conversation_segment(
+            conversation_uuid=uuid.uuid1().hex,
+            timestamp=timestamp,
+            file_extension=self._file_extension
+        )
 
     def finish_capture_session(self):
-        # Finalize conversation detection
-        submit_conversation_detection_task(
-            task_queue=self._app_state.conversation_detection_task_queue,
-            capture_file=self._capture_file,
-            detector=self._conversation_endpoint_detector,
-            capture_uuid=self._capture_file.capture_uuid,
-            samples=None,
-            capture_finished=True
-        )
+        if self._segment_file:
+            self._process_conversation(capture_file=self.capture_file, segment_file=self._segment_file)
+       
+        capture_file = self._app_state.capture_files_by_id.pop(self._capture_uuid, None)
+        if self._endpointing_service:
+            self._endpointing_service.stop()
         logger.info(f"Finishing capture: {self._capture_uuid}")
+        if capture_file:
+            try:
+                with open(capture_file.filepath, "a"):
+                    pass  # Finalize the capture file
+            except Exception as e:
+                logger.error(f"Error closing file {capture_file.filepath}: {e}")
