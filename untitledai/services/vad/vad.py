@@ -456,7 +456,7 @@ class StreamingVoiceActivityDetector(VoiceActivityDetector):
             assert samples.dim() == 1
         elif isinstance(samples, AudioSegment):
             assert samples.frame_rate == 16000 and samples.sample_width == 2
-            samples = torch.Tensor(samples.get_array_of_samples()) * (1.0 / 65535.0)
+            samples = torch.Tensor(samples.get_array_of_samples()) * (1.0 / 32767.0)
         else:
             raise TypeError("'samples' must be either torch.Tensor or pydub.AudioSegment")
 
