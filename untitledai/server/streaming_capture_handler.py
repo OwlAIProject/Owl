@@ -10,8 +10,6 @@ from ..services.endpointing.streaming.streaming_endpointing_service import Strea
 from ..files import CaptureFile, CaptureSegmentFile
 from ..files.wav_file import append_to_wav_file
 from ..database.crud import create_utterance
-from ..core.utils.hexdump import hexdump
-from ..files import AACFrameSequencer
 from .task import Task
 if TYPE_CHECKING:
     from .app_state import AppState
@@ -103,6 +101,8 @@ class StreamingCaptureHandler:
     async def _handle_utterance(self, utterance):
         logger.info(f"Received utterance: {utterance}")
         asyncio.create_task(self._endpointing_service.utterance_detected())
+        with next(self._app_state.database.get_db()) as db:
+            create_utterance(db, utterance)
 
     def _start_new_segment(self):
         timestamp = datetime.now(timezone.utc)  # we are streaming in real-time, so we know start time
