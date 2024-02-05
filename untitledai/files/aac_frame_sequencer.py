@@ -44,7 +44,7 @@ class AACFrameSequencer:
                     layer = (self._buffer[i + 1] >> 1) & 3
                     mp4_sampling_frequency_index = (self._buffer[i + 2] >> 2) & 0xf
                     if layer == 0 and mp4_sampling_frequency_index == 8:
-                        # MPEG-4, layer 0, and 16KHz sampling -> looks correct
+                        # Layer 0 and 16KHz sampling -> looks correct
                         return (True, i)    # found it
                     return (False, i + 2)   # invalid header, skip past these false sync bits
         
