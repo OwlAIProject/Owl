@@ -47,7 +47,7 @@ struct ConversationCellView: View {
                 .padding(.top)
             
             HStack(alignment: .top) {
-                Text(conversation.summary)
+                Text(conversation.shortSummary ?? conversation.summary)
                     .font(.headline)
                     .foregroundColor(.primary)
                     .lineLimit(3)
