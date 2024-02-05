@@ -69,7 +69,9 @@ def run_conversation_detection_task(task: ConversationDetectionTask, conversatio
                 timestamp=timestamp,
                 file_extension=file_extension
             )
-            conversation_audio.export(out_f=segment_file.filepath, format=file_extension)
+            #TODO: need a unified audio exporting function that handles this automatically
+            format = "adts" if file_extension == "aac" else file_extension
+            conversation_audio.export(out_f=segment_file.filepath, format=format)
             logger.info(f"Wrote conversation audio file: {segment_file.filepath}")
 
             # Enqueue for processing
