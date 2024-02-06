@@ -58,7 +58,7 @@ class AppState:
 
     @staticmethod
     async def authenticate_request(request: Request, authorization: Optional[str] = Header(None)):
-        app_state = AppState.get(request)
+        app_state: AppState = AppState.get(request)
         await AppState._parse_and_verify_token(authorization, app_state.config.user.client_token)
         return app_state
 
@@ -66,6 +66,6 @@ class AppState:
     async def authenticate_socket(environ: dict):
         headers = {k.decode('utf-8').lower(): v.decode('utf-8') for k, v in environ.get('asgi.scope', {}).get('headers', [])}
         authorization = headers.get('authorization')
-        app_state = AppState.get(environ['asgi.scope']['app'])
+        app_state: AppState = AppState.get(environ['asgi.scope']['app'])
         await AppState._parse_and_verify_token(authorization, app_state.config.user.client_token)
         return app_state
