@@ -1,21 +1,46 @@
-import React from 'react';
+'use client';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useSocket } from './hooks/useSocket'; 
 
-async function fetchConversations() {
-  const response = await fetch(`http://localhost:3000/api/conversations`, {
-    cache: 'no-store'
-  });
-  if (!response.ok) {
-    throw new Error('Failed to fetch conversations');
-  }
-  const data = await response.json();
-  console.log(data);
-  return data.conversations;
-}
+const ConversationsList = () => {
+  const [conversations, setConversations] = useState([]);
 
+  useEffect(() => {
+    const fetchConversations = async () => {
+      try {
+        const response = await fetch(`http://localhost:3000/api/conversations`, {
+          cache: 'no-store'
+        });
+        if (!response.ok) {
+          throw new Error('Failed to fetch conversations');
+        }
+        const data = await response.json();
+        setConversations(data.conversations);
+      } catch (error) {
+        console.error(error);
+      }
+    };
 
-const ConversationsList = async () => {
-  const conversations = await fetchConversations();
+    fetchConversations();
+  }, []);
+
+  const socket = useSocket();
+
+  useEffect(() => {
+    if (socket) {
+      socket.on('new_conversation', (newConversation) => {
+        newConversation = JSON.parse(newConversation);
+        setConversations((prevConversations) => [newConversation, ...prevConversations]);
+      });
+    }
+
+    return () => {
+      if (socket) {
+        socket.off('new_conversation');
+      }
+    };
+  }, [socket]);
 
   return (
     <div className="min-h-screen bg-black py-10">

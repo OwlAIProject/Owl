@@ -4,7 +4,7 @@
 First, set the client token environmental variable:
 
 ```bash
-export UNTITLEDAI_CLIENT_TOKEN=your-client-token
+export NEXT_PUBLIC_UNTITLEDAI_CLIENT_TOKEN=your-client-token
 ```
 
 Optionally, set the google maps token if you want maps to work:
