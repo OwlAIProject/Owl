@@ -5,6 +5,11 @@ from sqlalchemy.orm import joinedload
 from sqlalchemy import desc, func, or_
 from datetime import datetime
 
+def create_utterance(db: Session, utterance: Utterance) -> Utterance:
+    db.add(utterance)
+    db.commit()
+    db.refresh(utterance)
+    return utterance
 
 def create_transcription(db: Session, transcription: Transcription) -> Transcription:
     db.add(transcription)

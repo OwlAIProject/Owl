@@ -1,6 +1,5 @@
 from __future__ import annotations  # required for AppState annotation in AppState.get()
 from dataclasses import dataclass, field
-import os
 from typing import Dict
 from fastapi import FastAPI, HTTPException, Request, Depends, Header
 from typing import Optional
@@ -9,6 +8,7 @@ from ..services import ConversationService, LLMService, NotificationService
 from .streaming_capture_handler import StreamingCaptureHandler
 from ..database.database import Database
 from ..files import CaptureFile
+from ..services import ConversationDetectionService
 from queue import Queue
 
 @dataclass
@@ -24,10 +24,11 @@ class AppState:
     llm_service: LLMService
     notification_service: NotificationService
     
-    capture_sessions_by_id: Dict[str, CaptureFile] = field(default_factory=lambda: {})
+    capture_files_by_id: Dict[str, CaptureFile] = field(default_factory=lambda: {})
     capture_handlers: Dict[str, StreamingCaptureHandler] = field(default_factory=lambda: {})
+    conversation_detection_service_by_id: Dict[str, ConversationDetectionService] = field(default_factory=lambda: {})
 
-    conversation_task_queue = Queue()
+    task_queue = Queue()
 
     @staticmethod
     def get(from_obj: FastAPI | Request) -> AppState:
@@ -58,7 +59,7 @@ class AppState:
 
     @staticmethod
     async def authenticate_request(request: Request, authorization: Optional[str] = Header(None)):
-        app_state = AppState.get(request)
+        app_state: AppState = AppState.get(request)
         await AppState._parse_and_verify_token(authorization, app_state.config.user.client_token)
         return app_state
 
@@ -66,6 +67,6 @@ class AppState:
     async def authenticate_socket(environ: dict):
         headers = {k.decode('utf-8').lower(): v.decode('utf-8') for k, v in environ.get('asgi.scope', {}).get('headers', [])}
         authorization = headers.get('authorization')
-        app_state = AppState.get(environ['asgi.scope']['app'])
+        app_state: AppState = AppState.get(environ['asgi.scope']['app'])
         await AppState._parse_and_verify_token(authorization, app_state.config.user.client_token)
         return app_state

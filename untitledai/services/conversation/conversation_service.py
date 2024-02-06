@@ -43,10 +43,16 @@ class ConversationService:
         transcription.transcription_time = time.time() - start_time  # Transcription time
         logger.info(f"Transcription complete in {transcription.transcription_time:.2f} seconds")
         logger.info(f"Transcription: {transcription.utterances}")
-                
+        if not transcription.utterances:
+            logger.info("No utterances found in the transcription. Skipping conversation processing.")
+            return None, None  
+
         # Conversation start and end time
         conversation_start_time = segment_file.timestamp
         conversation_end_time = conversation_start_time + timedelta(seconds=audio_duration)
+        
+        for utterance in transcription.utterances:
+            utterance.spoken_at = conversation_start_time + timedelta(seconds=utterance.start)
 
         start_time = time.time()
         summary_text = await self._summarizer.summarize(transcription)

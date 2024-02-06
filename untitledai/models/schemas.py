@@ -24,6 +24,8 @@ class Utterance(CreatedAtMixin, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     start: Optional[float] = None
     end: Optional[float] = None
+    spoken_at: Optional[datetime] = None
+    realtime: bool = Field(default=False)
     text: Optional[str] = None
     speaker: Optional[str] = None
     transcription_id: Optional[int] = Field(default=None, foreign_key="transcription.id")
@@ -101,6 +103,7 @@ class UtteranceRead(BaseModel):
     id: Optional[int]
     start: Optional[float]
     end: Optional[float]
+    spoken_at: Optional[datetime]
     text: Optional[str]
     speaker: Optional[str]
     class Config:

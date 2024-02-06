@@ -20,6 +20,7 @@ from .capture_socket import CaptureSocketApp
 from ..services import LLMService, ConversationService, NotificationService
 from ..database.database import Database
 from ..services.stt.asynchronous.async_transcription_service_factory import AsyncTranscriptionServiceFactory
+from .task import Task
 import ray
 import logging
 import asyncio
@@ -56,15 +57,15 @@ def setup_logging():
      logging.root.addHandler(handler)
 
 async def process_queue(app_state: AppState):
-    logger.info("Starting conversation processing queue...")
+    logger.info("Starting server task processing queue...")
     while True:
-        if not app_state.conversation_task_queue.empty():
-            capture_file, segment_file = app_state.conversation_task_queue.get()
+        if not app_state.task_queue.empty():
+            task: Task = app_state.task_queue.get()
             try:
-                await app_state.conversation_service.process_conversation_from_audio(capture_file=capture_file, segment_file=segment_file, voice_sample_filepath=app_state.config.user.voice_sample_filepath, speaker_name=app_state.config.user.name)
+                await task.run(app_state=app_state)
             except Exception as e:
-                logging.error(f"Error processing conversation: {e}")
-            app_state.conversation_task_queue.task_done()
+                logging.error(f"Error processing task: {e}")
+            app_state.task_queue.task_done()
         else:
             await asyncio.sleep(1)
 
