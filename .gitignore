@@ -6,6 +6,11 @@
 
 # Local audio
 audio_cache/
+*.wav
+*.mp3
+*.m4a
+*.mp4
+*.aac
 
 # Local voice samples
 voice_samples/

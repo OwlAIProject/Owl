@@ -23,7 +23,6 @@ class NetworkManager : NSObject, URLSessionDataDelegate {
         let config = URLSessionConfiguration.default
         config.requestCachePolicy = .reloadIgnoringLocalCacheData
         self.urlSession = URLSession(configuration: config, delegate: self, delegateQueue: .main)
-        let url = URL(string: "\(AppConstants.apiBaseURL)/capture/streaming_post/\(captureUUID)")!
         var components = URLComponents(string: "\(AppConstants.apiBaseURL)/capture/streaming_post/\(captureUUID)")
         components?.queryItems = [
             URLQueryItem(name: "device_type", value: "apple_watch")

@@ -18,6 +18,10 @@ captures:
 
 user:
   name: "Bob"
+  client_token: your_own_secret_token
+
+vad:
+  vad_model_savedir: pretrained_models/vad
 
 deepgram:
   api_key: ""
@@ -35,8 +39,9 @@ database:
   url: "sqlite:///./db.sqlite3" 
 
 conversation_endpointing:
-  timeout_interval: 10
+  timeout_seconds: 300
   min_utterances: 2
 
 notification:
   apn_team_id: ""
+
