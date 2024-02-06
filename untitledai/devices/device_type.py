@@ -19,3 +19,4 @@ class DeviceType(Enum, metaclass=DeviceTypeMeta):
     APPLE_WATCH = "apple_watch"
     XIAO_ESP32S3_SENSE = "xiao_esp32s3_sense"
     SONY_SPRESENSE = "spresense"
+    WEB = "web"

@@ -51,10 +51,10 @@ class CaptureSocketApp(socketio.AsyncNamespace):
     async def on_disconnect(self, path, sid, *args):
         logger.info(f'Disconnected: {sid}')
 
-    async def on_audio_data(self, path, sid, binary_data, device_name, capture_uuid, *args):
+    async def on_audio_data(self, path, sid, binary_data, device_name, capture_uuid, file_extension="aac", *args):
         if capture_uuid not in self._app_state.capture_handlers:
             self._app_state.capture_handlers[capture_uuid] = StreamingCaptureHandler(
-                self._app_state, device_name, capture_uuid
+                self._app_state, device_name, capture_uuid, file_extension
             )
 
         capture_handler = self._app_state.capture_handlers[capture_uuid]

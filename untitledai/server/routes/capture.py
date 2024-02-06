@@ -40,12 +40,7 @@ async def streaming_post(request: Request, capture_uuid: str, device_type: str, 
     logger.info('Client connected')
     try:
         if capture_uuid not in app_state.capture_handlers:
-            app_state.capture_handlers[capture_uuid] = StreamingCaptureHandler(
-                app_state, device_type, capture_uuid, file_extension = "wav", stream_format={
-                    "sample_rate": 16000,
-                    "encoding": "linear16"
-                }
-            )
+            app_state.capture_handlers[capture_uuid] = StreamingCaptureHandler(app_state, device_type, capture_uuid, file_extension = "wav")
 
         capture_handler = app_state.capture_handlers[capture_uuid]
 

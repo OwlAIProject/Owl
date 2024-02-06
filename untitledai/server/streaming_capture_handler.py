@@ -32,14 +32,16 @@ class ProcessConversationTask(Task):
 Task.register(ProcessConversationTask)
 
 class StreamingCaptureHandler:
-    def __init__(self, app_state, device_name, capture_uuid, file_extension="aac", stream_format=None):
+    def __init__(self, app_state, device_name, capture_uuid, file_extension="aac"):
         self._app_state = app_state
         self._device_name = device_name
         self._capture_uuid = capture_uuid
         self._file_extension = file_extension
         self._segment_file = None
+        # infer from file extension
+        self._stream_format = { "sample_rate": 16000, "encoding": "linear16" } if file_extension == "wav" else None
         self._transcription_service = StreamingTranscriptionServiceFactory.get_service(
-            app_state.config, self.handle_utterance, stream_format=stream_format
+            app_state.config, self.handle_utterance, stream_format=self._stream_format
         )
         
         self._endpointing_service = StreamingEndpointingService(
