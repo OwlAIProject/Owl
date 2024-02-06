@@ -52,3 +52,17 @@ The server also supports non-real time syncing of capture data in chunks, which 
 7. Lastly, if the capture session ends and the `/process_capture` route is used, a final `ProcessAudioChunkTask` is submitted to finalize any remaining conversation that may have been ongoing in the final chunk.
 
 Chunked uploads enter the server differently than streaming audio, use a different conversation endpointing method, but then follow the same path back to the iOS app.
+
+## Capture Storage
+
+Captures are stored in the directory specified by the `capture_dir` key in the YAML configuration file. They are organized by date and capture
+device to make manual inspection easy. When conversations are detected within a capture, they are extracted into a subdirectory named after the capture file. The subdirectory will contain conversation audio files as well as transcripts and summaries in JSON form. Conversation detection may sometimes be incorrect; conversations that are too short or contain no dialog at all are not summarized and the corresponding JSON files will be absent.
+
+| ![Capture sessions from February 6, 2024](docs/images/capture_storage/captures_today.png) | 
+|:--:| 
+| *Apple Watch captures recorded on February 6, 2024, with subdirectories for conversations.* |
+
+
+| ![Conversations](docs/images/capture_storage/conversations.png) | 
+|:--:| 
+| *Conversations extracted from a particular capture.* |
