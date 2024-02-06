@@ -154,7 +154,7 @@ class AudioFileWriter {
             let now = Date()
             let formatter = DateFormatter()
             formatter.dateFormat = "yyyyMMdd-HHmmss.SSS"
-            formatter.timeZone = .current
+            formatter.timeZone = TimeZone(abbreviation: "UTC")
             let timestamp = formatter.string(from: now)
             _captureUUID = UUID().hex
             _filenameBase = "audio_\(_captureUUID!)_\(timestamp)"
