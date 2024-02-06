@@ -18,6 +18,7 @@ captures:
 
 user:
   name: "Bob"
+  client_token: your_own_secret_token
 
 vad:
   vad_model_savedir: pretrained_models/vad
