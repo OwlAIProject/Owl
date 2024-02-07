@@ -4,11 +4,22 @@ from fastapi.responses import JSONResponse
 from sqlmodel import Session
 
 from ...server.app_state import AppState
-from ...models.schemas import ConversationsResponse 
-from ...database.crud import get_all_conversations, delete_conversation
+from ...models.schemas import ConversationsResponse, ConversationRead 
+from ...database.crud import get_all_conversations, get_conversation, delete_conversation
 from typing import List
 
 router = APIRouter()
+
+@router.get("/conversations/{conversation_id}", response_model=ConversationRead)
+def read_conversation(
+    conversation_id: int, 
+    db: Session = Depends(AppState.get_db),
+    app_state: AppState = Depends(AppState.authenticate_request)
+):
+    conversation = get_conversation(db, conversation_id)
+    if not conversation:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+    return conversation
 
 @router.get("/conversations/", response_model=ConversationsResponse)
 def read_conversations(

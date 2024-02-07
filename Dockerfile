@@ -8,9 +8,7 @@ RUN apt-get update && apt-get install -y \
     ffmpeg \
     pkg-config \
     libcairo2-dev \
-    libgirepository1.0-dev \
     portaudio19-dev \
-    python3-gst-1.0 \
     cmake && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
@@ -29,9 +27,6 @@ RUN poetry config virtualenvs.create false && \
     poetry install -vvv
 
 RUN poetry run python -c "print('Poetry and project dependencies are installed correctly.')"
-
-ARG CONFIG_FILE
-ENV CONFIG_FILE=${CONFIG_FILE}
 
 RUN echo '#!/bin/sh\n\
 if [ -z "$CONFIG_FILE" ]; then\n\

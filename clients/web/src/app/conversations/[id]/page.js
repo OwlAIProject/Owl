@@ -1,0 +1,121 @@
+'use client';
+import React, { useEffect, useState } from 'react';
+
+
+
+const ConversationDetail = ({ params }) => {
+    const [conversation, setConversation] = useState(null);
+    const [googleMapsApiKey, setGoogleMapsApiKey] = useState('');
+
+    const fetchConversation = async (id) => {
+        const response = await fetch(`/api/conversations/${id}`, { cache: 'no-store' });
+        if (!response.ok) {
+            throw new Error('Failed to fetch conversations');
+        }
+        const data = await response.json();
+        return data;
+    }
+    
+    const fetchGoogleMapsApiKey = async () => {
+        const response = await fetch(`/api/tokens`, {
+            cache: 'no-store'
+        });
+        if (!response.ok) {
+            throw new Error('Failed to fetch API tokens');
+        }
+        const data = await response.json();
+        return data.GOOGLE_MAPS_API_KEY;
+    };
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const conversationData = await fetchConversation(params.id);
+                setConversation(conversationData);
+                const apiKey = await fetchGoogleMapsApiKey();
+                setGoogleMapsApiKey(apiKey);
+            } catch (error) {
+                console.error(error);
+            }
+        };
+
+        fetchData();
+    }, [params.id]);
+
+    if (!conversation) return null;
+
+    return (
+        <div className="max-w-4xl mx-auto p-5">
+            <h1 className="text-2xl font-bold mb-4">Conversation Detail</h1>
+
+            <div className="bg-white shadow overflow-hidden sm:rounded-lg mb-6">
+                <div className="px-4 py-5 sm:px-6">
+                    <h2 className="text-lg leading-6 font-medium text-gray-900">Summary</h2>
+                    <p className="mt-1 max-w-2xl text-sm text-gray-500">{conversation.short_summary}</p>
+                </div>
+                <div className="border-t border-gray-200">
+                    <dl>
+                        <div className="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                            <dt className="text-sm font-medium text-gray-500">Start Time</dt>
+                            <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{new Date(conversation.start_time).toLocaleString()}</dd>
+                        </div>
+                        <div className="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                            <dt className="text-sm font-medium text-gray-500">Full Summary</dt>
+                            <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2 whitespace-pre-line">{conversation.summary}</dd>
+                        </div>
+                    </dl>
+                </div>
+            </div>
+
+            <div className="mb-6">
+                <h2 className="text-xl font-bold mb-2">Transcription</h2>
+                {conversation.transcriptions.map((transcription, index) => (
+                    <div key={index} className="bg-white shadow overflow-hidden sm:rounded-lg mb-4">
+                        <div className="px-4 py-5 sm:px-6">
+                            <h3 className="text-lg leading-6 font-medium text-gray-900">Transcription {index + 1}</h3>
+                            <p className="mt-1 max-w-2xl text-sm text-gray-500">Model: {transcription.model}</p>
+                        </div>
+                        <div className="border-t border-gray-200">
+                            <ul className="divide-y divide-gray-200">
+                                {transcription.utterances.map((utterance) => (
+                                    <li key={utterance.id} className="px-4 py-4 sm:px-6">
+                                        <div className="flex items-center justify-between">
+                                            <div className="text-sm font-medium text-gray-600">
+                                                {utterance.text} <span className="text-gray-400">- {utterance.speaker}</span>
+                                            </div>
+                                            <div className="ml-2 flex-shrink-0 flex">
+                                                <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                                    {utterance.start.toFixed(2)}s - {utterance.end.toFixed(2)}s
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    </div>
+                ))}
+            </div>
+
+            {conversation.primary_location && (
+                <div className="mb-6">
+                    <h2 className="text-xl font-bold mb-2">Location</h2>
+                    <div className="bg-white shadow overflow-hidden sm:rounded-lg">
+                        <div className="px-4 py-5 sm:px-6">
+                            <h3 className="text-lg leading-6 font-medium text-gray-900">Primary Location</h3>
+                            <p className="mt-1 max-w-2xl text-sm text-gray-500">{conversation.primary_location.address}</p>
+                        </div>
+                        <div className="px-4 py-5 sm:px-6">
+                            <img
+                                src={`https://maps.googleapis.com/maps/api/staticmap?center=${conversation.primary_location.latitude},${conversation.primary_location.longitude}&zoom=15&size=600x300&markers=color:red%7C${conversation.primary_location.latitude},${conversation.primary_location.longitude}&key=${googleMapsApiKey}`}
+                                alt="Location Map"
+                                className="w-full object-cover"
+                            />
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}
+
+export default ConversationDetail;

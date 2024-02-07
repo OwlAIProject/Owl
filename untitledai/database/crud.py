@@ -39,8 +39,7 @@ def get_transcription(db: Session, transcription_id: int) -> Transcription:
     return db.exec(statement).first()
 
 def get_conversation(db: Session, conversation_id: int) -> Conversation:
-    statement = select(Conversation).where(Conversation.id == conversation_id)
-    return db.exec(statement).first()
+    return db.query(Conversation).filter(Conversation.id == conversation_id).first()
 
 def update_transcription(db: Session, transcription_id: int, updated_transcription: Transcription) -> Transcription:
     db_transcription = db.get(Transcription, transcription_id)
