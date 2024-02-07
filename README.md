@@ -16,13 +16,8 @@
 The app's main screen allows recording to be toggled. Recording continues in the background until stopped explicitly or the app is force quit.
 
 <p align="center">
-<img alt="Apple Watch app main screen" src="docs/images/capture_device_user_guides/apple_watch/content_view.png"><br>
-<i>Apple Watch app main screen. Recording is initiated and stopped here.</i>
-</p>
-
-<p align="center">
-<img alt="Apple Watch app settings screen" src="docs/images/capture_device_user_guides/apple_watch/settings_view.png"><br>
-<i>Apple Watch app settings.</i>
+<img alt="Apple Watch app main screen" src="docs/images/capture_device_user_guides/apple_watch/content_view.png"> <img alt="Apple Watch app settings screen" src="docs/images/capture_device_user_guides/apple_watch/settings_view.png"><br>
+<i>Recording is initiated and stopped on the main screen. Settings control transfer modes.</i>
 </p>
 
 The settings screen allows the capture mode to be configured. There are three permutations:
