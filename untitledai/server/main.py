@@ -17,6 +17,7 @@ from .app_state import AppState
 from .routes.capture import router as capture_router
 from .routes.conversations import router as conversations_router
 from .capture_socket import CaptureSocketApp
+from .udp_capture_socket import UDPCaptureSocketApp
 from ..services import LLMService, ConversationService, NotificationService
 from ..database.database import Database
 from ..services.stt.asynchronous.async_transcription_service_factory import AsyncTranscriptionServiceFactory
@@ -26,6 +27,8 @@ import logging
 import asyncio
 from colorama import init, Fore, Style, Back
 from fastapi import Depends
+
+from .streaming_capture_handler import StreamingCaptureHandler
 
 logger = logging.getLogger(__name__)
 
@@ -103,6 +106,11 @@ def create_server_app(config: Configuration) -> FastAPI:
         # Initialize the database
         app.state._app_state.database.init_db()
         asyncio.create_task(process_queue(app.state._app_state))
+        if config.udp.enabled:
+            loop = asyncio.get_running_loop()
+            await loop.create_datagram_endpoint(
+                lambda: UDPCaptureSocketApp(app.state._app_state), local_addr=(config.udp.host, config.udp.port)
+            )
 
     @app.on_event("shutdown")
     async def shutdown_event():
