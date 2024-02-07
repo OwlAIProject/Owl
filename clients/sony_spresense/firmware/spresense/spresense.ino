@@ -73,7 +73,6 @@ void setup() {
   }
 
   Serial.println("UDP started.");
-  Serial.println("Connected to TCP server.");
 
   Serial.println("Init Audio Library");
   theAudio = AudioClass::getInstance();
