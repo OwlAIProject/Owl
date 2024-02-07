@@ -1,13 +1,22 @@
-// Utility function to handle fetching to the backend
 async function fetchFromBackend(url, options) {
-    const token = process.env.NEXT_PUBLIC_UNTITLEDAI_CLIENT_TOKEN; 
+    const token = process.env.UNTITLEDAI_CLIENT_TOKEN;
     const incomingUrl = new URL(url);
     const newPathname = incomingUrl.pathname.replace(/^\/api/, '');
-    const backendUrl = new URL(incomingUrl);
-    backendUrl.pathname = newPathname;
-    backendUrl.protocol = 'http';
-    backendUrl.hostname = '127.0.0.1';
-    backendUrl.port = '8000';
+
+    if (newPathname === '/tokens') {
+        return new Response(JSON.stringify({
+            UNTITLEDAI_CLIENT_TOKEN: process.env.UNTITLEDAI_CLIENT_TOKEN,
+            GOOGLE_MAPS_API_KEY: process.env.GOOGLE_MAPS_API_KEY
+        }), {
+            status: 200,
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+    }
+
+    const backendBaseUrl = process.env.UNTITLEDAI_API_URL || 'http://127.0.0.1:8000';
+    const backendUrl = new URL(newPathname, backendBaseUrl);
 
     const backendOptions = {
         ...options,

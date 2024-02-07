@@ -1,19 +1,47 @@
-import React from 'react';
+'use client';
+import React, { useEffect, useState } from 'react';
 
-async function fetchConversation(id) {
-    const response = await fetch(`http://localhost:3000/api/conversations/${id}`, { cache: 'no-store' });
-    if (!response.ok) {
-        throw new Error('Failed to fetch conversations');
+
+
+const ConversationDetail = ({ params }) => {
+    const [conversation, setConversation] = useState(null);
+    const [googleMapsApiKey, setGoogleMapsApiKey] = useState('');
+
+    const fetchConversation = async (id) => {
+        const response = await fetch(`/api/conversations/${id}`, { cache: 'no-store' });
+        if (!response.ok) {
+            throw new Error('Failed to fetch conversations');
+        }
+        const data = await response.json();
+        return data;
     }
-    const data = await response.json();
-    console.log(data);
-    return data;
-}
+    
+    const fetchGoogleMapsApiKey = async () => {
+        const response = await fetch(`/api/tokens`, {
+            cache: 'no-store'
+        });
+        if (!response.ok) {
+            throw new Error('Failed to fetch API tokens');
+        }
+        const data = await response.json();
+        return data.GOOGLE_MAPS_API_KEY;
+    };
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const conversationData = await fetchConversation(params.id);
+                setConversation(conversationData);
+                const apiKey = await fetchGoogleMapsApiKey();
+                setGoogleMapsApiKey(apiKey);
+            } catch (error) {
+                console.error(error);
+            }
+        };
 
+        fetchData();
+    }, [params.id]);
 
-const ConversationDetail = async ({ params }) => {
-    const conversation = await fetchConversation(params.id);
-    const googleMapsApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+    if (!conversation) return null;
 
     return (
         <div className="max-w-4xl mx-auto p-5">

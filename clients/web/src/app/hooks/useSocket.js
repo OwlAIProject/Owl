@@ -5,8 +5,23 @@ export const useSocket = () => {
   const [socket, setSocket] = useState(null);
 
   useEffect(() => {
-    const socketIo = initSocket();
-    setSocket(socketIo);
+    const initializeSocket = async () => {
+        try {
+          const response = await fetch(`/api/tokens`, {
+            cache: 'no-store'
+          });
+          if (!response.ok) {
+            throw new Error('Failed to fetch tokens');
+          }
+          const data = await response.json();
+          const socketIo = initSocket(data.UNTITLEDAI_CLIENT_TOKEN);
+          setSocket(socketIo);
+        } catch (error) {
+          console.error(error);
+        }
+      };
+      initializeSocket();
+ 
   }, []);
 
   return socket;

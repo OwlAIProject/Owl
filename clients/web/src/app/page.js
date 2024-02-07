@@ -9,7 +9,7 @@ const ConversationsList = () => {
   useEffect(() => {
     const fetchConversations = async () => {
       try {
-        const response = await fetch(`http://localhost:3000/api/conversations`, {
+        const response = await fetch(`/api/conversations`, {
           cache: 'no-store'
         });
         if (!response.ok) {

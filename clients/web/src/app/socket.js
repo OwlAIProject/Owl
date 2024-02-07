@@ -3,10 +3,10 @@ import io from 'socket.io-client';
 
 let socket;
 
-export const initSocket = () => {
-  const token = process.env.NEXT_PUBLIC_UNTITLEDAI_CLIENT_TOKEN;
+export const initSocket = (token) => {
   if (!socket) {
-    socket = io('http://localhost:8000', {
+    socket = io(process.env.UNTITLEDAI_API_URL || '/', {
+        path: '/api/socket',
         extraHeaders: {
             Authorization: `Bearer ${token}`
           }

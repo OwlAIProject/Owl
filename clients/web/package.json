@@ -6,9 +6,11 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "startCustom": "NODE_ENV=production node server.js",
     "lint": "next lint"
   },
   "dependencies": {
+    "http-proxy": "^1.18.1",
     "next": "14.1.0",
     "react": "^18",
     "react-dom": "^18",

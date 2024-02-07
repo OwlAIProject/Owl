@@ -40,7 +40,6 @@ const CaptureComponent = () => {
         onClick={toggleRecording}
       >
         {isRecording ? <FiSquare size={24} /> : <FiMic size={24} />}
-        <span className="ml-2">{isRecording ? 'Stop Recording' : 'Start Recording'}</span>
       </button>
     </div>
   );

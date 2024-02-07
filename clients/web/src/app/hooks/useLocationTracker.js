@@ -6,7 +6,7 @@ export const useLocationTracker = (isActive, captureUUID, updateInterval = 10000
 
     const postLocation = async (latitude, longitude) => {
       try {
-        const response = await fetch('http://localhost:3000/api/capture/location', {
+        const response = await fetch('/api/capture/location', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
