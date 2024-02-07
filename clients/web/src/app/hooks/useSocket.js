@@ -14,7 +14,7 @@ export const useSocket = () => {
             throw new Error('Failed to fetch tokens');
           }
           const data = await response.json();
-          const socketIo = initSocket(data.UNTITLEDAI_CLIENT_TOKEN);
+          const socketIo = initSocket(data.UNTITLEDAI_USER_CLIENT_TOKEN);
           setSocket(socketIo);
         } catch (error) {
           console.error(error);

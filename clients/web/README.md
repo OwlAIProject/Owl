@@ -4,13 +4,13 @@
 First, set the client token environmental variable:
 
 ```bash
-export NEXT_PUBLIC_UNTITLEDAI_CLIENT_TOKEN=your-client-token
+export UNTITLEDAI_USER_CLIENT_TOKEN=your-client-token
 ```
 
 Optionally, set the google maps token if you want maps to work:
 
 ```bash
-export NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=your-google-maps-token
+export GOOGLE_MAPS_API_KEY=your-google-maps-token
 ```
 
 Then, install the dependencies:

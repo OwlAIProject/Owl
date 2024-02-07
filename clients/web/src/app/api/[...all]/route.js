@@ -1,11 +1,11 @@
 async function fetchFromBackend(url, options) {
-    const token = process.env.UNTITLEDAI_CLIENT_TOKEN;
+    const token = process.env.UNTITLEDAI_USER_CLIENT_TOKEN;
     const incomingUrl = new URL(url);
     const newPathname = incomingUrl.pathname.replace(/^\/api/, '');
 
     if (newPathname === '/tokens') {
         return new Response(JSON.stringify({
-            UNTITLEDAI_CLIENT_TOKEN: process.env.UNTITLEDAI_CLIENT_TOKEN,
+            UNTITLEDAI_USER_CLIENT_TOKEN: token,
             GOOGLE_MAPS_API_KEY: process.env.GOOGLE_MAPS_API_KEY
         }), {
             status: 200,
