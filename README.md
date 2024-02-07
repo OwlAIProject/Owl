@@ -64,6 +64,10 @@ select a complication, and choose the app using the digital crown. The steps are
 <i><b>Step 5:</b> Once confirmed, the complication will be visible on the watch face.</i>
 </p>
 
+### Xiao ESP32S3 Sense Board
+
+TODO: battery warning and mention potential dangers of lacking a battery protection circuit, battery discharge
+
 ## Source Code Tour
 
 To help orient newcomers to the code base, we will trace the complete path that data takes through the system, from speech to displayed summary.
