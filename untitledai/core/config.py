@@ -51,6 +51,12 @@ class ConversationEndpointingConfiguration(BaseModel):
 class NotificationConfiguration(BaseModel):
     apn_team_id: str | None
 
+class UDPConfiguration(BaseModel):
+    enabled: bool
+    host: str | None
+    port: int | None
+
+
 class Configuration(BaseModel):
 
     @classmethod
@@ -82,3 +88,4 @@ class Configuration(BaseModel):
     database: DatabaseConfiguration
     conversation_endpointing: ConversationEndpointingConfiguration
     notification: NotificationConfiguration
+    udp: UDPConfiguration
