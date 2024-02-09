@@ -164,6 +164,12 @@ class ConversationProgress(BaseModel):
     start_time: datetime
     device_type: str
 
+    class Config:
+        json_encoders = {
+            #TODO: create system-wide timestamping functions to aovid repeating this conversion everywhere
+            datetime: lambda datetime: datetime.strftime("%Y-%m-%dT%H:%M:%S.%f")
+        }
+
 class ConversationsResponse(BaseModel):
     conversations: List[ConversationRead]
     conversations_in_progress: List[ConversationProgress]
