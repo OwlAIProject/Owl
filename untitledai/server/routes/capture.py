@@ -183,7 +183,7 @@ async def upload_chunk(
             detection_service = app_state.conversation_detection_service_by_id.get(capture_uuid)
             if detection_service is None:
                 logger.error(f"Internal error: No conversation detection service exists for capture_uuid={capture_uuid}")
-                raise HTTPException(status_Code=500, detail="Internal error: Lost conversation service")
+                raise HTTPException(status_code=500, detail="Internal error: Lost conversation service")
         else:
             # Create new capture session
             capture_file = CaptureFile(
