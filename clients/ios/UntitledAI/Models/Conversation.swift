@@ -9,6 +9,12 @@ import Foundation
 
 struct ConversationsResponse: Codable {
     var conversations: [Conversation]
+    var conversationsInProgress: [ConversationProgress]
+
+    enum CodingKeys: String, CodingKey {
+        case conversations
+        case conversationsInProgress = "conversations_in_progress"
+    }
 }
 
 struct Conversation: Codable {
@@ -26,5 +32,19 @@ struct Conversation: Codable {
         case shortSummary = "short_summary"
         case transcriptions
         case primaryLocation = "primary_location"
+    }
+}
+
+struct ConversationProgress: Codable {
+    var captureUUID: String
+    var inConversation: Bool
+    var startTime: Date
+    var deviceType: String
+
+    enum CodingKeys: String, CodingKey {
+        case captureUUID = "capture_uuid"
+        case inConversation = "in_conversation"
+        case startTime = "start_time"
+        case deviceType = "device_type"
     }
 }

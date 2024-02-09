@@ -7,6 +7,7 @@
 import Foundation
 class ConversationsViewModel: ObservableObject {
     @Published var conversations: [Conversation] = []
+    @Published var conversationsInProgress: [ConversationProgress] = []
 
     private let apiService = API.shared 
     private let socketManager = SocketManager.shared
@@ -19,7 +20,10 @@ class ConversationsViewModel: ObservableObject {
     func fetchConversations() {
         apiService.fetchConversations { [weak self] response in
             DispatchQueue.main.async {
+                // These are snapshots and safe to overwrite anything that was added incrementally
+                // by the socket listeners
                 self?.conversations = response.conversations
+                self?.conversationsInProgress = response.conversationsInProgress.filter { $0.inConversation }
             }
         }
     }
@@ -50,6 +54,32 @@ class ConversationsViewModel: ObservableObject {
                     print("Decoding error: \(error)")
                 }
             }
+        }
+
+        socketManager.socket.on("conversation_progress") { [weak self] data, ack in
+            guard let self = self else { return }
+
+            if let conversationProgressJsonString = data[0] as? String,
+               let jsonData = conversationProgressJsonString.data(using: .utf8) {
+                do {
+                    let decoder = JSONDecoder.dateDecoder()
+                    let conversationInProgress = try decoder.decode(ConversationProgress.self, from: jsonData)
+                    DispatchQueue.main.async {
+                        print(conversationInProgress)
+                        // Replace/remove existing if it exists, otherwise insert new
+                        if let idx = self.conversationsInProgress.firstIndex(where: { $0.captureUUID == conversationInProgress.captureUUID }) {
+                            var modified = self.conversationsInProgress
+                            modified[idx] = conversationInProgress
+                            self.conversationsInProgress = modified.filter { $0.inConversation }    // remove anything not in progress
+                        } else if conversationInProgress.inConversation {
+                            self.conversationsInProgress.insert(conversationInProgress, at: 0)
+                        }
+                    }
+                } catch {
+                    print("Decoding error: \(error)")
+                }
+            }
+            print("GOT HERE")
         }
     }
 }
