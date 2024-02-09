@@ -109,6 +109,10 @@ class ProcessAudioChunkTask(Task):
         #       - PROCESSING
         #       - COMPLETED
         #       - FAILED_PROCESSING? <-- For now we don't have a way to set this and I wouldn't add it yet but could be added in future
+        # - We should also log last update time in schema. Right now, end time is the end of the last VAD segment. So if you go silent,
+        #   this doesn't update. Also, it only updates at most every 30 seconds when chunking, so having a last update time could allow
+        #   for a UI that gives more information as to whether anything is still being received or whether we are stuck. We can do the UI
+        #   stuff later.
         #
         # - detection_results holds all completed and possibly an in-progress conversation. I process
         #   them all together at the *bottom of this function*. But we should start doing stuff here.
