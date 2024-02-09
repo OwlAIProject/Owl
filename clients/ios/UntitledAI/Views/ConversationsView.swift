@@ -68,9 +68,6 @@ struct ConversationCellView: View {
 struct ConversationInProgressCellView: View {
     let conversation: ConversationProgress
 
-    @State private var _secondsElapsed = "0"
-    private let _timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
-
     private var formattedStartTime: String {
         conversation.startTime.formatted(date: .long, time: .shortened)
     }
@@ -84,11 +81,8 @@ struct ConversationInProgressCellView: View {
                 .padding(.top)
 
             HStack(alignment: .top) {
-                Text("Recording from \(conversation.deviceType): \(_secondsElapsed) sec")
-                    .onReceive(_timer) { _ in
-                        let duration = Date.now.timeIntervalSince(conversation.startTime)
-                        _secondsElapsed = String(format: "%.0f", duration)
-                    }
+                let secondsElapsed = String(format: "%.0f", conversation.endTime.timeIntervalSince(conversation.startTime))
+                Text("Recording from \(conversation.deviceType): \(secondsElapsed) sec")
                     .font(.headline)
                     .foregroundColor(.primary)
                     .lineLimit(3)

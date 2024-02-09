@@ -39,12 +39,14 @@ struct ConversationProgress: Codable {
     var conversationUUID: String
     var inConversation: Bool
     var startTime: Date
+    var endTime: Date
     var deviceType: String
 
     enum CodingKeys: String, CodingKey {
         case conversationUUID = "conversation_uuid"
         case inConversation = "in_conversation"
         case startTime = "start_time"
+        case endTime = "end_time"
         case deviceType = "device_type"
     }
 }
