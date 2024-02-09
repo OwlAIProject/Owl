@@ -31,6 +31,13 @@ class DeepgramConfiguration(BaseModel):
     model: str
     language: str
 
+class StreamingWhisperConfiguration(BaseModel):
+    model: str
+    language: str
+    silero_sensitivity: float
+    webrtc_sensitivity: int
+    post_speech_silence_duration: float
+
 class StreamingTranscriptionConfiguration(BaseModel):
     provider: str
     
@@ -76,6 +83,7 @@ class Configuration(BaseModel):
     captures: CapturesConfiguration
     vad: VADConfiguration
     deepgram: DeepgramConfiguration
+    streaming_whisper: StreamingWhisperConfiguration
     streaming_transcription: StreamingTranscriptionConfiguration
     async_transcription: AsyncTranscriptionConfiguration
     user: UserConfiguration

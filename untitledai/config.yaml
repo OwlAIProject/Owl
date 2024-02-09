@@ -29,7 +29,15 @@ deepgram:
   language: "en-US"
 
 streaming_transcription:
-  provider: "deepgram"
+  provider: "whisper"  
+  # provider: "deepgram"
+
+streaming_whisper:
+  model: "small"
+  language: "en"
+  silero_sensitivity: 0.4
+  webrtc_sensitivity: 2
+  post_speech_silence_duration: 0.5
 
 async_transcription:
   provider: "whisper"  

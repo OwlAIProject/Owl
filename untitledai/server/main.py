@@ -26,6 +26,7 @@ import logging
 import asyncio
 from colorama import init, Fore, Style, Back
 from fastapi import Depends
+from ..services.stt.streaming.streaming_whisper.streaming_whisper_server import start_streaming_whisper_server
 
 logger = logging.getLogger(__name__)
 
@@ -103,6 +104,8 @@ def create_server_app(config: Configuration) -> FastAPI:
         # Initialize the database
         app.state._app_state.database.init_db()
         asyncio.create_task(process_queue(app.state._app_state))
+        if config.streaming_transcription.provider == "whisper":
+            start_streaming_whisper_server(config.streaming_whisper)
 
     @app.on_event("shutdown")
     async def shutdown_event():
