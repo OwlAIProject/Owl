@@ -161,12 +161,13 @@ class ConversationRead(BaseModel):
 class ConversationProgress(BaseModel):
     conversation_uuid: str
     in_conversation: bool
-    start_time: datetime
+    start_time: datetime    # start of conversation
+    end_time: datetime      # end of last voice segment (note: conversation can remain in progress while this remains unchanged during silent periods)
     device_type: str
 
     class Config:
         json_encoders = {
-            #TODO: create system-wide timestamping functions to aovid repeating this conversion everywhere
+            #TODO: create system-wide timestamping functions to avoid repeating these conversions in all over the place
             datetime: lambda datetime: datetime.strftime("%Y-%m-%dT%H:%M:%S.%f")
         }
 

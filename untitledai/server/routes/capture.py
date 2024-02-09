@@ -101,6 +101,32 @@ class ProcessAudioChunkTask(Task):
         # Run conversation detection stage (finds conversations thus far)
         detection_results = await detection_service.detect_conversations(audio_data=audio_data, format=format, capture_finished=capture_finished)
 
+        #
+        # TODO for Ethan:
+        #
+        # - Suggested states for Conversation object (to unify with ConversationInProgress):
+        #       - RECORDING / CAPTURING
+        #       - PROCESSING
+        #       - COMPLETED
+        #       - FAILED_PROCESSING? <-- For now we don't have a way to set this and I wouldn't add it yet but could be added in future
+        #
+        # - detection_results holds all completed and possibly an in-progress conversation. I process
+        #   them all together at the *bottom of this function*. But we should start doing stuff here.
+        #
+        # - At this point detection_results.completed contains a list of *completed* conversations.
+        #   We may have never encountered these yet in the case of passing in a large chunk. We 
+        #   should create new database objects if needed, with an *in-processing* state (because
+        #   completed convos are immediately processed next), or update existing objects if they
+        #   exist (i.e., we had entered "recording" state into the database previously.)
+        #
+        # - Here is also where an in-progress conversation ("recording" state) can be first detected.
+        #   It would be on detection_results.in_progress (when not None). Would be good to enter it
+        #   into the database in a "recording" state and notify the server.
+        #
+        # - Then, after this, I have code that takes the completed conversations and extracts them
+        #   into files and processes them....
+        #
+
         # Create conversation segment files and store extracted conversations there
         convo_filepaths = []
         segment_files = []
@@ -126,6 +152,15 @@ class ProcessAudioChunkTask(Task):
         except Exception as e:
             logging.error(f"Error processing conversation: {e}")
 
+        #
+        # TODO for Ethan:
+        #
+        # - Right now, as I said above, I actually handle all the progress updates here in one big pass.
+        #   All completed convos and the in-progress one are handled here.
+        #
+        # - In reality, we would want to have only the completed conversations finalized here.
+        #
+
         # Construct progress updates to server
         progress_updates = []
 
@@ -135,6 +170,7 @@ class ProcessAudioChunkTask(Task):
                 conversation_uuid=convo.uuid,
                 in_conversation=False,
                 start_time=convo.endpoints.start,
+                end_time=convo.endpoints.end,
                 device_type=capture_file.device_type.value
             )
             progress_updates.append(progress)
@@ -146,6 +182,7 @@ class ProcessAudioChunkTask(Task):
                 conversation_uuid=conversation_in_progress.uuid,
                 in_conversation=True,
                 start_time=conversation_in_progress.endpoints.start,
+                end_time=conversation_in_progress.endpoints.end,
                 device_type=capture_file.device_type.value
             )
             progress_updates.append(progress)

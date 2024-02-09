@@ -47,6 +47,7 @@ def read_conversations(
                     conversation_uuid=conversation_in_progress.uuid,
                     in_conversation=True,
                     start_time=conversation_in_progress.endpoints.start,
+                    end_time=conversation_in_progress.endpoints.end,
                     device_type=capture_file.device_type.value
                 )
                 progress_updates.append(progress)
