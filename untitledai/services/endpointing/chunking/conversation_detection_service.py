@@ -8,6 +8,7 @@
 #
 
 from dataclasses import dataclass
+from datetime import datetime, timedelta
 from io import BytesIO
 import logging
 import os
@@ -50,6 +51,7 @@ class TerminateProcess:
 @dataclass
 class DetectedConversationsResponse:
     conversations: List[TimeSegment]
+    current_conversation_start_offset_milliseconds: int | None
 
 @dataclass
 class ExtractToFilesFinished:
@@ -66,7 +68,7 @@ class ConversationDetectionService:
     extracting them to files. May only handle one capture session.
     """
 
-    def __init__(self, config: Configuration, capture_filepath: str):
+    def __init__(self, config: Configuration, capture_filepath: str, capture_timestamp: datetime):
         """
         Instantiates the service for a particular capture file and starts a subprocess.
 
@@ -78,9 +80,16 @@ class ConversationDetectionService:
         capture_filepath : str
             The capture file for the capture session this instance will handle. This is expected to
             be updated separately and before detection is invoked on each audio chunk.
+
+        capture_timestamp : datetime
+            Timestamp of the start of the capture.
         """
         self._request_queue = AsyncMultiprocessingQueue(queue=Queue())
         self._response_queue = AsyncMultiprocessingQueue(queue=Queue())
+
+        # Timestamps
+        self._start_time = capture_timestamp
+        self._current_conversation_start_time = None
 
         # Start process
         process_args = (
@@ -123,8 +132,21 @@ class ConversationDetectionService:
         await self._request_queue.put(DetectConversations(capture_finished=capture_finished, audio_data=audio_data, format=format))
         response = await self._response_queue.get()
         if isinstance(response, DetectedConversationsResponse):
+            self._current_conversation_start_time = None
+            if response.current_conversation_start_offset_milliseconds is not None:
+                self._current_conversation_start_time = self._start_time + timedelta(milliseconds=response.current_conversation_start_offset_milliseconds)
             return response.conversations
         return []
+    
+    async def current_conversation_start_time(self) -> datetime | None:
+        """
+        Returns
+        -------
+        datetime | None
+            If a conversation is currently in progress, its start timem is returned. Otherwise, None
+            if no conversation is currently in progress.
+        """
+        return self._current_conversation_start_time
     
     async def extract_conversations(self, conversations: List[TimeSegment], conversation_filepaths: List[str]):
         """
@@ -179,7 +201,11 @@ class ConversationDetectionService:
                 
                 # Detect conversations and return them
                 convos = detector.consume_samples(samples=audio_chunk, end_stream=request.capture_finished)
-                response_queue.put(DetectedConversationsResponse(conversations=convos))
+                response = DetectedConversationsResponse(
+                    conversations=convos,
+                    current_conversation_start_offset_milliseconds=detector.current_conversation_start_offset_milliseconds()
+                )
+                response_queue.put(response)
 
             # Command: extract conversations from capture file into their own files
             elif isinstance(request, ExtractToFiles):

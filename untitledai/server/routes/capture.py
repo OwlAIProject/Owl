@@ -181,7 +181,11 @@ async def upload_chunk(
             app_state.capture_files_by_id[capture_uuid] = capture_file
 
             # ... and associated conversation detection service
-            detection_service = ConversationDetectionService(config=app_state.config, capture_filepath=capture_file.filepath)
+            detection_service = ConversationDetectionService(
+                config=app_state.config,
+                capture_filepath=capture_file.filepath,
+                capture_timestamp=capture_file.timestamp
+            )
             app_state.conversation_detection_service_by_id[capture_uuid] = detection_service
         
         # Get uploaded data

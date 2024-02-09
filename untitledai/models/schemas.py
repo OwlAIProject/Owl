@@ -158,5 +158,11 @@ class ConversationRead(BaseModel):
     class Config:
         from_attributes = True
 
+class ConversationInProgress(BaseModel):
+    start_time: datetime
+    device_type: str
+
+
 class ConversationsResponse(BaseModel):
     conversations: List[ConversationRead]
+    conversations_in_progress: List[ConversationInProgress]

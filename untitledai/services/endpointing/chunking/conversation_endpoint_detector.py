@@ -73,6 +73,9 @@ class ConversationEndpointDetector:
 
         return conversations
 
+    def current_conversation_start_offset_milliseconds(self) -> int | None:
+        return self._current_conversation_start
+
     def _get_duration_milliseconds(self, samples: torch.Tensor | AudioSegment) -> int:
         if isinstance(samples, torch.Tensor):
             assert samples.dim() == 1
