@@ -41,6 +41,7 @@ def read_conversations(
             capture_file = app_state.capture_files_by_id.get(capture_uuid)
             if capture_file is not None:
                 conversation_in_progress = ConversationInProgress(
+                    capture_uuid=capture_uuid,
                     start_time=current_conversation_start_time,
                     device_type=capture_file.device_type.value
                 )

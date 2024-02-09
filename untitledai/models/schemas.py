@@ -159,9 +159,9 @@ class ConversationRead(BaseModel):
         from_attributes = True
 
 class ConversationInProgress(BaseModel):
+    capture_uuid: str
     start_time: datetime
     device_type: str
-
 
 class ConversationsResponse(BaseModel):
     conversations: List[ConversationRead]

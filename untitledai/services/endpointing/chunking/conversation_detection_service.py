@@ -138,7 +138,7 @@ class ConversationDetectionService:
             return response.conversations
         return []
     
-    async def current_conversation_start_time(self) -> datetime | None:
+    def current_conversation_start_time(self) -> datetime | None:
         """
         Returns
         -------
