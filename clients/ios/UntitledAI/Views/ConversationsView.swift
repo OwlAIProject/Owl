@@ -13,7 +13,7 @@ struct ConversationsView: View {
 
     var body: some View {
         List {
-            ForEach(viewModel.conversationsInProgress, id: \.captureUUID) { conversation in
+            ForEach(viewModel.conversationsInProgress, id: \.conversationUUID) { conversation in
                 ConversationInProgressCellView(conversation: conversation)
             }
             ForEach(viewModel.conversations, id: \.id) { conversation in

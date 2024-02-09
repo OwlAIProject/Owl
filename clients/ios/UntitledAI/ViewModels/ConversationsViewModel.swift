@@ -67,7 +67,7 @@ class ConversationsViewModel: ObservableObject {
                     DispatchQueue.main.async {
                         print(conversationInProgress)
                         // Replace/remove existing if it exists, otherwise insert new
-                        if let idx = self.conversationsInProgress.firstIndex(where: { $0.captureUUID == conversationInProgress.captureUUID }) {
+                        if let idx = self.conversationsInProgress.firstIndex(where: { $0.conversationUUID == conversationInProgress.conversationUUID }) {
                             var modified = self.conversationsInProgress
                             modified[idx] = conversationInProgress
                             self.conversationsInProgress = modified.filter { $0.inConversation }    // remove anything not in progress
@@ -79,7 +79,6 @@ class ConversationsViewModel: ObservableObject {
                     print("Decoding error: \(error)")
                 }
             }
-            print("GOT HERE")
         }
     }
 }

@@ -36,13 +36,13 @@ struct Conversation: Codable {
 }
 
 struct ConversationProgress: Codable {
-    var captureUUID: String
+    var conversationUUID: String
     var inConversation: Bool
     var startTime: Date
     var deviceType: String
 
     enum CodingKeys: String, CodingKey {
-        case captureUUID = "capture_uuid"
+        case conversationUUID = "conversation_uuid"
         case inConversation = "in_conversation"
         case startTime = "start_time"
         case deviceType = "device_type"
