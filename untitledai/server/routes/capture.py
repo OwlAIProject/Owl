@@ -4,7 +4,7 @@
 # Capture endpoints: streaming and chunked file uploads via HTTP handled here.
 #
 
-from datetime import timedelta
+from datetime import datetime, timedelta, timezone
 from glob import glob
 import os
 from typing import Annotated
@@ -21,7 +21,7 @@ from .. import AppState
 from ..task import Task
 from ...database.crud import create_location
 from ...files import CaptureFile, append_to_wav_file
-from ...models.schemas import Location
+from ...models.schemas import Location, ConversationProgress
 from ..streaming_capture_handler import StreamingCaptureHandler
 from ...services import ConversationDetectionService
 
@@ -126,6 +126,21 @@ class ProcessAudioChunkTask(Task):
                 )
         except Exception as e:
             logging.error(f"Error processing conversation: {e}")
+
+        # Lastly, ping the server indicating whether a conversation is in progress
+        conversation_start_time = detection_service.current_conversation_start_time()
+        conversation_in_progress = ConversationProgress(
+            capture_uuid=capture_file.capture_uuid,
+            in_conversation=conversation_start_time is not None,
+            start_time=conversation_start_time if conversation_start_time is not None else datetime.now(timezone.utc),
+            device_type=capture_file.device_type.value
+        )
+        await app_state.notification_service.send_notification(
+            title="New Conversation-in-Progress",
+            body=f"On device: {capture_file.device_type.value}",
+            type="conversation_progress",
+            payload=conversation_in_progress.model_dump_json()
+        )
 
 Task.register(ProcessAudioChunkTask)
 

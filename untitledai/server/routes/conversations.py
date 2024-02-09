@@ -5,7 +5,7 @@ from fastapi.responses import JSONResponse
 from sqlmodel import Session
 
 from ...server.app_state import AppState
-from ...models.schemas import ConversationsResponse, ConversationRead, ConversationInProgress
+from ...models.schemas import ConversationsResponse, ConversationRead, ConversationProgress
 from ...database.crud import get_all_conversations, get_conversation, delete_conversation
 from ...devices import DeviceType
 from typing import List
@@ -40,8 +40,9 @@ def read_conversations(
             # Conversation in progress, look up its device from the capture file
             capture_file = app_state.capture_files_by_id.get(capture_uuid)
             if capture_file is not None:
-                conversation_in_progress = ConversationInProgress(
+                conversation_in_progress = ConversationProgress(
                     capture_uuid=capture_uuid,
+                    in_conversation=True,
                     start_time=current_conversation_start_time,
                     device_type=capture_file.device_type.value
                 )
