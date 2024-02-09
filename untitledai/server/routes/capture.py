@@ -99,23 +99,22 @@ class ProcessAudioChunkTask(Task):
         detection_service = self._detection_service
         
         # Run conversation detection stage (finds conversations thus far)
-        convos = await detection_service.detect_conversations(audio_data=audio_data, format=format, capture_finished=capture_finished)
+        detection_results = await detection_service.detect_conversations(audio_data=audio_data, format=format, capture_finished=capture_finished)
 
         # Create conversation segment files and store extracted conversations there
         convo_filepaths = []
         segment_files = []
-        for convo in convos:
-            timestamp = capture_file.timestamp + timedelta(milliseconds=convo.start)
+        for convo in detection_results.completed:
             segment_file = capture_file.create_conversation_segment(
-                conversation_uuid=uuid.uuid1().hex,
-                timestamp=timestamp,
+                conversation_uuid=convo.uuid,
+                timestamp=convo.endpoints.start,
                 file_extension=format
             )
             convo_filepaths.append(segment_file.filepath)
             segment_files.append(segment_file)
-        await detection_service.extract_conversations(conversations=convos, conversation_filepaths=convo_filepaths)
+        await detection_service.extract_conversations(conversations=detection_results.completed, conversation_filepaths=convo_filepaths)
 
-        # Process each conversation
+        # Process each completed conversation
         try:
             for segment_file in segment_files:
                 await app_state.conversation_service.process_conversation_from_audio(
@@ -127,20 +126,38 @@ class ProcessAudioChunkTask(Task):
         except Exception as e:
             logging.error(f"Error processing conversation: {e}")
 
-        # Lastly, ping the server indicating whether a conversation is in progress
-        conversation_start_time = detection_service.current_conversation_start_time()
-        conversation_in_progress = ConversationProgress(
-            capture_uuid=capture_file.capture_uuid,
-            in_conversation=conversation_start_time is not None,
-            start_time=conversation_start_time if conversation_start_time is not None else datetime.now(timezone.utc),
-            device_type=capture_file.device_type.value
-        )
-        await app_state.notification_service.send_notification(
-            title="New Conversation-in-Progress",
-            body=f"On device: {capture_file.device_type.value}",
-            type="conversation_progress",
-            payload=conversation_in_progress.model_dump_json()
-        )
+        # Construct progress updates to server
+        progress_updates = []
+
+        # Inform the server that all completed conversations are no longer "in progress"
+        for convo in detection_results.completed:
+            progress = ConversationProgress(
+                conversation_uuid=convo.uuid,
+                in_conversation=False,
+                start_time=convo.endpoints.start,
+                device_type=capture_file.device_type.value
+            )
+            progress_updates.append(progress)
+
+        # If there is an in-progress conversation, add that
+        conversation_in_progress = detection_results.in_progress
+        if conversation_in_progress is not None:
+            progress = ConversationProgress(
+                conversation_uuid=conversation_in_progress.uuid,
+                in_conversation=True,
+                start_time=conversation_in_progress.endpoints.start,
+                device_type=capture_file.device_type.value
+            )
+            progress_updates.append(progress)
+            
+        # Send updates to server
+        for progress in progress_updates:
+            await app_state.notification_service.send_notification(
+                title="New Conversation-in-Progress",
+                body=f"On device: {capture_file.device_type.value}",
+                type="conversation_progress",
+                payload=progress.model_dump_json()
+            )
 
 Task.register(ProcessAudioChunkTask)
 

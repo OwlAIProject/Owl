@@ -159,7 +159,7 @@ class ConversationRead(BaseModel):
         from_attributes = True
 
 class ConversationProgress(BaseModel):
-    capture_uuid: str
+    conversation_uuid: str
     in_conversation: bool
     start_time: datetime
     device_type: str
