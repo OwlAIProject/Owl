@@ -27,6 +27,7 @@ import logging
 import asyncio
 from colorama import init, Fore, Style, Back
 from fastapi import Depends
+from ..services.stt.streaming.streaming_whisper.streaming_whisper_server import start_streaming_whisper_server
 
 from .streaming_capture_handler import StreamingCaptureHandler
 
@@ -106,6 +107,9 @@ def create_server_app(config: Configuration) -> FastAPI:
         # Initialize the database
         app.state._app_state.database.init_db()
         asyncio.create_task(process_queue(app.state._app_state))
+        if config.streaming_transcription.provider == "whisper":
+            start_streaming_whisper_server(config.streaming_whisper)
+        # UPD capture for LTE-M and other low bandwidth devices
         if config.udp.enabled:
             loop = asyncio.get_running_loop()
             await loop.create_datagram_endpoint(
