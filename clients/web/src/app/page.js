@@ -1,7 +1,8 @@
 'use client';
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useSocket } from './hooks/useSocket'; 
+import { useSocket } from './hooks/useSocket';
+import CountUpTimer from './components/CountUpTimer';
 
 const ConversationsList = () => {
   const [conversations, setConversations] = useState([]);
@@ -29,18 +30,52 @@ const ConversationsList = () => {
 
   useEffect(() => {
     if (socket) {
-      socket.on('new_conversation', (newConversation) => {
-        newConversation = JSON.parse(newConversation);
-        setConversations((prevConversations) => [newConversation, ...prevConversations]);
-      });
-    }
+      const handleNewConversation = (newConversation) => {
+        setConversations((prevConversations) => [JSON.parse(newConversation), ...prevConversations]);
+      };
 
-    return () => {
-      if (socket) {
-        socket.off('new_conversation');
-      }
-    };
+      const handleUpdateConversation = (updatedConversationJson) => {
+        const updatedConversation = JSON.parse(updatedConversationJson);
+        setConversations((prevConversations) =>
+          prevConversations.map((conversation) =>
+            conversation.id === updatedConversation.id ? updatedConversation : conversation
+          )
+        );
+      };
+
+      const handleDeleteConversation = (deletedConversationJson) => {
+        const deletedConversation = JSON.parse(deletedConversationJson);
+        setConversations((prevConversations) =>
+          prevConversations.filter((conversation) => conversation.id !== deletedConversation.id)
+        );
+      };
+
+      socket.on('new_conversation', handleNewConversation);
+      socket.on('update_conversation', handleUpdateConversation);
+      socket.on('delete_conversation', handleDeleteConversation);
+
+      return () => {
+        socket.off('new_conversation', handleNewConversation);
+        socket.off('update_conversation', handleUpdateConversation);
+        socket.off('delete_conversation', handleDeleteConversation);
+      };
+    }
   }, [socket]);
+
+  const getConversationStateStyle = (state) => {
+    switch (state) {
+      case 'CAPTURING':
+        return 'bg-blue-500';
+      case 'PROCESSING':
+        return 'bg-yellow-500';
+      case 'COMPLETED':
+        return 'bg-green-500';
+      case 'FAILED_PROCESSING':
+        return 'bg-red-500';
+      default:
+        return 'bg-gray-500';
+    }
+  };
 
   return (
     <div className="min-h-screen bg-black py-10">
@@ -54,9 +89,18 @@ const ConversationsList = () => {
               className="block transform transition duration-300 ease-in-out hover:-translate-y-1 hover:shadow-xl"
               passHref
             >
-              <div className="p-6 bg-gray-800 rounded-lg border border-gray-700">
-                <h5 className="text-2xl font-bold tracking-tight text-white">{conversation.short_summary}</h5>
-                <p className="font-normal text-gray-400 mt-2">{new Date(conversation.start_time).toLocaleString()}</p>
+              <div className={`p-6 rounded-lg border border-gray-700 flex justify-between items-center`}>
+                <div>
+                  <h5 className="text-2xl font-bold tracking-tight text-white">{conversation.short_summary}</h5>
+                  <p className="font-normal text-gray-400 mt-2">{new Date(`${conversation.start_time}Z`).toLocaleString()}</p>
+                </div>
+                {conversation.state === 'CAPTURING' ? (
+                  <CountUpTimer startTime={conversation.start_time} />
+                ) : (
+                  <span className={`px-4 py-1 rounded-full text-white ${getConversationStateStyle(conversation.state)}`}>
+                    {conversation.state.replace('FAILED_PROCESSING', 'FAILED')}
+                  </span>
+                )}
               </div>
             </Link>
           ))}
