@@ -5,8 +5,9 @@ let socket;
 
 export const initSocket = (token) => {
   if (!socket) {
-    socket = io(process.env.UNTITLEDAI_API_URL || '/', {
-        path: '/api/socket',
+    const backendBaseUrl = process.env.UNTITLEDAI_API_URL || '/';
+    socket = io(backendBaseUrl, {
+        path: backendBaseUrl,
         extraHeaders: {
             Authorization: `Bearer ${token}`
           }
