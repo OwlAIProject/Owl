@@ -13,9 +13,6 @@ struct ConversationsView: View {
 
     var body: some View {
         List {
-            ForEach(viewModel.conversationsInProgress, id: \.conversationUUID) { conversation in
-                ConversationInProgressCellView(conversation: conversation)
-            }
             ForEach(viewModel.conversations, id: \.id) { conversation in
                 NavigationLink(destination: ConversationDetailView(conversation: conversation)) {
                     ConversationCellView(conversation: conversation)
@@ -170,35 +167,3 @@ struct ConversationCellView: View {
     }
 }
 
-struct ConversationInProgressCellView: View {
-    let conversation: ConversationProgress
-
-    private var formattedStartTime: String {
-        conversation.startTime.formatted(date: .long, time: .shortened)
-    }
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 5) {
-            Text(formattedStartTime)
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-                .padding(.horizontal)
-                .padding(.top)
-
-            HStack(alignment: .top) {
-                let secondsElapsed = String(format: "%.0f", conversation.endTime.timeIntervalSince(conversation.startTime))
-                Text("Recording from \(conversation.deviceType): \(secondsElapsed) sec")
-                    .font(.headline)
-                    .foregroundColor(.primary)
-                    .lineLimit(3)
-                    .truncationMode(.tail)
-                    .padding()
-                    .multilineTextAlignment(.leading)
-
-                Spacer()
-            }
-        }
-        .background(Color(.tertiarySystemBackground))
-        .cornerRadius(8)
-    }
-}
