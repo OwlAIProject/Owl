@@ -1,4 +1,3 @@
-
 import asyncio
 import websockets
 import threading
@@ -19,13 +18,13 @@ class StreamingWhisperServer:
         self._recorder_ready = threading.Event()
         self._client_websocket = None
 
-    async def send_to_client(self, message):
+    async def _send_to_client(self, message):
         if self._client_websocket:
             await self._client_websocket.send(message)
 
-    def text_detected(self, text):
+    def _text_detected(self, text):
         asyncio.new_event_loop().run_until_complete(
-            self.send_to_client(
+            self._send_to_client(
                 json.dumps({
                     'type': 'realtime',
                     'text': text
@@ -34,7 +33,7 @@ class StreamingWhisperServer:
         )
         logger.info(f"\r{text}", flush=True, end='')
 
-    def recorder_thread(self):
+    def _recorder_thread(self):
         logger.info("Initializing RealtimeSTT...")
         recorder_config = {
             'spinner': False,
@@ -49,7 +48,7 @@ class StreamingWhisperServer:
             'enable_realtime_transcription': True,
             'realtime_processing_pause': 0,
             'realtime_model_type': 'tiny.en',
-            'on_realtime_transcription_stabilized': self.text_detected,
+            'on_realtime_transcription_stabilized': self._text_detected,
         }
         self._recorder = AudioToTextRecorder(**recorder_config)
         logger.info("RealtimeSTT initialized")
@@ -57,7 +56,7 @@ class StreamingWhisperServer:
         while True:
             full_sentence = self._recorder.text()
             asyncio.new_event_loop().run_until_complete(
-                self.send_to_client(
+                self._send_to_client(
                     json.dumps({
                         'type': 'fullSentence',
                         'text': full_sentence
@@ -65,7 +64,7 @@ class StreamingWhisperServer:
                 )
             )
 
-    def decode_and_resample(self, audio_data, original_sample_rate, target_sample_rate):
+    def _decode_and_resample(self, audio_data, original_sample_rate, target_sample_rate):
         audio_np = np.frombuffer(audio_data, dtype=np.int16)
         num_original_samples = len(audio_np)
         num_target_samples = int(num_original_samples * target_sample_rate / original_sample_rate)
@@ -85,11 +84,11 @@ class StreamingWhisperServer:
             metadata = json.loads(metadata_json)
             sample_rate = metadata['sampleRate']
             chunk = message[4+metadata_length:]
-            resampled_chunk = self.decode_and_resample(chunk, sample_rate, 16000)
+            resampled_chunk = self._decode_and_resample(chunk, sample_rate, 16000)
             self._recorder.feed_audio(resampled_chunk)
 
     def start(self):
-        threading.Thread(target=self.recorder_thread).start()
+        threading.Thread(target=self._recorder_thread).start()
         self._recorder_ready.wait()
         start_server = websockets.serve(self.echo, "localhost", 8009)
         asyncio.get_event_loop().run_until_complete(start_server)

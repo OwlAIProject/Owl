@@ -23,45 +23,45 @@ class StreamingWhisperTranscriptionService(AbstractStreamingTranscriptionService
         self._last_audio_time = None 
         self._retry_interval = 3  
 
+    async def send_audio(self, audio_chunk):
+        self._last_audio_time = datetime.utcnow()  # Update last audio receive time
+        await self._start_converter_and_process_audio()
+        await self._converter.feed_input_chunk(audio_chunk)
+
     async def on_utterance(self, callback):
         self._callback = callback
 
-    async def connect_to_websocket(self):
+    async def _connect_to_websocket(self):
         while True:
             try:
                 self._websocket = await websockets.connect("ws://localhost:8009")
-                asyncio.create_task(self.listen_for_messages())
+                asyncio.create_task(self._listen_for_messages())
                 logger.info("WebSocket connection established.")
                 break
             except (OSError, websockets.exceptions.InvalidURI, websockets.exceptions.WebSocketException) as e:
                 logger.error(f"Failed to connect to WebSocket, retrying in {self._retry_interval} seconds... Error: {e}")
                 await asyncio.sleep(self._retry_interval)
 
-    async def start_converter_and_process_audio(self):
+    async def _start_converter_and_process_audio(self):
         if not self._converter_started:
             self._converter_started = True
             await self._converter.start()
             logger.info("Converter started.")
-            await self.connect_to_websocket()
-            asyncio.create_task(self.receive_and_process_audio())
+            await self._connect_to_websocket()
+            asyncio.create_task(self._receive_and_process_audio())
 
-    async def send_audio(self, audio_chunk):
-        self._last_audio_time = datetime.utcnow()  # Update last audio receive time
-        await self.start_converter_and_process_audio()
-        await self._converter.feed_input_chunk(audio_chunk)
-
-    async def receive_and_process_audio(self):
+    async def _receive_and_process_audio(self):
         while True:
             output_chunk = await self._converter.read_output_chunk()
             if output_chunk:
                 audio_chunk = frombuffer(output_chunk, dtype=int16)
-                await self.send_audio_via_websocket(audio_chunk)
+                await self._send_audio_via_websocket(audio_chunk)
             else:
                 logger.info("No more output from converter.")
                 break
-            await self.check_audio_timeout()
+            await self._check_audio_timeout()
 
-    async def listen_for_messages(self):
+    async def _listen_for_messages(self):
         try:
             while True:
                 message = await self._websocket.recv()
@@ -82,7 +82,7 @@ class StreamingWhisperTranscriptionService(AbstractStreamingTranscriptionService
         except Exception as e:
             logger.error(f"An unexpected error occurred while listening for messages: {e}")
 
-    async def send_audio_via_websocket(self, audio_chunk):
+    async def _send_audio_via_websocket(self, audio_chunk):
         if self._websocket and self._websocket.open:
             audio_data_bytes = audio_chunk.tobytes()
             metadata = {"sampleRate": 16000}
@@ -94,12 +94,12 @@ class StreamingWhisperTranscriptionService(AbstractStreamingTranscriptionService
         else:
             logger.info("WebSocket connection is not open.")
 
-    async def check_audio_timeout(self):
+    async def _check_audio_timeout(self):
         if self._last_audio_time and datetime.utcnow() - self._last_audio_time > timedelta(seconds=10):
-            await self.close_websocket()
+            await self._close_websocket()
             logger.info("WebSocket closed due to inactivity.")
 
-    async def close_websocket(self):
+    async def _close_websocket(self):
         if self._websocket:
             await self._websocket.close()
             self._websocket = None  
