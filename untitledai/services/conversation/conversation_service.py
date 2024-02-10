@@ -50,7 +50,7 @@ class ConversationService:
                 conversation_uuid=segment_file.conversation_uuid,
                 capture_segment_file=saved_capture_file_segment,
                 device_type=capture_file.device_type.value,
-                start_time=capture_file.timestamp,
+                start_time=segment_file.timestamp,
                 end_time=None,
                 transcriptions=[realtime_transcript]
             )
