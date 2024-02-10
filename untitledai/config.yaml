@@ -53,3 +53,6 @@ conversation_endpointing:
 notification:
   apn_team_id: ""
 
+udp:
+  enabled: false
+

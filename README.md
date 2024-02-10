@@ -6,6 +6,15 @@
 - ffmpeg
 - ollama (if using local llm)
 
+## Privacy and Security
+
+- **Respect local privacy and recording laws.** Regardless of what is legally permitted, we ask that users **inform other parties when recording conversations** and comply with their wishes. We ask that users be respectful and fully transparent as they explore use cases for this exciting technology. We welcome feedback and contributions that explore making the user experience more safety and privacy aware.
+  
+- Depending on how the server is hosted, **sensitive data may be transmitted and stored in the open**. For example, if running on a home server over HTTP with an exception domain entered into the iOS and Watch Xcode projects, all audio data sent to the server will be unencrypted and conversation transcripts will be readable as plaintext to anyone intercepting packets along the route. Furthermore, HTTP connections allow the user authorization token to be intercepted, allowing access to all conversations stored on the server. Recommended practices to improve security:
+  
+  - Servers should be hosted over HTTPS on domains with valid SSL certificates.
+  - Use a reverse proxy (such as [ngrok](https://ngrok.com/)) when running on a personal server, which will encrypt traffic using HTTPS.
+  - If you absolutely insist on running an unprotected home server, change your authorization token regularly and consider frequently deleting your database and capture directory so as not to leave a large number of conversations exposed.
 
 ## User Guides for Capture Devices
 
