@@ -4,6 +4,9 @@ from typing import List, Optional
 from sqlalchemy.orm import joinedload, selectinload
 from sqlalchemy import desc, func, or_
 from datetime import datetime
+import logging
+
+logger = logging.getLogger(__name__)
 
 def create_utterance(db: Session, utterance: Utterance) -> Utterance:
     db.add(utterance)
@@ -57,6 +60,30 @@ def get_conversation(db: Session, conversation_id: int) -> Conversation:
 def get_conversation_by_conversation_uuid(db: Session, conversation_uuid: int) -> Conversation:
     return db.query(Conversation).filter(Conversation.conversation_uuid == conversation_uuid).first()
 
+def get_latest_capturing_conversation_by_capture_uuid(db: Session, capture_uuid: str) -> Optional[Conversation]:
+    statement = (
+        select(Conversation)
+        .join(CaptureSegmentFileRef, Conversation.capture_segment_file)
+        .join(CaptureFileRef, CaptureSegmentFileRef.source_capture)   
+        .where(CaptureFileRef.capture_uuid == capture_uuid, Conversation.state == ConversationState.CAPTURING)
+        .order_by(Conversation.start_time.desc())
+        .limit(1)
+    )
+    result = db.execute(statement).scalars().first()
+    return result
+
+def update_latest_conversation_location(db: Session, capture_uuid: str, location_data: Location) -> Optional[Conversation]:
+    latest_conversation = get_latest_capturing_conversation_by_capture_uuid(db, capture_uuid)
+    
+    if not latest_conversation:
+        logger.error(f"No capturing conversation found for capture_uuid: {capture_uuid}")
+        return None
+    new_location = create_location(db, location_data)
+    latest_conversation.primary_location_id = new_location.id
+    db.commit()
+    db.refresh(latest_conversation)
+    
+    return latest_conversation
 def update_conversation_state(db: Session, conversation_id: int, new_state: ConversationState) -> Conversation:
     conversation = db.get(Conversation, conversation_id)
     if conversation:

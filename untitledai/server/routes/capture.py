@@ -20,9 +20,9 @@ import traceback
 
 from .. import AppState
 from ..task import Task
-from ...database.crud import create_location, get_capture_file_segment_file_ref
+from ...database.crud import create_location, get_capture_file_segment_file_ref, update_latest_conversation_location
 from ...files import CaptureFile, append_to_wav_file
-from ...models.schemas import Location
+from ...models.schemas import Location, ConversationRead
 from ..streaming_capture_handler import StreamingCaptureHandler
 from ...services import ConversationDetectionService
 
@@ -272,6 +272,10 @@ async def receive_location(location: Location, db: Session = Depends(AppState.ge
     try:
         logger.info(f"Received location: {location}")
         new_location = create_location(db, location)
+        if location.capture_uuid:
+            conversation = update_latest_conversation_location(db, location.capture_uuid, location)
+            await app_state.notification_service.emit_message("update_conversation",  ConversationRead.from_orm(conversation).model_dump_json())
+            
         return {"message": "Location received", "location_id": new_location.id}
     except Exception as e:
         logger.error(f"Error processing location: {e}")
