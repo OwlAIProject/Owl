@@ -102,34 +102,66 @@ class ProcessAudioChunkTask(Task):
         # Run conversation detection stage (finds conversations thus far)
         detection_results = await detection_service.detect_conversations(audio_data=audio_data, format=format, capture_finished=capture_finished)
 
+        # As soon as we detect a new, in-progress conversation, we need to create a conversation 
+        # object in the database and create a segment file object for it.
+        active_convo = detection_results.in_progress
+        if active_convo is not None and capture_file.conversation_segments.get(active_convo.uuid) is None:
+            segment_file = capture_file.create_conversation_segment(
+                conversation_uuid=active_convo.uuid,
+                timestamp=active_convo.endpoints.start,
+                file_extension=format
+            )
+
+            # Create the conversation (and transcript), and references to the capture and segment
+            # files in db. This will also send a notification to app of a new conversation. Note
+            # that the segment file is not yet created on disk (will happen once the conversation)
+            # is actually finished. For chunked uploads, we do not do any partial transcription or
+            # otherwise process the conversation until it is known to be complete!
+            await app_state.conversation_service.create_conversation(capture_file=capture_file, segment_file=segment_file)
+
+        #TODO: how to update conversation-in-progress after it has been created? Need to send some
+        # sort of notification to UI to let it know latest progress.
+
+        # Handle the completed conversations. Two things have to happen here:
+        #
+        # 1. Because chunks can be arbitrarily long, it is possible that conversations are detected
+        #    and completed for the first time here. That is, we may have conversations that we
+        #    we never saw "in progress". Therefore, we have to create the objects if need-be.
+        # 2. Now that we know where the conversations have ended, we can ask the detection service
+        #    to extract them into their designated segment file locations in one shot.
+        convo_segment_files = []
         convo_filepaths = []
-        completed_conversation_uuid = []
         for convo in detection_results.completed:
-            # get the file path since it was persisted when the conversation was created
-            with next(app_state.database.get_db()) as db:
-                segment_file_ref = get_capture_file_segment_file_ref(db, convo.uuid)
-                convo_filepaths.append(segment_file_ref.file_path)
-            completed_conversation_uuid.append(convo.uuid)
+            if capture_file.conversation_segments.get(convo.uuid) is None:
+                # First time we've encountered this conversation. Need to create a segment file
+                # object and enter it into the db.
+                segment_file = capture_file.create_conversation_segment(
+                    conversation_uuid=convo.uuid,
+                    timestamp=convo.endpoints.start,
+                    file_extension=format
+                )
+                await app_state.conversation_service.create_conversation(capture_file=capture_file, segment_file=segment_file)
+
+            # We now know the conversation segment exists, add it to the list of conversations to
+            # process.
+            convo_segment_files.append(capture_file.conversation_segments[convo.uuid])
+            convo_filepaths.append(convo_segment_files[-1].filepath)
+
+            # TODO: remove this
+            # with next(app_state.database.get_db()) as db:
+            #     segment_file_ref = get_capture_file_segment_file_ref(db, convo.uuid)
+            #     convo_filepaths.append(segment_file_ref.file_path)
+            # completed_conversation_uuid.append(convo.uuid)
         await detection_service.extract_conversations(conversations=detection_results.completed, conversation_filepaths=convo_filepaths)
 
         # Process each completed conversation
         try:
-            for conversation_uuid in completed_conversation_uuid:
-                # we just need to pass the uuid since the conversation is already persisted
-                await app_state.conversation_service.process_conversation_from_audio(conversation_uuid=conversation_uuid)
+            for segment_file in convo_segment_files:
+                # We just need to pass the uuid since the conversation is already persisted
+                await app_state.conversation_service.process_conversation_from_audio(conversation_uuid=segment_file.conversation_uuid)
         except Exception as e:
             logging.error(f"Error processing conversation: {e}")
 
-        conversation_in_progress = detection_results.in_progress
-        if conversation_in_progress is not None:
-            segment_file = capture_file.create_conversation_segment(
-                conversation_uuid=conversation_in_progress.uuid,
-                timestamp=conversation_in_progress.endpoints.start,
-                file_extension=format
-            )
-            # create the conversation which will also create the persisted capture file and capture segment file
-            await app_state.conversation_service.create_conversation(capture_file=capture_file, segment_file=segment_file)
-            
 Task.register(ProcessAudioChunkTask)
 
 def find_audio_filepath(audio_directory: str, capture_uuid: str) -> str | None:
@@ -225,6 +257,7 @@ async def upload_chunk(
 async def process_capture(request: Request, capture_uuid: Annotated[str, Form()], app_state: AppState = Depends(AppState.authenticate_request)):
     try:
         # Get capture file
+        # TODO: this creates a consistency problem because we don't load segment files! That's why in-progress convos get double-added
         filepath = find_audio_filepath(audio_directory=app_state.config.captures.capture_dir, capture_uuid=capture_uuid)
         logger.info(f"Found file to process: {filepath}")
         capture_file: CaptureFile = CaptureFile.from_filepath(filepath=filepath)
