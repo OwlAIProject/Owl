@@ -106,9 +106,11 @@ def create_server_app(config: Configuration) -> FastAPI:
 
     @app.on_event("shutdown")
     async def shutdown_event():
+        conversation_service = app.state._app_state.conversation_service
+        await conversation_service.fail_processing_and_capturing_conversations()
         if ray.is_initialized():
             ray.shutdown()
-            
+        
     # Base routing
     @app.get("/")
     async def read_root(app_state: AppState = Depends(AppState.authenticate_request)):

@@ -1,7 +1,7 @@
 from sqlmodel import SQLModel, Session, select
-from ..models.schemas import Transcription, Conversation, Utterance, Location, SegmentedCaptureFile, CaptureFileRef
+from ..models.schemas import Transcription, Conversation, Utterance, Location, CaptureSegmentFileRef, CaptureFileRef, ConversationState
 from typing import List, Optional
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import joinedload, selectinload
 from sqlalchemy import desc, func, or_
 from datetime import datetime
 
@@ -17,11 +17,11 @@ def create_transcription(db: Session, transcription: Transcription) -> Transcrip
     db.refresh(transcription)
     return transcription
 
-def create_segmented_capture_file(db: Session, segmented_capture_file: SegmentedCaptureFile) -> SegmentedCaptureFile:
-    db.add(segmented_capture_file)
+def create_capture_file_segment_file_ref(db: Session, capture_file_segment_file: CaptureSegmentFileRef) -> CaptureSegmentFileRef:
+    db.add(capture_file_segment_file)
     db.commit()
-    db.refresh(segmented_capture_file)
-    return segmented_capture_file
+    db.refresh(capture_file_segment_file)
+    return capture_file_segment_file
 
 def create_capture_file_ref(db: Session, capture_file_ref: CaptureFileRef) -> CaptureFileRef:
     db.add(capture_file_ref)
@@ -39,8 +39,29 @@ def get_transcription(db: Session, transcription_id: int) -> Transcription:
     return db.exec(statement).first()
 
 def get_conversation(db: Session, conversation_id: int) -> Conversation:
-    return db.query(Conversation).filter(Conversation.id == conversation_id).first()
+    result = db.query(Conversation).options(
+        selectinload(Conversation.transcriptions)
+        .selectinload(Transcription.utterances)
+        .selectinload(Utterance.words),
+        selectinload(Conversation.capture_segment_file)
+        .joinedload(CaptureSegmentFileRef.source_capture),
+        selectinload(Conversation.primary_location),
+    ).filter(Conversation.id == conversation_id).first()
+    return result
 
+def get_conversation_by_conversation_uuid(db: Session, conversation_uuid: int) -> Conversation:
+    return db.query(Conversation).filter(Conversation.conversation_uuid == conversation_uuid).first()
+
+def update_conversation_state(db: Session, conversation_id: int, new_state: ConversationState) -> Conversation:
+    conversation = db.get(Conversation, conversation_id)
+    if conversation:
+        conversation.state = new_state
+        db.commit()
+        db.refresh(conversation)
+        return conversation
+    else:
+        raise Exception(f"Conversation with ID {conversation_id} not found.")
+    
 def update_transcription(db: Session, transcription_id: int, updated_transcription: Transcription) -> Transcription:
     db_transcription = db.get(Transcription, transcription_id)
     if db_transcription:

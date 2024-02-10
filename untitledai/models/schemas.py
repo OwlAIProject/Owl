@@ -2,6 +2,7 @@ from typing import List, Optional
 from sqlmodel import SQLModel, Field, Relationship
 from datetime import datetime, timezone
 from pydantic import BaseModel, validator
+from enum import Enum
 
 
 class CreatedAtMixin(SQLModel):
@@ -36,15 +37,13 @@ class Utterance(CreatedAtMixin, table=True):
 
 class Transcription(CreatedAtMixin, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
+    realtime: bool = Field(default=False)
     model: str 
     transcription_time: float 
     conversation_id: Optional[int] = Field(default=None, foreign_key="conversation.id")
-    segmented_capture_id: Optional[int] = Field(default=None, foreign_key="segmentedcapturefile.id")
-    segmented_capture: Optional["SegmentedCaptureFile"] = Relationship(back_populates="transcription")
     conversation: "Conversation" = Relationship(back_populates="transcriptions")
-
     utterances: List[Utterance] = Relationship(back_populates="transcription", sa_relationship_kwargs={"cascade": "all, delete-orphan"})
-
+        
 class Location(CreatedAtMixin, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     latitude: float = Field(nullable=False)
@@ -54,13 +53,26 @@ class Location(CreatedAtMixin, table=True):
 
     conversation: Optional["Conversation"] = Relationship(back_populates="primary_location")
 
+class ConversationState(Enum):
+    CAPTURING = "CAPTURING"
+    PROCESSING = "PROCESSING"
+    COMPLETED = "COMPLETED"
+    FAILED_PROCESSING = "FAILED_PROCESSING"
+
 class Conversation(CreatedAtMixin, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     start_time: datetime = Field(...)
-    summary: str  
-    short_summary: str  
-    transcriptions: List[Transcription] = Relationship(back_populates="conversation")
+    end_time: Optional[datetime]
+    conversation_uuid: str
+    device_type: str
+    summary: Optional[str]
+    short_summary: Optional[str]
+    summarization_model: Optional[str]
+    state: ConversationState = Field(default=ConversationState.CAPTURING)
 
+    capture_segment_file_id: Optional[int] = Field(default=None, foreign_key="capturesegmentfileref.id")
+    capture_segment_file: Optional["CaptureSegmentFileRef"] = Relationship(back_populates="conversation")
+    transcriptions: List[Transcription] = Relationship(back_populates="conversation")
     primary_location_id: Optional[int] = Field(default=None, foreign_key="location.id")
     primary_location: Optional[Location] = Relationship(back_populates="conversation")
 
@@ -70,21 +82,20 @@ class CaptureFileRef(CreatedAtMixin, table=True):
     file_path: str = Field(...)
     start_time: datetime 
     device_type: str
-    duration: float
+    duration: Optional[float]
 
-    segmented_captures: List["SegmentedCaptureFile"] = Relationship(back_populates="source_capture")
+    capture_segment_files: List["CaptureSegmentFileRef"] = Relationship(back_populates="source_capture")
 
-class SegmentedCaptureFile(CreatedAtMixin, table=True):
+class CaptureSegmentFileRef(CreatedAtMixin, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
-    segment_path: str = Field(...)
+    file_path: str = Field(...)
+    start_time: datetime 
     source_capture_id: int = Field(default=None, foreign_key="capturefileref.id")
-    duration: float
+    source_capture: CaptureFileRef = Relationship(back_populates="capture_segment_files")
+    duration: Optional[float]
 
-    source_capture: CaptureFileRef = Relationship(back_populates="segmented_captures")
+    conversation: Optional[Conversation] = Relationship(back_populates="capture_segment_file")
 
-    transcription: Optional[Transcription] = Relationship(back_populates="segmented_capture")
-
-    
 #  API Response Models
 #  https://sqlmodel.tiangolo.com/tutorial/fastapi/relationships/#dont-include-all-the-data
     
@@ -109,33 +120,33 @@ class UtteranceRead(BaseModel):
     class Config:
         from_attributes=True
 
-class SegmentedCaptureFileRead(BaseModel):
-    id: Optional[int]
-    segment_path: str
-    duration: float
-    source_capture_id: int
-    source_capture: Optional["CaptureFileRefRead"]
-    class Config:
-        from_attributes = True
-
-class TranscriptionRead(BaseModel):
-    id: Optional[int]
-    model: str
-    transcription_time: float
-    conversation_id: Optional[int]
-    segmented_capture_id: Optional[int]
-    segmented_capture: Optional[SegmentedCaptureFileRead]
-    utterances: List[UtteranceRead] = []
-    class Config:
-        from_attributes = True
-
 class CaptureFileRefRead(BaseModel):
     id: Optional[int]
     capture_uuid: str
     file_path: str
     start_time: datetime
-    duration: float
+    duration: Optional[float]
     device_type: str
+    class Config:
+        from_attributes = True
+
+class CaptureSegmentFileRefRead(BaseModel):
+    id: Optional[int]
+    file_path: str
+    duration: Optional[float]
+    start_time: datetime
+    source_capture: Optional[CaptureFileRefRead] = None
+    source_capture_id: Optional[int] = None
+    class Config:
+        from_attributes = True
+
+class TranscriptionRead(BaseModel):
+    id: Optional[int]
+    realtime: bool
+    model: str
+    transcription_time: float
+    conversation_id: Optional[int]
+    utterances: List[UtteranceRead] = []
     class Config:
         from_attributes = True
 
@@ -149,28 +160,19 @@ class LocationRead(BaseModel):
 
 class ConversationRead(BaseModel):
     id: Optional[int]
+    state: ConversationState
     start_time: datetime
-    summary: str  
-    short_summary: str
+    conversation_uuid: str
+    device_type: str    
+    summarization_model: Optional[str]
+    summary: Optional[str] 
+    short_summary: Optional[str] 
     transcriptions: List[TranscriptionRead] = []
     primary_location: Optional[LocationRead] = None
+    capture_segment_file: Optional[CaptureSegmentFileRefRead] 
 
     class Config:
-        from_attributes = True
-
-class ConversationProgress(BaseModel):
-    conversation_uuid: str
-    in_conversation: bool
-    start_time: datetime    # start of conversation
-    end_time: datetime      # end of last voice segment (note: conversation can remain in progress while this remains unchanged during silent periods)
-    device_type: str
-
-    class Config:
-        json_encoders = {
-            #TODO: create system-wide timestamping functions to avoid repeating these conversions in all over the place
-            datetime: lambda datetime: datetime.strftime("%Y-%m-%dT%H:%M:%S.%f")
-        }
+          from_attributes = True
 
 class ConversationsResponse(BaseModel):
     conversations: List[ConversationRead]
-    conversations_in_progress: List[ConversationProgress]

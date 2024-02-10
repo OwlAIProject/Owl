@@ -21,7 +21,7 @@ from .. import AppState
 from ..task import Task
 from ...database.crud import create_location
 from ...files import CaptureFile, append_to_wav_file
-from ...models.schemas import Location, ConversationProgress
+from ...models.schemas import Location
 from ..streaming_capture_handler import StreamingCaptureHandler
 from ...services import ConversationDetectionService
 
@@ -169,36 +169,39 @@ class ProcessAudioChunkTask(Task):
         progress_updates = []
 
         # Inform the server that all completed conversations are no longer "in progress"
-        for convo in detection_results.completed:
-            progress = ConversationProgress(
-                conversation_uuid=convo.uuid,
-                in_conversation=False,
-                start_time=convo.endpoints.start,
-                end_time=convo.endpoints.end,
-                device_type=capture_file.device_type.value
-            )
-            progress_updates.append(progress)
+        # for convo in detection_results.completed:
+            # progress = ConversationProgress(
+            #     conversation_uuid=convo.uuid,
+            #     in_conversation=False,
+            #     start_time=convo.endpoints.start,
+            #     end_time=convo.endpoints.end,
+            #     device_type=capture_file.device_type.value
+            # )
+            # progress_updates.append(progress)
 
         # If there is an in-progress conversation, add that
-        conversation_in_progress = detection_results.in_progress
-        if conversation_in_progress is not None:
-            progress = ConversationProgress(
-                conversation_uuid=conversation_in_progress.uuid,
-                in_conversation=True,
-                start_time=conversation_in_progress.endpoints.start,
-                end_time=conversation_in_progress.endpoints.end,
-                device_type=capture_file.device_type.value
-            )
-            progress_updates.append(progress)
+        # conversation_in_progress = detection_results.in_progress
+        # if conversation_in_progress is not None:
+        #     progress = ConversationProgress(
+        #         conversation_uuid=conversation_in_progress.uuid,
+        #         in_conversation=True,
+        #         start_time=conversation_in_progress.endpoints.start,
+        #         end_time=conversation_in_progress.endpoints.end,
+        #         device_type=capture_file.device_type.value
+        #     )
+        #     progress_updates.append(progress)
             
         # Send updates to server
-        for progress in progress_updates:
-            await app_state.notification_service.send_notification(
-                title="New Conversation-in-Progress",
-                body=f"On device: {capture_file.device_type.value}",
-                type="conversation_progress",
-                payload=progress.model_dump_json()
-            )
+        # for progress in progress_updates:
+        #     await app_state.notification_service.send_notification(
+        #         title="New Conversation-in-Progress",
+        #         body=f"On device: {capture_file.device_type.value}",
+        #         type="conversation_progress",
+        #         payload=progress.model_dump_json()
+            # )
+        # Bart - Do you have the capture segment file at this point? if so can you try calling:
+        # await app_state.conversation_service.create_conversation(capture_file, capture_file: capture_file, segment_file: segment_file)
+        # Calling this as soon as you recognize a conversation should handle everything else.
 
 Task.register(ProcessAudioChunkTask)
 

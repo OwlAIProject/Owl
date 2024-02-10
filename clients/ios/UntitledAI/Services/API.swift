@@ -31,6 +31,26 @@ class API {
         task.resume()
     }
     
+    
+    func retryConversation(_ id: Int, completion: @escaping (Bool) -> Void) {
+        let url = URL(string: "\(AppConstants.apiBaseURL)/conversations/\(id)/retry")!
+        var request = URLRequest(url: url)
+        request.addCommonHeaders()
+        request.httpMethod = "POST"
+        URLSession.shared.dataTask(with: request) { data, response, error in
+            if let error = error {
+                print("Error deleting conversation: \(error)")
+                completion(false)
+                return
+            }
+            if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 {
+                completion(true)
+            } else {
+                completion(false)
+            }
+        }.resume()
+    }
+    
     func deleteConversation(_ id: Int, completion: @escaping (Bool) -> Void) {
         let url = URL(string: "\(AppConstants.apiBaseURL)/conversations/\(id)")!
         var request = URLRequest(url: url)

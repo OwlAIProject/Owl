@@ -22,28 +22,27 @@ struct CaptureFile: Codable {
 }
 
 
-struct SegmentedCapture: Codable {
+struct CaptureFileSegment: Codable {
     var id: Int
-    var segmentPath: String
-    var duration: Double
+    var filePath: String
+    var duration: Double?
     var sourceCapture: CaptureFile
 
     enum CodingKeys: String, CodingKey {
         case id, duration
-        case segmentPath = "segment_path"
+        case filePath = "file_path"
         case sourceCapture = "source_capture"
     }
 }
 struct Transcription: Codable {
     var id: Int
     var model: String
+    var realtime: Bool
     var transcriptionTime: Double
     var utterances: [Utterance]
-    var segmentedCapture: SegmentedCapture
-
+    
     enum CodingKeys: String, CodingKey {
-        case id, model, utterances
-        case segmentedCapture = "segmented_capture"
+        case id, model, utterances, realtime
         case transcriptionTime = "transcription_time"
     }
 }
