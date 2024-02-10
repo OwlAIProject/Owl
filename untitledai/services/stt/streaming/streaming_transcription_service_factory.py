@@ -1,4 +1,6 @@
 from .streaming_deepgram_transcription_service import StreamingDeepgramTranscriptionService
+from .streaming_whisper_transcription_service import StreamingWhisperTranscriptionService
+
 import logging
 
 logger = logging.getLogger(__name__)
@@ -13,8 +15,11 @@ class StreamingTranscriptionServiceFactory:
         if service_type not in StreamingTranscriptionServiceFactory._instances:
             logger.info(f"Creating new {service_type} streaming transcription service")
             if service_type == "deepgram":
-                # always make a new deepgram service
+                # Always make a new deepgram service
                 return StreamingDeepgramTranscriptionService(config.deepgram, callback, stream_format=stream_format)
+            elif service_type == "whisper":
+                StreamingTranscriptionServiceFactory._instances[service_type] = StreamingWhisperTranscriptionService(config, callback)
+                return StreamingTranscriptionServiceFactory._instances[service_type]
             else:
                 raise ValueError(f"Unknown transcription service type: {service_type}")
 
