@@ -7,10 +7,8 @@ RUN apt-get update && apt-get install -y \
     git \
     ffmpeg \
     pkg-config \
-    libcairo2-dev \
-    portaudio19-dev \
-    cmake && \
-    apt-get clean && \
+    build-essential \
+    && apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
 RUN pip install --no-cache-dir --upgrade pip && \
