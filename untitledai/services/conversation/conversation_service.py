@@ -32,6 +32,7 @@ class ConversationService:
                 start_time=capture_file.timestamp
             ))
             saved_capture_file_segment = create_capture_file_segment_file_ref(db, CaptureSegmentFileRef(
+                conversation_uuid=segment_file.conversation_uuid,
                 start_time=segment_file.timestamp,
                 file_path=segment_file.filepath,
                 source_capture_id=saved_capture_file_ref.id,

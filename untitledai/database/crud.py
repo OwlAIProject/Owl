@@ -34,6 +34,11 @@ def get_capture_file_ref(db: Session, capture_uuid: str) -> Optional[CaptureFile
     result = db.execute(statement).first()
     return result[0] if result else None
 
+def get_capture_file_segment_file_ref(db: Session, conversation_uuid: str) -> Optional[CaptureSegmentFileRef]:
+    statement = select(CaptureSegmentFileRef).where(CaptureSegmentFileRef.conversation_uuid == conversation_uuid)
+    result = db.execute(statement).first()
+    return result[0] if result else None
+
 def get_transcription(db: Session, transcription_id: int) -> Transcription:
     statement = select(Transcription).where(Transcription.id == transcription_id)
     return db.exec(statement).first()

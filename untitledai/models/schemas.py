@@ -90,6 +90,7 @@ class CaptureSegmentFileRef(CreatedAtMixin, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     file_path: str = Field(...)
     start_time: datetime 
+    conversation_uuid: str
     source_capture_id: int = Field(default=None, foreign_key="capturefileref.id")
     source_capture: CaptureFileRef = Relationship(back_populates="capture_segment_files")
     duration: Optional[float]

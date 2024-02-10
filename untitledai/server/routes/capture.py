@@ -9,6 +9,7 @@ from glob import glob
 import os
 from typing import Annotated
 import uuid
+import asyncio
 
 from fastapi import APIRouter, Request, HTTPException, BackgroundTasks, UploadFile, Form, Depends
 from fastapi.responses import JSONResponse
@@ -19,7 +20,7 @@ import traceback
 
 from .. import AppState
 from ..task import Task
-from ...database.crud import create_location
+from ...database.crud import create_location, get_capture_file_segment_file_ref
 from ...files import CaptureFile, append_to_wav_file
 from ...models.schemas import Location
 from ..streaming_capture_handler import StreamingCaptureHandler
@@ -101,108 +102,34 @@ class ProcessAudioChunkTask(Task):
         # Run conversation detection stage (finds conversations thus far)
         detection_results = await detection_service.detect_conversations(audio_data=audio_data, format=format, capture_finished=capture_finished)
 
-        #
-        # TODO for Ethan:
-        #
-        # - Suggested states for Conversation object (to unify with ConversationInProgress):
-        #       - RECORDING / CAPTURING
-        #       - PROCESSING
-        #       - COMPLETED
-        #       - FAILED_PROCESSING? <-- For now we don't have a way to set this and I wouldn't add it yet but could be added in future
-        # - We should also log last update time in schema. Right now, end time is the end of the last VAD segment. So if you go silent,
-        #   this doesn't update. Also, it only updates at most every 30 seconds when chunking, so having a last update time could allow
-        #   for a UI that gives more information as to whether anything is still being received or whether we are stuck. We can do the UI
-        #   stuff later.
-        #
-        # - detection_results holds all completed and possibly an in-progress conversation. I process
-        #   them all together at the *bottom of this function*. But we should start doing stuff here.
-        #
-        # - At this point detection_results.completed contains a list of *completed* conversations.
-        #   We may have never encountered these yet in the case of passing in a large chunk. We 
-        #   should create new database objects if needed, with an *in-processing* state (because
-        #   completed convos are immediately processed next), or update existing objects if they
-        #   exist (i.e., we had entered "recording" state into the database previously.)
-        #
-        # - Here is also where an in-progress conversation ("recording" state) can be first detected.
-        #   It would be on detection_results.in_progress (when not None). Would be good to enter it
-        #   into the database in a "recording" state and notify the server.
-        #
-        # - Then, after this, I have code that takes the completed conversations and extracts them
-        #   into files and processes them....
-        #
-
-        # Create conversation segment files and store extracted conversations there
         convo_filepaths = []
-        segment_files = []
+        completed_conversation_uuid = []
         for convo in detection_results.completed:
-            segment_file = capture_file.create_conversation_segment(
-                conversation_uuid=convo.uuid,
-                timestamp=convo.endpoints.start,
-                file_extension=format
-            )
-            convo_filepaths.append(segment_file.filepath)
-            segment_files.append(segment_file)
+            # get the file path since it was persisted when the conversation was created
+            with next(app_state.database.get_db()) as db:
+                segment_file_ref = get_capture_file_segment_file_ref(db, convo.uuid)
+                convo_filepaths.append(segment_file_ref.file_path)
+            completed_conversation_uuid.append(convo.uuid)
         await detection_service.extract_conversations(conversations=detection_results.completed, conversation_filepaths=convo_filepaths)
 
         # Process each completed conversation
         try:
-            for segment_file in segment_files:
-                await app_state.conversation_service.process_conversation_from_audio(
-                    capture_file=capture_file,
-                    segment_file=segment_file,
-                    voice_sample_filepath=app_state.config.user.voice_sample_filepath,
-                    speaker_name=app_state.config.user.name
-                )
+            for conversation_uuid in completed_conversation_uuid:
+                # we just need to pass the uuid since the conversation is already persisted
+                await app_state.conversation_service.process_conversation_from_audio(conversation_uuid=conversation_uuid)
         except Exception as e:
             logging.error(f"Error processing conversation: {e}")
 
-        #
-        # TODO for Ethan:
-        #
-        # - Right now, as I said above, I actually handle all the progress updates here in one big pass.
-        #   All completed convos and the in-progress one are handled here.
-        #
-        # - In reality, we would want to have only the completed conversations finalized here.
-        #
-
-        # Construct progress updates to server
-        progress_updates = []
-
-        # Inform the server that all completed conversations are no longer "in progress"
-        # for convo in detection_results.completed:
-            # progress = ConversationProgress(
-            #     conversation_uuid=convo.uuid,
-            #     in_conversation=False,
-            #     start_time=convo.endpoints.start,
-            #     end_time=convo.endpoints.end,
-            #     device_type=capture_file.device_type.value
-            # )
-            # progress_updates.append(progress)
-
-        # If there is an in-progress conversation, add that
-        # conversation_in_progress = detection_results.in_progress
-        # if conversation_in_progress is not None:
-        #     progress = ConversationProgress(
-        #         conversation_uuid=conversation_in_progress.uuid,
-        #         in_conversation=True,
-        #         start_time=conversation_in_progress.endpoints.start,
-        #         end_time=conversation_in_progress.endpoints.end,
-        #         device_type=capture_file.device_type.value
-        #     )
-        #     progress_updates.append(progress)
+        conversation_in_progress = detection_results.in_progress
+        if conversation_in_progress is not None:
+            segment_file = capture_file.create_conversation_segment(
+                conversation_uuid=conversation_in_progress.uuid,
+                timestamp=conversation_in_progress.endpoints.start,
+                file_extension=format
+            )
+            # create the conversation which will also create the persisted capture file and capture segment file
+            await app_state.conversation_service.create_conversation(capture_file=capture_file, segment_file=segment_file)
             
-        # Send updates to server
-        # for progress in progress_updates:
-        #     await app_state.notification_service.send_notification(
-        #         title="New Conversation-in-Progress",
-        #         body=f"On device: {capture_file.device_type.value}",
-        #         type="conversation_progress",
-        #         payload=progress.model_dump_json()
-            # )
-        # Bart - Do you have the capture segment file at this point? if so can you try calling:
-        # await app_state.conversation_service.create_conversation(capture_file, capture_file: capture_file, segment_file: segment_file)
-        # Calling this as soon as you recognize a conversation should handle everything else.
-
 Task.register(ProcessAudioChunkTask)
 
 def find_audio_filepath(audio_directory: str, capture_uuid: str) -> str | None:
