@@ -25,12 +25,14 @@ class ConversationService:
 
     async def create_conversation(self, capture_file: CaptureFile, segment_file: CaptureSegmentFile):
         with next(self._database.get_db()) as db:
-            saved_capture_file_ref = create_capture_file_ref(db, CaptureFileRef(
-                capture_uuid=capture_file.capture_uuid,
-                file_path=capture_file.filepath,
-                device_type=capture_file.device_type.value,
-                start_time=capture_file.timestamp
-            ))
+            saved_capture_file_ref = get_capture_file_ref(db, capture_file.capture_uuid)
+            if not saved_capture_file_ref:
+                saved_capture_file_ref = create_capture_file_ref(db, CaptureFileRef(
+                    capture_uuid=capture_file.capture_uuid,
+                    file_path=capture_file.filepath,
+                    device_type=capture_file.device_type.value,
+                    start_time=capture_file.timestamp
+                ))
             saved_capture_file_segment = create_capture_file_segment_file_ref(db, CaptureSegmentFileRef(
                 conversation_uuid=segment_file.conversation_uuid,
                 start_time=segment_file.timestamp,
