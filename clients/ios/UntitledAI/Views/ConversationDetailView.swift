@@ -27,23 +27,26 @@ struct ConversationDetailView: View {
                     MetadataView(conversation: conversation, transcription: transcription)
                     
                     Divider().padding(.vertical)
-                    
-                    ForEach(transcription.utterances, id: \.id) { utterance in
-                        HStack {
-                            Text("\(utterance.speaker ?? "Unknown"):")
-                                .fontWeight(.semibold)
-                                .foregroundColor(.blue)
-                            
-                            Text(utterance.text ?? "")
-                                .foregroundColor(.secondary)
+                    if !transcription.utterances.isEmpty {
+                        ForEach(transcription.utterances, id: \.id) { utterance in
+                            HStack {
+                                Text("\(utterance.speaker ?? "Unknown"):")
+                                    .fontWeight(.semibold)
+                                    .foregroundColor(.blue)
+                                
+                                Text(utterance.text ?? "")
+                                    .foregroundColor(.secondary)
+                            }
+                            Divider()
                         }
-                        Divider()
                     }
                 }
                 
-                SummaryView(conversation: conversation)
-                
-                Divider().padding(.vertical)
+                if conversation.summary != nil {
+                    SummaryView(conversation: conversation)
+                    
+                    Divider().padding(.vertical)
+                }
                 
                 if let primaryLocation = conversation.primaryLocation {
                     Map(coordinateRegion: .constant(MKCoordinateRegion(center: primaryLocation.coordinate, span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05))), interactionModes: [], annotationItems: [primaryLocation]) { location in
@@ -99,10 +102,12 @@ struct MetadataView: View {
                 .font(.subheadline)
                 .fontWeight(.bold)
             
-            Text("\(String(format: "%.2f seconds", conversation.captureFileSegment.duration ?? 0))")
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .font(.subheadline)
-                .fontWeight(.bold)
+            if let duration = conversation.captureFileSegment.duration {
+                Text("\(String(format: "%.2f seconds", duration))")
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .font(.subheadline)
+                    .fontWeight(.bold)
+            }
             
             Text(conversation.captureFileSegment.sourceCapture.deviceType)
                 .frame(maxWidth: .infinity, alignment: .leading)

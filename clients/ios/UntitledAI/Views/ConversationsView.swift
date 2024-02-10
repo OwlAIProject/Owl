@@ -66,7 +66,7 @@ struct CountUpTimerView: View {
     
     var body: some View {
         Text(elapsedTime)
-            .font(.headline)
+            .font(.headline.monospacedDigit())
             .foregroundColor(.blue)
             .padding(.vertical, 8)
             .padding(.horizontal, 12)
@@ -126,7 +126,7 @@ struct ConversationCellView: View {
     let conversation: Conversation
     
     private var formattedStartTime: String {
-        conversation.startTime.formatted(date: .long, time: .shortened)
+        conversation.startTime.formatted(date: .numeric, time: .shortened)
     }
     
     var body: some View {
