@@ -115,6 +115,8 @@ def create_server_app(config: Configuration) -> FastAPI:
             await loop.create_datagram_endpoint(
                 lambda: UDPCaptureSocketApp(app.state._app_state), local_addr=(config.udp.host, config.udp.port)
             )
+        # fail any conversations that were in progress if the server was not shut down gracefully. could also retry them
+        await conversation_service.fail_processing_and_capturing_conversations()
 
     @app.on_event("shutdown")
     async def shutdown_event():
