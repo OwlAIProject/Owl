@@ -18,7 +18,7 @@ from .routes.capture import router as capture_router
 from .routes.conversations import router as conversations_router
 from .capture_socket import CaptureSocketApp
 from .udp_capture_socket import UDPCaptureSocketApp
-from ..services import LLMService, ConversationService, NotificationService
+from ..services import LLMService, CaptureService, ConversationService, NotificationService
 from ..database.database import Database
 from ..services.stt.asynchronous.async_transcription_service_factory import AsyncTranscriptionServiceFactory
 from .task import Task
@@ -84,12 +84,14 @@ def create_server_app(config: Configuration) -> FastAPI:
     llm_service = LLMService(config=config.llm)
     transcription_service = AsyncTranscriptionServiceFactory.get_service(config)
     notification_service = NotificationService(config.notification)
+    capture_service = CaptureService(config=config, database=database)
     conversation_service = ConversationService(config, database, transcription_service, notification_service)
     # Create server app
     app = FastAPI()
     app.state._app_state = AppState(
         config=config,
         database=database,
+        capture_service=capture_service,
         conversation_service=conversation_service,
         llm_service=llm_service,
         notification_service=notification_service

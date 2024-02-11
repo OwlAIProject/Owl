@@ -1,17 +1,16 @@
-from ..stt.asynchronous.abstract_async_transcription_service import AbstractAsyncTranscriptionService
-from ..conversation.transcript_summarizer import TranscriptionSummarizer  
-from ...database.crud import create_transcription, create_conversation, find_most_common_location, create_capture_file_ref, create_capture_file_segment_file_ref, get_capture_file_ref, update_conversation_state, get_conversation_by_conversation_uuid 
-from ...database.database import Database
-from ...core.config import Configuration
-from ...models.schemas import Transcription, Conversation, ConversationState, CaptureFileRef, CaptureSegmentFileRef, TranscriptionRead, ConversationRead
-from ...files import CaptureFile, CaptureSegmentFile
-import asyncio
 import os
 import time
-from datetime import timezone
 from pydub import AudioSegment
 from datetime import datetime, timedelta
 import logging
+
+from ..stt.asynchronous.abstract_async_transcription_service import AbstractAsyncTranscriptionService
+from ..conversation.transcript_summarizer import TranscriptionSummarizer  
+from ...database.crud import create_transcription, create_conversation, find_most_common_location, create_capture_file_segment_file_ref, update_conversation_state, get_conversation_by_conversation_uuid 
+from ...database.database import Database
+from ...core.config import Configuration
+from ...models.schemas import Transcription, Conversation, ConversationState, CaptureFileRef, CaptureSegmentFileRef, TranscriptionRead, ConversationRead
+from ...files import CaptureDirectory
 
 logger = logging.getLogger(__name__)
 
@@ -23,41 +22,43 @@ class ConversationService:
         self._notification_service = notification_service
         self._summarizer = TranscriptionSummarizer(config)
 
-    async def create_conversation(self, capture_file: CaptureFile, segment_file: CaptureSegmentFile):
+    async def create_conversation(self, conversation_uuid: str, start_time: datetime, capture_file: CaptureFileRef) -> Conversation:
         with next(self._database.get_db()) as db:
-            saved_capture_file_ref = get_capture_file_ref(db, capture_file.capture_uuid)
-            if not saved_capture_file_ref:
-                saved_capture_file_ref = create_capture_file_ref(db, CaptureFileRef(
-                    capture_uuid=capture_file.capture_uuid,
-                    file_path=capture_file.filepath,
-                    device_type=capture_file.device_type.value,
-                    start_time=capture_file.timestamp
-                ))
-            saved_capture_file_segment = create_capture_file_segment_file_ref(db, CaptureSegmentFileRef(
-                conversation_uuid=segment_file.conversation_uuid,
-                start_time=segment_file.timestamp,
-                file_path=segment_file.filepath,
-                source_capture_id=saved_capture_file_ref.id,
-            ))
+            # Create segment file
+            segment_file = CaptureSegmentFileRef(
+                conversation_uuid=conversation_uuid,
+                start_time=start_time,
+                file_path=CaptureDirectory(config=self._config).get_capture_segment_filepath(capture_file=capture_file, conversation_uuid=conversation_uuid, timestamp=start_time),
+                source_capture_id=capture_file.id   # database IDs to link segments to their parent captures
+            )
+            saved_segment_file = create_capture_file_segment_file_ref(db=db, capture_file_segment_file=segment_file)
+
+            # Transcription object
             realtime_transcript = Transcription(
                     realtime=True,
                     model=self._config.streaming_transcription.provider,
-                    file_name=segment_file.filepath,
+                    file_name=saved_segment_file.file_path,
                     utterances=[],
-                    transcription_time=segment_file.timestamp.timestamp(),
+                    transcription_time=saved_segment_file.start_time.timestamp(),
             )
+
+            # Conversation object, enter into database
             conversation = Conversation(
-                conversation_uuid=segment_file.conversation_uuid,
-                capture_segment_file=saved_capture_file_segment,
-                device_type=capture_file.device_type.value,
-                start_time=segment_file.timestamp,
+                conversation_uuid=saved_segment_file.conversation_uuid,
+                capture_segment_file=saved_segment_file,
+                device_type=capture_file.device_type,
+                start_time=saved_segment_file.start_time,
                 end_time=None,
                 transcriptions=[realtime_transcript]
             )
-            saved_conversation = create_conversation(db, conversation)
+            saved_conversation = create_conversation(db=db, conversation=conversation)
  
             await self._notification_service.send_notification("New Conversation", "New conversation detected.", "new_conversation", payload=ConversationRead.from_orm(conversation).model_dump_json(indent=2))
             return saved_conversation
+        
+    def get_conversation(self, conversation_uuid: str) -> Conversation | None:
+        with next(self._database.get_db()) as db:
+            return get_conversation_by_conversation_uuid(db, conversation_uuid)
         
     async def fail_processing_and_capturing_conversations(self):
         with next(self._database.get_db()) as db:
@@ -67,17 +68,13 @@ class ConversationService:
                 await self._notification_service.send_notification("Conversation Failure", "A conversation failed to process.", "update_conversation", payload=ConversationRead.from_orm(conversation).model_dump_json(indent=2))
             db.commit()
 
-    async def process_conversation_from_audio(self, capture_file: CaptureFile = None, segment_file: CaptureSegmentFile = None, conversation_uuid: str = None, voice_sample_filepath: str = None, speaker_name: str = None):
+    async def process_conversation_from_audio(self, conversation_uuid: str, voice_sample_filepath: str = None, speaker_name: str = None):
         try:
             with next(self._database.get_db()) as db:
-                if conversation_uuid is not None:
-                        conversation = get_conversation_by_conversation_uuid(db, conversation_uuid)
-                        update_conversation_state(db, conversation.id, ConversationState.PROCESSING)
-                        conversation.state = ConversationState.PROCESSING
-                        await self._notification_service.send_notification("Conversation Processing", "A conversation has begun processing.", "update_conversation", payload=ConversationRead.from_orm(conversation).model_dump_json(indent=2))
-                else:
-                    logger.info("No conversation provided. Creating a new conversation.")
-                    conversation = self.create_conversation(capture_file, segment_file)
+                conversation = get_conversation_by_conversation_uuid(db, conversation_uuid)
+                update_conversation_state(db, conversation.id, ConversationState.PROCESSING)
+                conversation.state = ConversationState.PROCESSING
+                await self._notification_service.send_notification("Conversation Processing", "A conversation has begun processing.", "update_conversation", payload=ConversationRead.from_orm(conversation).model_dump_json(indent=2))
 
                 logger.info(f"Processing conversation...")
                 # Segment audio and duration
@@ -151,12 +148,13 @@ class ConversationService:
                 transcription_json = transcription_data.model_dump_json(indent=2)
                 conversation_json = conversation_data.model_dump_json(indent=2)
                 
-                #  Todo restore this
-                # with open(segment_file.get_transcription_filepath(), 'w') as file:
-                #     file.write(transcription_json)
+                transcription_json_filepath = CaptureDirectory(config=self._config).get_transcription_filepath(segment_file=conversation.capture_segment_file)
+                with open(transcription_json_filepath, 'w') as file:
+                    file.write(transcription_json)
 
-                # with open(segment_file.get_conversation_filepath(), 'w') as file:
-                #     file.write(conversation_json)
+                conversation_json_filepath = CaptureDirectory(config=self._config).get_conversation_filepath(segment_file=conversation.capture_segment_file)
+                with open(conversation_json_filepath, 'w') as file:
+                    file.write(conversation_json)
                     
                 summary_snippet = summary_text[:100] + (summary_text[100:] and '...')
                 await self._notification_service.send_notification("New Conversation Summary", summary_snippet, "update_conversation", payload=conversation_json)

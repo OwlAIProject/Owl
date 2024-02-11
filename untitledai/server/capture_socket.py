@@ -9,20 +9,9 @@
 import asyncio
 import os
 import logging
-from datetime import datetime, timedelta
 from fastapi import FastAPI
-from queue import Queue
 import socketio
-from uuid import uuid4
-import time
-from datetime import timezone
-import json
-from ..services.conversation.conversation_service import ConversationService
-from ..services.stt.streaming.streaming_transcription_service_factory import StreamingTranscriptionServiceFactory
-from ..models.schemas import ConversationRead, Conversation
-from ..services.endpointing.streaming.streaming_endpointing_service import StreamingEndpointingService
-from ..files import CaptureFile
-from ..database.crud import get_conversation
+
 from .streaming_capture_handler import StreamingCaptureHandler
 
 logger = logging.getLogger(__name__)

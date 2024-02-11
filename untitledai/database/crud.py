@@ -58,7 +58,13 @@ def get_conversation(db: Session, conversation_id: int) -> Conversation:
     return result
 
 def get_conversation_by_conversation_uuid(db: Session, conversation_uuid: int) -> Conversation:
-    return db.query(Conversation).filter(Conversation.conversation_uuid == conversation_uuid).first()
+    return db.query(Conversation).options(
+        joinedload(Conversation.capture_segment_file)
+    ).options(
+        joinedload(Conversation.transcriptions)
+    ).options(
+        joinedload(Conversation.primary_location)
+    ).filter(Conversation.conversation_uuid == conversation_uuid).first()
 
 def get_latest_capturing_conversation_by_capture_uuid(db: Session, capture_uuid: str) -> Optional[Conversation]:
     statement = (
