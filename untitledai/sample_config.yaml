@@ -1,3 +1,10 @@
+#
+# sample_config.yaml
+#
+# Copy this up one level to the root of the source tree, from where the server will be run, and
+# rename to config.yaml. Change settings as needed.
+#
+
 transcription:
   hf_token: your_hugging_face_token
   device: cpu
@@ -29,7 +36,7 @@ deepgram:
   language: "en-US"
 
 streaming_transcription:
-  provider: "whisper"  
+  provider: "whisper"
   # provider: "deepgram"
 
 streaming_whisper:
@@ -40,11 +47,11 @@ streaming_whisper:
   post_speech_silence_duration: 0.5
 
 async_transcription:
-  provider: "whisper"  
+  provider: "whisper"
   #provider: "deepgram"
 
 database:
-  url: "sqlite:///./db.sqlite3" 
+  url: "sqlite:///./db.sqlite3"
 
 conversation_endpointing:
   timeout_seconds: 300
