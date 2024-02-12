@@ -69,7 +69,7 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
             let location = Location(latitude: currentLocation.coordinate.latitude,
                                     longitude: currentLocation.coordinate.longitude,
                                     address: addressString,
-                                    captureUUID: CaptureManager.shared.getCurrentCapture()?.captureUUID
+                                    captureUUID: CaptureManager.shared.currentCapture?.captureUUID
             )
 
             API.shared.saveLocation(location) { result in

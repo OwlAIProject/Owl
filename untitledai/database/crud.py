@@ -66,6 +66,21 @@ def get_conversation_by_conversation_uuid(db: Session, conversation_uuid: int) -
         joinedload(Conversation.primary_location)
     ).filter(Conversation.conversation_uuid == conversation_uuid).first()
 
+def get_capturing_conversation_by_capture_uuid(db: Session, capture_uuid: str) -> Conversation:
+    return db.query(Conversation).\
+        options(
+            joinedload(Conversation.capture_segment_file),
+            joinedload(Conversation.transcriptions),
+            joinedload(Conversation.primary_location)
+        ).\
+        join(CaptureSegment, CaptureSegment.id == Conversation.capture_segment_file_id).\
+        join(Capture, Capture.id == CaptureSegment.source_capture_id).\
+        filter(
+            Capture.capture_uuid == capture_uuid,
+            Conversation.state == ConversationState.CAPTURING
+        ).\
+        first()
+
 def get_latest_capturing_conversation_by_capture_uuid(db: Session, capture_uuid: str) -> Optional[Conversation]:
     statement = (
         select(Conversation)

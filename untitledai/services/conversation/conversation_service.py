@@ -6,7 +6,7 @@ import logging
 
 from ..stt.asynchronous.abstract_async_transcription_service import AbstractAsyncTranscriptionService
 from ..conversation.transcript_summarizer import TranscriptionSummarizer  
-from ...database.crud import create_transcription, create_conversation, find_most_common_location, create_capture_file_segment_file_ref, update_conversation_state, get_conversation_by_conversation_uuid 
+from ...database.crud import create_transcription, create_conversation, find_most_common_location, create_capture_file_segment_file_ref, update_conversation_state, get_conversation_by_conversation_uuid, get_capturing_conversation_by_capture_uuid 
 from ...database.database import Database
 from ...core.config import Configuration
 from ...models.schemas import Transcription, Conversation, ConversationState, Capture, CaptureSegment, TranscriptionRead, ConversationRead
@@ -59,6 +59,10 @@ class ConversationService:
     def get_conversation(self, conversation_uuid: str) -> Conversation | None:
         with next(self._database.get_db()) as db:
             return get_conversation_by_conversation_uuid(db, conversation_uuid)
+        
+    def get_capturing_conversation(self, capture_uuid: str) -> Conversation | None:
+        with next(self._database.get_db()) as db:
+            return get_capturing_conversation_by_capture_uuid(db, capture_uuid)
         
     async def fail_processing_and_capturing_conversations(self):
         with next(self._database.get_db()) as db:

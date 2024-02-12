@@ -112,15 +112,9 @@ class BLEManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate, Obse
         }
         
         if characteristic.uuid.isEqual(audioCharacteristicUUID) {
-            // Retrieve the current capture or create a new one
-            let capture = CaptureManager.shared.getCurrentCapture() ?? {
-                let deviceName = peripheral.name ?? "Unknown"
-                let newCapture = Capture(deviceName: deviceName)
-                CaptureManager.shared.createCapture(capture: newCapture)
-                print("Created new capture for device: \(deviceName)")
-                return newCapture
-            }()
-
+            let capture = CaptureManager.shared.currentCapture ?? CaptureManager.shared.createCapture(deviceName: peripheral.name ?? "Unknown")
+            CaptureManager.shared.reportConnect()
+             
             if let completeFrames = frameSequencer?.add(packet: value) {
                 for frame in completeFrames {
                     socketManager.sendAudioData(frame, capture: capture)
@@ -160,10 +154,7 @@ class BLEManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate, Obse
                 self.connectedDeviceName = nil
             }
         }
-        if let capture = CaptureManager.shared.getCurrentCapture() {
-            socketManager.finishAudio(capture: capture)
-            CaptureManager.shared.endCapture()
-        }
+        CaptureManager.shared.reportDisconnect()
         centralManager.connect(peripheral, options: nil)
     }
   
