@@ -6,7 +6,7 @@ const ConversationDetail = ({ params }) => {
     const [conversation, setConversation] = useState(null);
     const [googleMapsApiKey, setGoogleMapsApiKey] = useState('');
     const socket = useSocket();
-    const conversationRef = useRef(conversation); 
+    const conversationRef = useRef(conversation);
 
     const fetchConversation = async (id) => {
         const response = await fetch(`/api/conversations/${id}`, { cache: 'no-store' });
@@ -47,7 +47,7 @@ const ConversationDetail = ({ params }) => {
         fetchData();
     }, [params.id]);
     useEffect(() => {
-        if (socket) { 
+        if (socket) {
             console.log('Socket setup');
             const handleUpdate = (updatedConversationJson) => {
                 const updatedConversation = JSON.parse(updatedConversationJson);
@@ -68,10 +68,10 @@ const ConversationDetail = ({ params }) => {
                             const updatedConversation = {
                                 ...currentConversation,
                                 transcriptions: currentConversation.transcriptions.map(transcription => {
-                                        return {
-                                            ...transcription,
-                                            utterances: [...transcription.utterances, utterance]
-                                        };
+                                    return {
+                                        ...transcription,
+                                        utterances: [...transcription.utterances, utterance]
+                                    };
                                 })
                             };
                             return updatedConversation;
@@ -90,7 +90,7 @@ const ConversationDetail = ({ params }) => {
             };
         }
     }, [socket, params.id]);
-    
+
     if (!conversation) return null;
     const transcriptToShow = conversation.state === 'COMPLETED' ?
         conversation.transcriptions.find(transcript => !transcript.realtime) :
@@ -136,11 +136,11 @@ const ConversationDetail = ({ params }) => {
                                                     {utterance.text} <span className="text-gray-400">- {utterance.speaker}</span>
                                                 </div>
                                                 <div className="ml-2 flex-shrink-0 flex">
-                                                {utterance.start && (
-                                                    <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                                                        {utterance.start.toFixed(2)}s - {utterance.end.toFixed(2)}s
-                                                    </span>
-                                                )}
+                                                    {utterance.start && (
+                                                        <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                                            {utterance.start.toFixed(2)}s - {utterance.end.toFixed(2)}s
+                                                        </span>
+                                                    )}
                                                 </div>
                                             </div>
                                         </li>
@@ -160,13 +160,20 @@ const ConversationDetail = ({ params }) => {
                             <h3 className="text-lg leading-6 font-medium text-gray-900">Primary Location</h3>
                             <p className="mt-1 max-w-2xl text-sm text-gray-500">{conversation.primary_location.address}</p>
                         </div>
-                        <div className="px-4 py-5 sm:px-6">
-                            <img
-                                src={`https://maps.googleapis.com/maps/api/staticmap?center=${conversation.primary_location.latitude},${conversation.primary_location.longitude}&zoom=15&size=600x300&markers=color:red%7C${conversation.primary_location.latitude},${conversation.primary_location.longitude}&key=${googleMapsApiKey}`}
-                                alt="Location Map"
-                                className="w-full object-cover"
-                            />
-                        </div>
+                        {googleMapsApiKey ? (
+                            <div className="px-4 py-5 sm:px-6">
+                                <img
+                                    src={`https://maps.googleapis.com/maps/api/staticmap?center=${conversation.primary_location.latitude},${conversation.primary_location.longitude}&zoom=15&size=600x300&markers=color:red%7C${conversation.primary_location.latitude},${conversation.primary_location.longitude}&key=${googleMapsApiKey}`}
+                                    alt="Location Map"
+                                    className="w-full object-cover"
+                                />
+                            </div>
+                        ) : (
+                            <div className="px-4 py-5 sm:px-6 bg-gray-50">
+                                <p className="mt-1 max-w-2xl text-sm text-gray-500">Latitude: {conversation.primary_location.latitude}</p>
+                                <p className="mt-1 max-w-2xl text-sm text-gray-500">Longitude: {conversation.primary_location.longitude}</p>
+                            </div>
+                        )}
                     </div>
                 </div>
             )}
