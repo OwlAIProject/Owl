@@ -131,6 +131,7 @@ class ConversationService:
                 if most_common_location:
                     logger.info(f"Identified conversation primary location: {most_common_location}")
 
+                conversation.end_time = conversation_end_time
                 conversation.summary = summary_text
                 conversation.short_summary = short_summary_text
                 conversation.start_time = conversation_start_time
