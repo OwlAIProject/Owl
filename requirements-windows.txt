@@ -69,10 +69,14 @@ sqlmodel~=0.0.14
 ray~=2.9.1
 deepgram-sdk~=3.1.0
 python-multipart~=0.0.6
+pvporcupine~=3.0.2
+webrtcvad~=2.0.10
+PyAudio~=0.2.14
+halo~=0.0.31
 
 # PyTorch CUDA 12.1. For a different CUDA version, change the index URL accordingly. Use the PyTorch
 # install tool if you aren't sure: https://pytorch.org/get-started/locally/
 --extra-index-url https://download.pytorch.org/whl/cu121
-torch >=2 
-torchaudio >=2 
-torchvision ~= 0.16.2 
+torch >=2
+torchaudio >=2
+torchvision ~= 0.16.2
