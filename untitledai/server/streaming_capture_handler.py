@@ -93,7 +93,7 @@ class StreamingCaptureHandler:
                     num_channels=1
                 )
         else:
-            with open(self._capture_file.filepath, "ab") as file:
+            with open(self._capture_file.file_path, "ab") as file:
                 file.write(binary_data)
 
             if self._segment_file:
