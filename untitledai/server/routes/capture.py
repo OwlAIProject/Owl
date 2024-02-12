@@ -1,18 +1,9 @@
 #
 # TODO for Ethan:
 #   - crud.py: get_conversation_by_conversation_uuid() <-- am i doing this correctly?
-#   - conversation_service.py: create_conversation() <-- is this correct? note how i use saved_segment_file to instantiate Conversation()
-#   - why is streaming broken now? StreamingCaptureHandler -- doesn't seem to do anything?
-#   - If you look at ProcessAudioChunkTask below, you will see that I use the Conversation object from the db
-#     to look up the segment file. I hope this is safe to do and that my database load code is correct? I generally want all members to be
-#     populated.
-#   - My goal is to have the conversation service, capture service be where the raw CRUD operations are called. Ideally, files like this
-#     would just use those methods rather than importing crud methods directly. But not going to be too dogmatic about it.
-
-# TODO for Bart: CaptureFileRef -> CaptureFile
-#       CaptureFileRef.file_path -> filepath
-#       Use my endpointing service in streaming capture handler?
-#       IMPORTANT: CaptureFileRef, CaptureFileSegmentRef need to have all relationship fields backpropagated so we can access them after a get
+#     i think you said this would be unnecessary but doesn't hurt anything, so if it works, maybe leave it for now?
+#   - streaming_capture_handler.py: _init_capture_session() should check if capture exists (and segment file?) to support restarts
+#   - Change: CaptureFileRef -> Capture, CaptureSegmentFileRef -> CaptureSegment
 
 #
 # capture.py
