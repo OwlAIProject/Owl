@@ -4,6 +4,8 @@ from datetime import datetime, timezone
 from pydantic import BaseModel, validator
 from enum import Enum
 
+from .datetime_serialization import datetime_string
+
 
 class CreatedAtMixin(SQLModel):
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), nullable=False)
@@ -18,7 +20,7 @@ class Word(CreatedAtMixin, table=True):
     score: Optional[float] = None
     speaker: Optional[str] = None
     utterance_id: Optional[int] = Field(default=None, foreign_key="utterance.id")
-    
+
     utterance: "Utterance" = Relationship(back_populates="words")
 
 class Utterance(CreatedAtMixin, table=True):
@@ -30,20 +32,20 @@ class Utterance(CreatedAtMixin, table=True):
     text: Optional[str] = None
     speaker: Optional[str] = None
     transcription_id: Optional[int] = Field(default=None, foreign_key="transcription.id")
-    
+
     transcription: "Transcription" = Relationship(back_populates="utterances")
-  
+
     words: List[Word] = Relationship(back_populates="utterance", sa_relationship_kwargs={"cascade": "all, delete-orphan"})
 
 class Transcription(CreatedAtMixin, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     realtime: bool = Field(default=False)
-    model: str 
-    transcription_time: float 
+    model: str
+    transcription_time: float
     conversation_id: Optional[int] = Field(default=None, foreign_key="conversation.id")
     conversation: "Conversation" = Relationship(back_populates="transcriptions")
     utterances: List[Utterance] = Relationship(back_populates="transcription", sa_relationship_kwargs={"cascade": "all, delete-orphan"})
-        
+
 class Location(CreatedAtMixin, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     latitude: float = Field(nullable=False)
@@ -80,7 +82,7 @@ class CaptureFileRef(CreatedAtMixin, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     capture_uuid: str
     file_path: str = Field(...)
-    start_time: datetime 
+    start_time: datetime
     device_type: str
     duration: Optional[float]
 
@@ -89,7 +91,7 @@ class CaptureFileRef(CreatedAtMixin, table=True):
 class CaptureSegmentFileRef(CreatedAtMixin, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     file_path: str = Field(...)
-    start_time: datetime 
+    start_time: datetime
     conversation_uuid: str
     source_capture_id: int = Field(default=None, foreign_key="capturefileref.id")
     source_capture: CaptureFileRef = Relationship(back_populates="capture_segment_files")
@@ -99,7 +101,7 @@ class CaptureSegmentFileRef(CreatedAtMixin, table=True):
 
 #  API Response Models
 #  https://sqlmodel.tiangolo.com/tutorial/fastapi/relationships/#dont-include-all-the-data
-    
+
 class WordRead(BaseModel):
     id: Optional[int]
     word: str
@@ -120,6 +122,9 @@ class UtteranceRead(BaseModel):
     speaker: Optional[str]
     class Config:
         from_attributes=True
+        json_encoders = {
+            datetime: datetime_string
+        }
 
 class CaptureFileRefRead(BaseModel):
     id: Optional[int]
@@ -130,6 +135,9 @@ class CaptureFileRefRead(BaseModel):
     device_type: str
     class Config:
         from_attributes = True
+        json_encoders = {
+            datetime: datetime_string
+        }
 
 class CaptureSegmentFileRefRead(BaseModel):
     id: Optional[int]
@@ -140,6 +148,9 @@ class CaptureSegmentFileRefRead(BaseModel):
     source_capture_id: Optional[int] = None
     class Config:
         from_attributes = True
+        json_encoders = {
+            datetime: datetime_string
+        }
 
 class TranscriptionRead(BaseModel):
     id: Optional[int]
@@ -164,16 +175,19 @@ class ConversationRead(BaseModel):
     state: ConversationState
     start_time: datetime
     conversation_uuid: str
-    device_type: str    
+    device_type: str
     summarization_model: Optional[str]
-    summary: Optional[str] 
-    short_summary: Optional[str] 
+    summary: Optional[str]
+    short_summary: Optional[str]
     transcriptions: List[TranscriptionRead] = []
     primary_location: Optional[LocationRead] = None
-    capture_segment_file: Optional[CaptureSegmentFileRefRead] 
+    capture_segment_file: Optional[CaptureSegmentFileRefRead]
 
     class Config:
-          from_attributes = True
+        from_attributes = True
+        json_encoders = {
+            datetime: datetime_string
+        }
 
 class ConversationsResponse(BaseModel):
     conversations: List[ConversationRead]
