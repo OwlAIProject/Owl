@@ -4,6 +4,7 @@
 #     i think you said this would be unnecessary but doesn't hurt anything, so if it works, maybe leave it for now?
 #   - streaming_capture_handler.py: _init_capture_session() should check if capture exists (and segment file?) to support restarts
 #   - Change: CaptureFileRef -> Capture, CaptureSegmentFileRef -> CaptureSegment
+#   - Conversation end_time is never set or updated
 #   - Stretch: integrate my endpointing
 
 #
