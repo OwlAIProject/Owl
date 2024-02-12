@@ -45,16 +45,16 @@ class ConversationEndpointDetector:
         self._current_conversation_start = None # milliseconds from start
         self._current_conversation_end = None   # milliseconds from start
         self._milliseconds_processed = 0
-    
+
     def consume_samples(self, samples: torch.Tensor | AudioSegment | None, end_stream: bool = False) -> List[DetectedConversation]:
         if self._finished:
             raise RuntimeError("ConversationEndpointDetector cannot be reused once streaming is finished")
-        
+
         if samples is None:
             samples = torch.Tensor([])
-        
+
         duration_milliseconds = self._get_duration_milliseconds(samples=samples)
-        
+
         conversations = []
 
         # Use VAD to detect voiced segments
@@ -70,12 +70,12 @@ class ConversationEndpointDetector:
                 if silence_duration >= self._conversation_timeout_milliseconds:
                     # Produce finished conversation
                     conversations.append(self._make_conversation_object())
-                    
+
                     # Start new
                     self._current_conversation_uuid = uuid.uuid1().hex
                     self._current_conversation_start = segment.start
             self._current_conversation_end = segment.end    # if we have a start, ensure end is always set!
-        
+
         self._milliseconds_processed += duration_milliseconds
 
         # If there were no segments, no speech segment is pending, and the VAD is not inside of a
@@ -93,10 +93,11 @@ class ConversationEndpointDetector:
                 self._current_conversation_uuid = None
                 self._current_conversation_start = None
                 self._current_conversation_end = None
-        
+
         # If stream is over, finish final conversation (if it exists)
         if end_stream and self._current_conversation_end:
             conversations.append(self._make_conversation_object())
+            self._current_conversation_uuid = None
             self._current_conversation_start = None
             self._current_conversation_end = None
             self._finished = True
@@ -107,7 +108,7 @@ class ConversationEndpointDetector:
         if self._current_conversation_start is not None:
             return self._make_conversation_object()
         return None
-    
+
     def _make_conversation_object(self):
         endpoints = ConversationEndpoints(
             start=self._start_time + timedelta(milliseconds=self._current_conversation_start),

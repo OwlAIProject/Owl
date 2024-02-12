@@ -111,11 +111,11 @@ class ProcessAudioChunkTask(Task):
         capture_finished = audio_data is None
         format = self._format
         detection_service = self._detection_service
-        
+
         # Run conversation detection stage (finds conversations thus far)
         detection_results = await detection_service.detect_conversations(audio_data=audio_data, format=format, capture_finished=capture_finished)
 
-        # As soon as we detect a new, in-progress conversation, we need to create a conversation 
+        # As soon as we detect a new, in-progress conversation, we need to create a conversation
         # object in the database and create a segment file object for it.
         active_convo = detection_results.in_progress
         if active_convo is not None and app_state.conversation_service.get_conversation(conversation_uuid=active_convo.uuid) is None:
@@ -148,7 +148,7 @@ class ProcessAudioChunkTask(Task):
                 # and enter it into the database.
                 await app_state.conversation_service.create_conversation(
                     conversation_uuid=convo.uuid,
-                    start_time=convo.endpoints.start_time,
+                    start_time=convo.endpoints.start,
                     capture_file=capture_file
                 )
 
@@ -184,10 +184,9 @@ async def upload_chunk(
         file_extension = os.path.splitext(file.filename)[1].lstrip(".")
         if file_extension not in supported_upload_file_extensions:
             raise HTTPException(status_code=500, detail=f"Failed to process because file extension is unsupported: {file_extension}")
-        
+
         # Validate timestamp
         try:
-            print(timestamp)
             start_time = datetime.strptime(timestamp, "%Y%m%d-%H%M%S.%f")
         except:
             raise HTTPException(status_code=500, detail="'timestamp' string does not conform to YYYYmmdd-HHMMSS.fff format")
@@ -208,7 +207,7 @@ async def upload_chunk(
                 start_time=start_time,
                 device_type=device_type
             )
-        
+
         # Ensure a conversation detection service has been created
         detection_service: ConversationDetectionService = app_state.conversation_detection_service_by_id.get(capture_uuid)
         if detection_service is None:
@@ -218,10 +217,10 @@ async def upload_chunk(
                 capture_timestamp=capture_file.start_time
             )
             app_state.conversation_detection_service_by_id[capture_uuid] = detection_service
-                
+
         # Get uploaded data
         content = await file.read()
-        
+
         # Append to file
         bytes_written = 0
         if write_wav_header:
@@ -248,7 +247,7 @@ async def upload_chunk(
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
-    
+
 @router.post("/capture/process_capture")
 async def process_capture(request: Request, capture_uuid: Annotated[str, Form()], app_state: AppState = Depends(AppState.authenticate_request)):
     try:
@@ -257,17 +256,17 @@ async def process_capture(request: Request, capture_uuid: Annotated[str, Form()]
         if capture_file is None:
             logger.error(f"Capture file for capture_uuid={capture_uuid} not found! Cannot process capture.")
             raise HTTPException(status_code=500, detail=f"Capture file for capture_uuid={capture_uuid} not found! Cannot process capture.")
-        
+
         # TODO: If the server dies in the middle of an upload or before /process_capture is called,
         # this will not work well because the in-memory conversation detection state will be gone.
         # However, users can protentially re-process the conversation manually.
-    
+
         # Conversation detection service
         detection_service: ConversationDetectionService = app_state.conversation_detection_service_by_id.get(capture_uuid)
         if detection_service is None:
             logger.error(f"Internal error: No conversation detection service exists for capture_uuid={capture_uuid}")
             raise HTTPException(status_Code=500, detail="Internal error: Lost conversation service")
-        
+
         # Enqueue for processing
         task = ProcessAudioChunkTask(
             capture_file=capture_file,
@@ -279,7 +278,7 @@ async def process_capture(request: Request, capture_uuid: Annotated[str, Form()]
         # Remove from in-memory app state
         if capture_uuid in app_state.conversation_detection_service_by_id:
             del app_state.conversation_detection_service_by_id[capture_uuid]
-        
+
         return JSONResponse(content={"message": "Conversation processed"})
     except Exception as e:
         logger.error(f"Failed to process: {e}")
@@ -295,7 +294,7 @@ async def receive_location(location: Location, db: Session = Depends(AppState.ge
         if location.capture_uuid:
             conversation = update_latest_conversation_location(db, location.capture_uuid, location)
             await app_state.notification_service.emit_message("update_conversation",  ConversationRead.from_orm(conversation).model_dump_json())
-            
+
         return {"message": "Location received", "location_id": new_location.id}
     except Exception as e:
         logger.error(f"Error processing location: {e}")
