@@ -9,7 +9,7 @@ from ..conversation.transcript_summarizer import TranscriptionSummarizer
 from ...database.crud import create_transcription, create_conversation, find_most_common_location, create_capture_file_segment_file_ref, update_conversation_state, get_conversation_by_conversation_uuid 
 from ...database.database import Database
 from ...core.config import Configuration
-from ...models.schemas import Transcription, Conversation, ConversationState, Capture, CaptureSegmentFileRef, TranscriptionRead, ConversationRead
+from ...models.schemas import Transcription, Conversation, ConversationState, Capture, CaptureSegment, TranscriptionRead, ConversationRead
 from ...files import CaptureDirectory
 
 logger = logging.getLogger(__name__)
@@ -25,7 +25,7 @@ class ConversationService:
     async def create_conversation(self, conversation_uuid: str, start_time: datetime, capture_file: Capture) -> Conversation:
         with next(self._database.get_db()) as db:
             # Create segment file
-            segment_file = CaptureSegmentFileRef(
+            segment_file = CaptureSegment(
                 conversation_uuid=conversation_uuid,
                 start_time=start_time,
                 filepath=CaptureDirectory(config=self._config).get_capture_segment_filepath(capture_file=capture_file, conversation_uuid=conversation_uuid, timestamp=start_time),

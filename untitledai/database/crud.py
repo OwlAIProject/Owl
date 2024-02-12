@@ -1,5 +1,5 @@
 from sqlmodel import SQLModel, Session, select
-from ..models.schemas import Transcription, Conversation, Utterance, Location, CaptureSegmentFileRef, Capture, ConversationState
+from ..models.schemas import Transcription, Conversation, Utterance, Location, CaptureSegment, Capture, ConversationState
 from typing import List, Optional
 from sqlalchemy.orm import joinedload, selectinload
 from sqlalchemy import desc, func, or_
@@ -20,7 +20,7 @@ def create_transcription(db: Session, transcription: Transcription) -> Transcrip
     db.refresh(transcription)
     return transcription
 
-def create_capture_file_segment_file_ref(db: Session, capture_file_segment_file: CaptureSegmentFileRef) -> CaptureSegmentFileRef:
+def create_capture_file_segment_file_ref(db: Session, capture_file_segment_file: CaptureSegment) -> CaptureSegment:
     db.add(capture_file_segment_file)
     db.commit()
     db.refresh(capture_file_segment_file)
@@ -37,8 +37,8 @@ def get_capture_file_ref(db: Session, capture_uuid: str) -> Optional[Capture]:
     result = db.execute(statement).first()
     return result[0] if result else None
 
-def get_capture_file_segment_file_ref(db: Session, conversation_uuid: str) -> Optional[CaptureSegmentFileRef]:
-    statement = select(CaptureSegmentFileRef).where(CaptureSegmentFileRef.conversation_uuid == conversation_uuid)
+def get_capture_file_segment_file_ref(db: Session, conversation_uuid: str) -> Optional[CaptureSegment]:
+    statement = select(CaptureSegment).where(CaptureSegment.conversation_uuid == conversation_uuid)
     result = db.execute(statement).first()
     return result[0] if result else None
 
@@ -52,7 +52,7 @@ def get_conversation(db: Session, conversation_id: int) -> Conversation:
         .selectinload(Transcription.utterances)
         .selectinload(Utterance.words),
         selectinload(Conversation.capture_segment_file)
-        .joinedload(CaptureSegmentFileRef.source_capture),
+        .joinedload(CaptureSegment.source_capture),
         selectinload(Conversation.primary_location),
     ).filter(Conversation.id == conversation_id).first()
     return result
@@ -69,8 +69,8 @@ def get_conversation_by_conversation_uuid(db: Session, conversation_uuid: int) -
 def get_latest_capturing_conversation_by_capture_uuid(db: Session, capture_uuid: str) -> Optional[Conversation]:
     statement = (
         select(Conversation)
-        .join(CaptureSegmentFileRef, Conversation.capture_segment_file)
-        .join(Capture, CaptureSegmentFileRef.source_capture)   
+        .join(CaptureSegment, Conversation.capture_segment_file)
+        .join(Capture, CaptureSegment.source_capture)   
         .where(Capture.capture_uuid == capture_uuid, Conversation.state == ConversationState.CAPTURING)
         .order_by(Conversation.start_time.desc())
         .limit(1)

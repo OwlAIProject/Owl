@@ -31,7 +31,7 @@ from datetime import datetime
 
 from ..core.config import Configuration
 from ..devices import DeviceType
-from ..models.schemas import Capture, CaptureSegmentFileRef
+from ..models.schemas import Capture, CaptureSegment
 
 
 class CaptureDirectory:
@@ -72,7 +72,7 @@ class CaptureDirectory:
         parent_dir = os.path.dirname(capture_file.filepath)
         return os.path.join(parent_dir, f"{self._timestamp_string(capture_file.start_time)}_{capture_file.capture_uuid}")
 
-    def get_transcription_filepath(self, segment_file: CaptureSegmentFileRef) -> str:
+    def get_transcription_filepath(self, segment_file: CaptureSegment) -> str:
         """
         Name of the transcript file on disk. Adjacent to the segment file.
 
@@ -91,7 +91,7 @@ class CaptureDirectory:
         rootname, _ = os.path.splitext(filename)
         return os.path.join(our_dir, f"{rootname}_transcript.json")
 
-    def get_conversation_filepath(self, segment_file: CaptureSegmentFileRef) -> str:
+    def get_conversation_filepath(self, segment_file: CaptureSegment) -> str:
         """
         Name of the conversation file on disk. Adjacent to the segment file.
 

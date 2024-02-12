@@ -6,7 +6,7 @@ from sqlmodel import Session
 
 from fastapi.encoders import jsonable_encoder
 from ...server.app_state import AppState
-from ...models.schemas import ConversationsResponse, ConversationRead, CaptureSegmentFileRefRead
+from ...models.schemas import ConversationsResponse, ConversationRead, CaptureSegmentRead
 from ...database.crud import get_all_conversations, get_conversation, delete_conversation
 from ...devices import DeviceType
 from typing import List

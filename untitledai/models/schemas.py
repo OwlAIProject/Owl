@@ -72,8 +72,8 @@ class Conversation(CreatedAtMixin, table=True):
     summarization_model: Optional[str]
     state: ConversationState = Field(default=ConversationState.CAPTURING)
 
-    capture_segment_file_id: Optional[int] = Field(default=None, foreign_key="capturesegmentfileref.id")
-    capture_segment_file: Optional["CaptureSegmentFileRef"] = Relationship(back_populates="conversation")
+    capture_segment_file_id: Optional[int] = Field(default=None, foreign_key="capturesegment.id")
+    capture_segment_file: Optional["CaptureSegment"] = Relationship(back_populates="conversation")
     transcriptions: List[Transcription] = Relationship(back_populates="conversation")
     primary_location_id: Optional[int] = Field(default=None, foreign_key="location.id")
     primary_location: Optional[Location] = Relationship(back_populates="conversation")
@@ -86,9 +86,9 @@ class Capture(CreatedAtMixin, table=True):
     device_type: str
     duration: Optional[float]
 
-    capture_segment_files: List["CaptureSegmentFileRef"] = Relationship(back_populates="source_capture")
+    capture_segment_files: List["CaptureSegment"] = Relationship(back_populates="source_capture")
 
-class CaptureSegmentFileRef(CreatedAtMixin, table=True):
+class CaptureSegment(CreatedAtMixin, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     filepath: str = Field(...)
     start_time: datetime
@@ -139,7 +139,7 @@ class CaptureRead(BaseModel):
             datetime: datetime_string
         }
 
-class CaptureSegmentFileRefRead(BaseModel):
+class CaptureSegmentRead(BaseModel):
     id: Optional[int]
     filepath: str
     duration: Optional[float]
@@ -181,7 +181,7 @@ class ConversationRead(BaseModel):
     short_summary: Optional[str]
     transcriptions: List[TranscriptionRead] = []
     primary_location: Optional[LocationRead] = None
-    capture_segment_file: Optional[CaptureSegmentFileRefRead]
+    capture_segment_file: Optional[CaptureSegmentRead]
 
     class Config:
         from_attributes = True
