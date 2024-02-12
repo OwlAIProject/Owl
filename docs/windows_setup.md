@@ -10,6 +10,7 @@ To install the server, first clone the git repository to a directory on disk and
 - Open an Anaconda Command Prompt and create a new Python 3.11 environment named `ai` with this command: `conda create -n ai python=3.11`
 - Switch to the environment: `conda activate ai`
 - In the root of the source tree, where `requirements-windows.txt` is, install the required packages: `pip install -r requirements-windows.txt`
+- FFmpeg is used by the server to convert audio formats. [Install it](https://ffmpeg.org/download.html) and ensure it is in the path and can be run from the command line as `ffmpeg`.
 - Test that you can run the server by issuing this command from the root directory, which will print usage instructions: `python -m untitledai.core.cli --help`
 
 Once installed, you will need to also [configure the server](./server_configuration.md) (API tokens, etc.)
