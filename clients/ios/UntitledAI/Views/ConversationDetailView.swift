@@ -23,9 +23,25 @@ struct ConversationDetailView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading) {
+                if conversation.summary != nil {
+                    SummaryView(conversation: conversation)
+
+                    Divider().padding(.vertical)
+                }
+
+                if let primaryLocation = conversation.primaryLocation {
+                    Map(coordinateRegion: .constant(MKCoordinateRegion(center: primaryLocation.coordinate, span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05))), interactionModes: [], annotationItems: [primaryLocation]) { location in
+                        MapMarker(coordinate: location.coordinate)
+                    }
+                    .frame(height: 200)
+                    .cornerRadius(15)
+
+                    Divider().padding(.vertical)
+                }
+
                 if let transcription = transcriptToShow {
                     MetadataView(conversation: conversation, transcription: transcription)
-                    
+
                     Divider().padding(.vertical)
                     if !transcription.utterances.isEmpty {
                         ForEach(transcription.utterances, id: \.id) { utterance in
@@ -33,29 +49,13 @@ struct ConversationDetailView: View {
                                 Text("\(utterance.speaker ?? "Unknown"):")
                                     .fontWeight(.semibold)
                                     .foregroundColor(.blue)
-                                
+
                                 Text(utterance.text ?? "")
                                     .foregroundColor(.secondary)
                             }
                             Divider()
                         }
                     }
-                }
-                
-                if conversation.summary != nil {
-                    SummaryView(conversation: conversation)
-                    
-                    Divider().padding(.vertical)
-                }
-                
-                if let primaryLocation = conversation.primaryLocation {
-                    Map(coordinateRegion: .constant(MKCoordinateRegion(center: primaryLocation.coordinate, span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05))), interactionModes: [], annotationItems: [primaryLocation]) { location in
-                        MapMarker(coordinate: location.coordinate)
-                    }
-                    .frame(height: 200)
-                    .cornerRadius(15)
-                    
-                    Divider().padding(.vertical)
                 }
             }
             .padding()
