@@ -45,7 +45,7 @@ class StreamingCaptureHandler:
         self._transcription_service = StreamingTranscriptionServiceFactory.get_service(
             app_state.config, self.handle_utterance, stream_format=self._stream_format
         )
-        
+
         self._endpointing_service = StreamingEndpointingService(
             timeout_seconds=app_state.config.conversation_endpointing.timeout_seconds,
             min_utterances=app_state.config.conversation_endpointing.min_utterances,
@@ -78,18 +78,18 @@ class StreamingCaptureHandler:
             await self._init_capture_session()
         if self._file_extension == "wav":
             append_to_wav_file(
-                filepath=self._capture_file.file_path, 
-                sample_bytes=binary_data, 
+                filepath=self._capture_file.file_path,
+                sample_bytes=binary_data,
                 sample_rate=16000,
                 sample_bits=16,
                 num_channels=1
             )
             if self._segment_file:
                 append_to_wav_file(
-                    filepath=self._segment_file.file_path, 
-                    sample_bytes=binary_data, 
-                    sample_rate=16000, 
-                    sample_bits=16, 
+                    filepath=self._segment_file.file_path,
+                    sample_bytes=binary_data,
+                    sample_rate=16000,
+                    sample_bits=16,
                     num_channels=1
                 )
         else:
@@ -125,8 +125,8 @@ class StreamingCaptureHandler:
 
     def finish_capture_session(self):
         if self._segment_file:
-            self._process_conversation(self._conversation_uuid, self._capture_file, self._segment_file)
-       
+            self._process_conversation(self._capture_file, self._segment_file)
+
         if self._endpointing_service:
             self._endpointing_service.stop()
         logger.info(f"Finishing capture: {self._capture_uuid}")
