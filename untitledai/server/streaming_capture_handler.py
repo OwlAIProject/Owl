@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 from ..services.stt.streaming.streaming_transcription_service_factory import StreamingTranscriptionServiceFactory
 from ..services.endpointing.streaming.streaming_endpointing_service import StreamingEndpointingService
 from ..files.wav_file import append_to_wav_file
-from ..models.schemas import UtteranceRead, CaptureFileRef, CaptureSegmentFileRef
+from ..models.schemas import UtteranceRead, Capture, CaptureSegmentFileRef
 from ..database.crud import create_utterance
 from .task import Task
 if TYPE_CHECKING:
@@ -68,7 +68,7 @@ class StreamingCaptureHandler:
             self._process_conversation(self._conversation_uuid, self._capture_file, self._segment_file)
         await self._start_new_segment()
 
-    def _process_conversation(self, capture_file: CaptureFileRef, segment_file: CaptureSegmentFileRef):
+    def _process_conversation(self, capture_file: Capture, segment_file: CaptureSegmentFileRef):
         logger.info(f"Processing conversation for capture_uuid={capture_file.capture_uuid} (conversation_uuid={segment_file.conversation_uuid})")
         task = ProcessConversationTask(conversation_uuid=segment_file.conversation_uuid)
         self._app_state.task_queue.put(task)

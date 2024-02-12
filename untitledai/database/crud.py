@@ -1,5 +1,5 @@
 from sqlmodel import SQLModel, Session, select
-from ..models.schemas import Transcription, Conversation, Utterance, Location, CaptureSegmentFileRef, CaptureFileRef, ConversationState
+from ..models.schemas import Transcription, Conversation, Utterance, Location, CaptureSegmentFileRef, Capture, ConversationState
 from typing import List, Optional
 from sqlalchemy.orm import joinedload, selectinload
 from sqlalchemy import desc, func, or_
@@ -26,14 +26,14 @@ def create_capture_file_segment_file_ref(db: Session, capture_file_segment_file:
     db.refresh(capture_file_segment_file)
     return capture_file_segment_file
 
-def create_capture_file_ref(db: Session, capture_file_ref: CaptureFileRef) -> CaptureFileRef:
+def create_capture_file_ref(db: Session, capture_file_ref: Capture) -> Capture:
     db.add(capture_file_ref)
     db.commit()
     db.refresh(capture_file_ref)
     return capture_file_ref
 
-def get_capture_file_ref(db: Session, capture_uuid: str) -> Optional[CaptureFileRef]:
-    statement = select(CaptureFileRef).where(CaptureFileRef.capture_uuid == capture_uuid)
+def get_capture_file_ref(db: Session, capture_uuid: str) -> Optional[Capture]:
+    statement = select(Capture).where(Capture.capture_uuid == capture_uuid)
     result = db.execute(statement).first()
     return result[0] if result else None
 
@@ -70,8 +70,8 @@ def get_latest_capturing_conversation_by_capture_uuid(db: Session, capture_uuid:
     statement = (
         select(Conversation)
         .join(CaptureSegmentFileRef, Conversation.capture_segment_file)
-        .join(CaptureFileRef, CaptureSegmentFileRef.source_capture)   
-        .where(CaptureFileRef.capture_uuid == capture_uuid, Conversation.state == ConversationState.CAPTURING)
+        .join(Capture, CaptureSegmentFileRef.source_capture)   
+        .where(Capture.capture_uuid == capture_uuid, Conversation.state == ConversationState.CAPTURING)
         .order_by(Conversation.start_time.desc())
         .limit(1)
     )

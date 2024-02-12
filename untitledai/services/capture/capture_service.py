@@ -12,7 +12,7 @@ import os
 from ...database.database import Database
 from ...core.config import Configuration
 from ...devices import DeviceType
-from ...models.schemas import CaptureFileRef
+from ...models.schemas import Capture
 from ...database.crud import create_capture_file_ref, get_capture_file_ref
 from ...files import CaptureDirectory
 
@@ -23,7 +23,7 @@ class CaptureService:
         self._config = config
         self._database = database
     
-    def create_capture_file(self, capture_uuid: str, format: str, start_time: datetime, device_type: DeviceType | str) -> CaptureFileRef:
+    def create_capture_file(self, capture_uuid: str, format: str, start_time: datetime, device_type: DeviceType | str) -> Capture:
         with next(self._database.get_db()) as db:
             # This method is only for creating new captures
             existing_capture_file_ref = get_capture_file_ref(db=db, capture_uuid=capture_uuid)
@@ -38,7 +38,7 @@ class CaptureService:
                 device = device_type
 
             # Create and enter into database
-            new_capture_file = CaptureFileRef(
+            new_capture_file = Capture(
                 capture_uuid=capture_uuid,
                 filepath=CaptureDirectory(config=self._config).get_capture_filepath(capture_uuid=capture_uuid, format=format, start_time=start_time, device_type=device),
                 device_type=device.value,
@@ -48,6 +48,6 @@ class CaptureService:
 
             return saved_capture_file
         
-    def get_capture_file(self, capture_uuid: str) -> CaptureFileRef | None:
+    def get_capture_file(self, capture_uuid: str) -> Capture | None:
         with next(self._database.get_db()) as db:
             return get_capture_file_ref(db=db, capture_uuid=capture_uuid)

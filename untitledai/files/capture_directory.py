@@ -31,7 +31,7 @@ from datetime import datetime
 
 from ..core.config import Configuration
 from ..devices import DeviceType
-from ..models.schemas import CaptureFileRef, CaptureSegmentFileRef
+from ..models.schemas import Capture, CaptureSegmentFileRef
 
 
 class CaptureDirectory:
@@ -51,7 +51,7 @@ class CaptureDirectory:
 
         return filepath
     
-    def get_capture_segment_filepath(self, capture_file: CaptureFileRef, conversation_uuid: str, timestamp: datetime) -> str:
+    def get_capture_segment_filepath(self, capture_file: Capture, conversation_uuid: str, timestamp: datetime) -> str:
         # Same format as parent capture, based on file extension
         format = os.path.splitext(capture_file.filepath)[1].lstrip(".")
 
@@ -66,7 +66,7 @@ class CaptureDirectory:
 
         return filepath
     
-    def get_capture_segment_directory(self, capture_file: CaptureFileRef):
+    def get_capture_segment_directory(self, capture_file: Capture):
         # Store segments in sub-directory {capture_timestamp}_{capture_uuid} alongside parent
         # capture file, i.e., {capture_dir}/{date}/{device}/{capture_timestamp}_{capture_uuid}
         parent_dir = os.path.dirname(capture_file.filepath)

@@ -30,7 +30,7 @@ from .. import AppState
 from ..task import Task
 from ...database.crud import create_location, update_latest_conversation_location
 from ...files import append_to_wav_file
-from ...models.schemas import Location, CaptureFileRef, ConversationRead
+from ...models.schemas import Location, Capture, ConversationRead
 from ..streaming_capture_handler import StreamingCaptureHandler
 from ...services import ConversationDetectionService
 
@@ -88,7 +88,7 @@ class ProcessAudioChunkTask(Task):
 
     def __init__(
         self,
-        capture_file: CaptureFileRef,
+        capture_file: Capture,
         detection_service: ConversationDetectionService,
         format: str,
         audio_data: bytes | None = None
@@ -194,7 +194,7 @@ async def upload_chunk(
             write_wav_header = True
 
         # Look up capture session or create a new one
-        capture_file: CaptureFileRef = app_state.capture_service.get_capture_file(capture_uuid=capture_uuid)
+        capture_file: Capture = app_state.capture_service.get_capture_file(capture_uuid=capture_uuid)
         if capture_file is None:
             capture_file = app_state.capture_service.create_capture_file(
                 capture_uuid=capture_uuid,
@@ -247,7 +247,7 @@ async def upload_chunk(
 async def process_capture(request: Request, capture_uuid: Annotated[str, Form()], app_state: AppState = Depends(AppState.authenticate_request)):
     try:
         # Get capture file
-        capture_file: CaptureFileRef = app_state.capture_service.get_capture_file(capture_uuid=capture_uuid)
+        capture_file: Capture = app_state.capture_service.get_capture_file(capture_uuid=capture_uuid)
         if capture_file is None:
             logger.error(f"Capture file for capture_uuid={capture_uuid} not found! Cannot process capture.")
             raise HTTPException(status_code=500, detail=f"Capture file for capture_uuid={capture_uuid} not found! Cannot process capture.")
