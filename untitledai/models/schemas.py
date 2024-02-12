@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 from pydantic import BaseModel, validator
 from enum import Enum
 
-from .datetime_serialization import datetime_string
+from .datetime_serialization import timestamp_string
 
 
 class CreatedAtMixin(SQLModel):
@@ -123,7 +123,7 @@ class UtteranceRead(BaseModel):
     class Config:
         from_attributes=True
         json_encoders = {
-            datetime: datetime_string
+            datetime: timestamp_string
         }
 
 class CaptureFileRefRead(BaseModel):
@@ -136,7 +136,7 @@ class CaptureFileRefRead(BaseModel):
     class Config:
         from_attributes = True
         json_encoders = {
-            datetime: datetime_string
+            datetime: timestamp_string
         }
 
 class CaptureSegmentFileRefRead(BaseModel):
@@ -149,7 +149,7 @@ class CaptureSegmentFileRefRead(BaseModel):
     class Config:
         from_attributes = True
         json_encoders = {
-            datetime: datetime_string
+            datetime: timestamp_string
         }
 
 class TranscriptionRead(BaseModel):
@@ -186,7 +186,7 @@ class ConversationRead(BaseModel):
     class Config:
         from_attributes = True
         json_encoders = {
-            datetime: datetime_string
+            datetime: timestamp_string
         }
 
 class ConversationsResponse(BaseModel):

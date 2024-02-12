@@ -31,6 +31,7 @@ from ...files import append_to_wav_file
 from ...models.schemas import Location, CaptureFileRef, ConversationRead
 from ..streaming_capture_handler import StreamingCaptureHandler
 from ...services import ConversationDetectionService
+from ...models.datetime_serialization import try_parse_timestamp
 
 
 logger = logging.getLogger(__name__)
@@ -179,9 +180,8 @@ async def upload_chunk(
             raise HTTPException(status_code=500, detail=f"Failed to process because file extension is unsupported: {file_extension}")
 
         # Validate timestamp
-        try:
-            start_time = datetime.strptime(timestamp, "%Y%m%d-%H%M%S.%f")
-        except:
+        start_time = try_parse_timestamp(from_string=timestamp)
+        if start_time is None:
             raise HTTPException(status_code=500, detail="'timestamp' string does not conform to YYYYmmdd-HHMMSS.fff format")
 
         # Raw PCM is automatically converted to wave format. We do this to prevent client from
