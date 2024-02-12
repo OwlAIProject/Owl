@@ -37,11 +37,11 @@ Once the server is installed, some configuration is necessary before it can be r
 
 - [Configuring the server](docs/server_configuration.md)
 
-## iOS Application Setup
+### iOS Application Setup
 
 TODO: write me
 
-## Capture Client Setup
+### Capture Client Setup
 
 Multiple capture clients are supported:
 
