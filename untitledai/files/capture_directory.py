@@ -53,7 +53,7 @@ class CaptureDirectory:
     
     def get_capture_segment_filepath(self, capture_file: CaptureFileRef, conversation_uuid: str, timestamp: datetime) -> str:
         # Same format as parent capture, based on file extension
-        format = os.path.splitext(capture_file.file_path)[1].lstrip(".")
+        format = os.path.splitext(capture_file.filepath)[1].lstrip(".")
 
         # Our file is: {conversation_timestamp}_{conversation_uuid}.{ext}, stored in the segment
         # subdirectory
@@ -69,7 +69,7 @@ class CaptureDirectory:
     def get_capture_segment_directory(self, capture_file: CaptureFileRef):
         # Store segments in sub-directory {capture_timestamp}_{capture_uuid} alongside parent
         # capture file, i.e., {capture_dir}/{date}/{device}/{capture_timestamp}_{capture_uuid}
-        parent_dir = os.path.dirname(capture_file.file_path)
+        parent_dir = os.path.dirname(capture_file.filepath)
         return os.path.join(parent_dir, f"{self._timestamp_string(capture_file.start_time)}_{capture_file.capture_uuid}")
 
     def get_transcription_filepath(self, segment_file: CaptureSegmentFileRef) -> str:
@@ -86,8 +86,8 @@ class CaptureDirectory:
         str
             Filepath of transcript file.
         """
-        our_dir = os.path.dirname(segment_file.file_path)
-        filename = os.path.basename(segment_file.file_path)
+        our_dir = os.path.dirname(segment_file.filepath)
+        filename = os.path.basename(segment_file.filepath)
         rootname, _ = os.path.splitext(filename)
         return os.path.join(our_dir, f"{rootname}_transcript.json")
 
@@ -105,8 +105,8 @@ class CaptureDirectory:
         str
             Filepath of conversation file.
         """
-        our_dir = os.path.dirname(segment_file.file_path)
-        filename = os.path.basename(segment_file.file_path)
+        our_dir = os.path.dirname(segment_file.filepath)
+        filename = os.path.basename(segment_file.filepath)
         rootname, _ = os.path.splitext(filename)
         return os.path.join(our_dir, f"{rootname}_conversation.json")
     

@@ -4,8 +4,8 @@
 #     i think you said this would be unnecessary but doesn't hurt anything, so if it works, maybe leave it for now?
 #   - streaming_capture_handler.py: _init_capture_session() should check if capture exists (and segment file?) to support restarts
 #   - Change: CaptureFileRef -> Capture, CaptureSegmentFileRef -> CaptureSegment
-#   - Change all occurrences of file_path -> filepath? I use filepath frequently (and we have used it
-#     in other places but in the schema, file_path is used)
+#   - Change all occurrences of filepath -> filepath? I use filepath frequently (and we have used it
+#     in other places but in the schema, filepath is used)
 #   - Conversation end_time is never set or updated
 #   - Stretch: integrate my endpointing
 
@@ -150,7 +150,7 @@ class ProcessAudioChunkTask(Task):
             # We now know the conversation segment exists, add it to the list of conversations to
             # process.
             completed_conversations.append(app_state.conversation_service.get_conversation(conversation_uuid=convo.uuid))
-            conversation_filepaths.append(completed_conversations[-1].capture_segment_file.file_path)
+            conversation_filepaths.append(completed_conversations[-1].capture_segment_file.filepath)
 
         # Perform the extraction!
         await detection_service.extract_conversations(conversations=detection_results.completed, conversation_filepaths=conversation_filepaths)
@@ -208,7 +208,7 @@ async def upload_chunk(
         if detection_service is None:
             detection_service = ConversationDetectionService(
                 config=app_state.config,
-                capture_filepath=capture_file.file_path,
+                capture_filepath=capture_file.filepath,
                 capture_timestamp=capture_file.start_time
             )
             app_state.conversation_detection_service_by_id[capture_uuid] = detection_service
@@ -219,11 +219,11 @@ async def upload_chunk(
         # Append to file
         bytes_written = 0
         if write_wav_header:
-            bytes_written = append_to_wav_file(filepath=capture_file.file_path, sample_bytes=content, sample_rate=16000)
+            bytes_written = append_to_wav_file(filepath=capture_file.filepath, sample_bytes=content, sample_rate=16000)
         else:
-            with open(file=capture_file.file_path, mode="ab") as fp:
+            with open(file=capture_file.filepath, mode="ab") as fp:
                 bytes_written = fp.write(content)
-        logging.info(f"{capture_file.file_path}: {bytes_written} bytes appended")
+        logging.info(f"{capture_file.filepath}: {bytes_written} bytes appended")
 
         # Conversation processing task
         task = ProcessAudioChunkTask(
@@ -266,7 +266,7 @@ async def process_capture(request: Request, capture_uuid: Annotated[str, Form()]
         task = ProcessAudioChunkTask(
             capture_file=capture_file,
             detection_service=detection_service,
-            format=os.path.splitext(capture_file.file_path)[1].lstrip(".")
+            format=os.path.splitext(capture_file.filepath)[1].lstrip(".")
         )
         app_state.task_queue.put(task)
 

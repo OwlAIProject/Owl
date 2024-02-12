@@ -67,11 +67,11 @@ class UDPConfiguration(BaseModel):
 class Configuration(BaseModel):
 
     @classmethod
-    def load_config_yaml(cls, config_file_path: str) -> 'Configuration':
+    def load_config_yaml(cls, config_filepath: str) -> 'Configuration':
         """
         Load configuration from YAML file and apply environment variable overrides.
         """
-        with open(config_file_path, 'r') as stream:
+        with open(config_filepath, 'r') as stream:
             config_data = yaml.safe_load(stream)
 
         # Apply environment variable overrides

@@ -81,7 +81,7 @@ class Conversation(CreatedAtMixin, table=True):
 class CaptureFileRef(CreatedAtMixin, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     capture_uuid: str
-    file_path: str = Field(...)
+    filepath: str = Field(...)
     start_time: datetime
     device_type: str
     duration: Optional[float]
@@ -90,7 +90,7 @@ class CaptureFileRef(CreatedAtMixin, table=True):
 
 class CaptureSegmentFileRef(CreatedAtMixin, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
-    file_path: str = Field(...)
+    filepath: str = Field(...)
     start_time: datetime
     conversation_uuid: str
     source_capture_id: int = Field(default=None, foreign_key="capturefileref.id")
@@ -129,7 +129,7 @@ class UtteranceRead(BaseModel):
 class CaptureFileRefRead(BaseModel):
     id: Optional[int]
     capture_uuid: str
-    file_path: str
+    filepath: str
     start_time: datetime
     duration: Optional[float]
     device_type: str
@@ -141,7 +141,7 @@ class CaptureFileRefRead(BaseModel):
 
 class CaptureSegmentFileRefRead(BaseModel):
     id: Optional[int]
-    file_path: str
+    filepath: str
     duration: Optional[float]
     start_time: datetime
     source_capture: Optional[CaptureFileRefRead] = None

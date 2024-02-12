@@ -78,7 +78,7 @@ class StreamingCaptureHandler:
             await self._init_capture_session()
         if self._file_extension == "wav":
             append_to_wav_file(
-                filepath=self._capture_file.file_path,
+                filepath=self._capture_file.filepath,
                 sample_bytes=binary_data,
                 sample_rate=16000,
                 sample_bits=16,
@@ -86,18 +86,18 @@ class StreamingCaptureHandler:
             )
             if self._segment_file:
                 append_to_wav_file(
-                    filepath=self._segment_file.file_path,
+                    filepath=self._segment_file.filepath,
                     sample_bytes=binary_data,
                     sample_rate=16000,
                     sample_bits=16,
                     num_channels=1
                 )
         else:
-            with open(self._capture_file.file_path, "ab") as file:
+            with open(self._capture_file.filepath, "ab") as file:
                 file.write(binary_data)
 
             if self._segment_file:
-                with open(self._segment_file.file_path, "ab") as file:
+                with open(self._segment_file.filepath, "ab") as file:
                     file.write(binary_data)
         await self._transcription_service.send_audio(binary_data)
 

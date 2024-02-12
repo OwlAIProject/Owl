@@ -40,7 +40,7 @@ class CaptureService:
             # Create and enter into database
             new_capture_file = CaptureFileRef(
                 capture_uuid=capture_uuid,
-                file_path=CaptureDirectory(config=self._config).get_capture_filepath(capture_uuid=capture_uuid, format=format, start_time=start_time, device_type=device),
+                filepath=CaptureDirectory(config=self._config).get_capture_filepath(capture_uuid=capture_uuid, format=format, start_time=start_time, device_type=device),
                 device_type=device.value,
                 start_time=start_time
             )

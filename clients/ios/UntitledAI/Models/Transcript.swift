@@ -15,7 +15,7 @@ struct CaptureFile: Codable {
 
     enum CodingKeys: String, CodingKey {
         case id
-        case filePath = "file_path"
+        case filePath = "filepath"
         case startTime = "start_time"
         case deviceType = "device_type"
     }
@@ -30,7 +30,7 @@ struct CaptureFileSegment: Codable {
 
     enum CodingKeys: String, CodingKey {
         case id, duration
-        case filePath = "file_path"
+        case filePath = "filepath"
         case sourceCapture = "source_capture"
     }
 }

@@ -28,7 +28,7 @@ class ConversationService:
             segment_file = CaptureSegmentFileRef(
                 conversation_uuid=conversation_uuid,
                 start_time=start_time,
-                file_path=CaptureDirectory(config=self._config).get_capture_segment_filepath(capture_file=capture_file, conversation_uuid=conversation_uuid, timestamp=start_time),
+                filepath=CaptureDirectory(config=self._config).get_capture_segment_filepath(capture_file=capture_file, conversation_uuid=conversation_uuid, timestamp=start_time),
                 source_capture_id=capture_file.id   # database IDs to link segments to their parent captures
             )
             saved_segment_file = create_capture_file_segment_file_ref(db=db, capture_file_segment_file=segment_file)
@@ -37,7 +37,7 @@ class ConversationService:
             realtime_transcript = Transcription(
                     realtime=True,
                     model=self._config.streaming_transcription.provider,
-                    file_name=saved_segment_file.file_path,
+                    file_name=saved_segment_file.filepath,
                     utterances=[],
                     transcription_time=saved_segment_file.start_time.timestamp(),
             )
@@ -78,11 +78,11 @@ class ConversationService:
 
                 logger.info(f"Processing conversation...")
                 # Segment audio and duration
-                audio = AudioSegment.from_file(conversation.capture_segment_file.file_path)
+                audio = AudioSegment.from_file(conversation.capture_segment_file.filepath)
                 audio_duration = len(audio) / 1000.0  # Duration in seconds
 
                 # Total capture audio duration
-                capture_audio = AudioSegment.from_file(conversation.capture_segment_file.source_capture.file_path)
+                capture_audio = AudioSegment.from_file(conversation.capture_segment_file.source_capture.filepath)
                 capture_audio_duration = len(capture_audio) / 1000.0  # Duration in seconds
 
                 # Conversation start and end time
@@ -92,7 +92,7 @@ class ConversationService:
                 # Start transcription timer
                 start_time = time.time()
 
-                transcription = await self._transcription_service.transcribe_audio(conversation.capture_segment_file.file_path, voice_sample_filepath, speaker_name)
+                transcription = await self._transcription_service.transcribe_audio(conversation.capture_segment_file.filepath, voice_sample_filepath, speaker_name)
                 transcription.transcription_time = time.time() - start_time  # Transcription time
                 logger.info(f"Transcription complete in {transcription.transcription_time:.2f} seconds")
                 logger.info(f"Transcription: {transcription.utterances}")
