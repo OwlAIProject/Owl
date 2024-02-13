@@ -7,7 +7,9 @@ RUN apt-get update && apt-get install -y \
     git \
     ffmpeg \
     pkg-config \
-    build-essential \
+    libcairo2-dev \
+    portaudio19-dev \
+    cmake && \
     && apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
