@@ -17,6 +17,11 @@ jobs:
       - name: Delete huge unnecessary tools folder
         run: sudo rm -rf /opt/hostedtoolcache
         
+      - name: Remove unnecessary files
+        run: |
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+        
       - name: Check out the repo
         uses: actions/checkout@v2
 
