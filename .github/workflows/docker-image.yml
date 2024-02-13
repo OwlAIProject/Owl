@@ -19,8 +19,10 @@ jobs:
         
       - name: Remove unnecessary files
         run: |
-          sudo rm -rf /usr/share/dotnet
           sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /opt/ghc
+          sudo rm -rf "/usr/local/share/boost"
         
       - name: Check out the repo
         uses: actions/checkout@v2
