@@ -31,8 +31,11 @@ __pycache__/
 *.py[cod]
 *$py.class
 
-# Annoying things
+# MacOS
 .DS_Store
+
+# Windows
+*.bat
 
 # Xcode
 ## User settings

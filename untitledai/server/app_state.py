@@ -4,10 +4,9 @@ from typing import Dict
 from fastapi import FastAPI, HTTPException, Request, Depends, Header
 from typing import Optional
 from ..core.config import Configuration
-from ..services import ConversationService, LLMService, NotificationService
+from ..services import CaptureService, ConversationService, LLMService, NotificationService
 from .streaming_capture_handler import StreamingCaptureHandler
 from ..database.database import Database
-from ..files import CaptureFile
 from ..services import ConversationDetectionService
 from queue import Queue
 
@@ -20,11 +19,11 @@ class AppState:
     config: Configuration
 
     database: Database
+    capture_service: CaptureService
     conversation_service: ConversationService
     llm_service: LLMService
     notification_service: NotificationService
     
-    capture_files_by_id: Dict[str, CaptureFile] = field(default_factory=lambda: {})
     capture_handlers: Dict[str, StreamingCaptureHandler] = field(default_factory=lambda: {})
     conversation_detection_service_by_id: Dict[str, ConversationDetectionService] = field(default_factory=lambda: {})
 

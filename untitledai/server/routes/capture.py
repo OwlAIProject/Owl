@@ -1,14 +1,16 @@
 #
+# TODO for Ethan:
+#   - Stretch: integrate my endpointing
+
+#
 # capture.py
 #
 # Capture endpoints: streaming and chunked file uploads via HTTP handled here.
 #
 
-from datetime import timedelta
-from glob import glob
+from datetime import datetime
 import os
 from typing import Annotated
-import uuid
 
 from fastapi import APIRouter, Request, HTTPException, BackgroundTasks, UploadFile, Form, Depends
 from fastapi.responses import JSONResponse
@@ -19,9 +21,9 @@ import traceback
 
 from .. import AppState
 from ..task import Task
-from ...database.crud import create_location
-from ...files import CaptureFile, append_to_wav_file
-from ...models.schemas import Location
+from ...database.crud import create_location, update_latest_conversation_location
+from ...files import append_to_wav_file
+from ...models.schemas import Location, Capture, ConversationRead
 from ..streaming_capture_handler import StreamingCaptureHandler
 from ...services import ConversationDetectionService
 
@@ -79,7 +81,7 @@ class ProcessAudioChunkTask(Task):
 
     def __init__(
         self,
-        capture_file: CaptureFile,
+        capture_file: Capture,
         detection_service: ConversationDetectionService,
         format: str,
         audio_data: bytes | None = None
@@ -97,46 +99,64 @@ class ProcessAudioChunkTask(Task):
         capture_finished = audio_data is None
         format = self._format
         detection_service = self._detection_service
-        
+
         # Run conversation detection stage (finds conversations thus far)
-        convos = await detection_service.detect_conversations(audio_data=audio_data, format=format, capture_finished=capture_finished)
+        detection_results = await detection_service.detect_conversations(audio_data=audio_data, format=format, capture_finished=capture_finished)
 
-        # Create conversation segment files and store extracted conversations there
-        convo_filepaths = []
-        segment_files = []
-        for convo in convos:
-            timestamp = capture_file.timestamp + timedelta(milliseconds=convo.start)
-            segment_file = capture_file.create_conversation_segment(
-                conversation_uuid=uuid.uuid1().hex,
-                timestamp=timestamp,
-                file_extension=format
+        # As soon as we detect a new, in-progress conversation, we need to create a conversation
+        # object in the database and create a segment file object for it.
+        active_convo = detection_results.in_progress
+        if active_convo is not None and app_state.conversation_service.get_conversation(conversation_uuid=active_convo.uuid) is None:
+            # Create the conversation (and transcript), and references to the capture and segment
+            # files in db. This will also send a notification to app of a new conversation. Note
+            # that the segment file is not yet created on disk (will happen once the conversation)
+            # is actually finished. For chunked uploads, we do not do any partial transcription or
+            # otherwise process the conversation until it is known to be complete!
+            await app_state.conversation_service.create_conversation(
+                conversation_uuid=active_convo.uuid,
+                start_time=active_convo.endpoints.start,
+                capture_file=capture_file
             )
-            convo_filepaths.append(segment_file.filepath)
-            segment_files.append(segment_file)
-        await detection_service.extract_conversations(conversations=convos, conversation_filepaths=convo_filepaths)
 
-        # Process each conversation
-        try:
-            for segment_file in segment_files:
-                await app_state.conversation_service.process_conversation_from_audio(
-                    capture_file=capture_file,
-                    segment_file=segment_file,
-                    voice_sample_filepath=app_state.config.user.voice_sample_filepath,
-                    speaker_name=app_state.config.user.name
+        #TODO: how to update conversation-in-progress after it has been created? Need to send some
+        # sort of notification to UI to let it know latest progress.
+
+        # Handle the completed conversations. Two things have to happen here:
+        #
+        # 1. Because chunks can be arbitrarily long, it is possible that conversations are detected
+        #    and completed for the first time here. That is, we may have conversations that we
+        #    we never saw "in progress". Therefore, we have to create the objects if need-be.
+        # 2. Now that we know where the conversations have ended, we can ask the detection service
+        #    to extract them into their designated segment file locations in one shot.
+        completed_conversations = []
+        conversation_filepaths = []
+        for convo in detection_results.completed:
+            if app_state.conversation_service.get_conversation(conversation_uuid=convo.uuid) is None:
+                # First time we've encountered this conversation. Need to create a new conversation
+                # and enter it into the database.
+                await app_state.conversation_service.create_conversation(
+                    conversation_uuid=convo.uuid,
+                    start_time=convo.endpoints.start,
+                    capture_file=capture_file
                 )
+
+            # We now know the conversation segment exists, add it to the list of conversations to
+            # process.
+            completed_conversations.append(app_state.conversation_service.get_conversation(conversation_uuid=convo.uuid))
+            conversation_filepaths.append(completed_conversations[-1].capture_segment_file.filepath)
+
+        # Perform the extraction!
+        await detection_service.extract_conversations(conversations=detection_results.completed, conversation_filepaths=conversation_filepaths)
+
+        # Process each completed conversation
+        try:
+            for conversation in completed_conversations:
+                # We just need to pass the uuid since the conversation is already persisted
+                await app_state.conversation_service.process_conversation_from_audio(conversation_uuid=conversation.conversation_uuid)
         except Exception as e:
             logging.error(f"Error processing conversation: {e}")
 
 Task.register(ProcessAudioChunkTask)
-
-def find_audio_filepath(audio_directory: str, capture_uuid: str) -> str | None:
-    # Files stored as: {audio_directory}/{date}/{device}/{files}.{ext}
-    filepaths = glob(os.path.join(audio_directory, "*/*/*"))
-    capture_uuids = [ CaptureFile.get_capture_uuid(filepath=filepath) for filepath in filepaths ]
-    file_idx = capture_uuids.index(capture_uuid)
-    if file_idx < 0:
-        return None
-    return filepaths[file_idx]
 
 @router.post("/capture/upload_chunk")
 async def upload_chunk(
@@ -151,7 +171,13 @@ async def upload_chunk(
         # Validate file format
         file_extension = os.path.splitext(file.filename)[1].lstrip(".")
         if file_extension not in supported_upload_file_extensions:
-            return JSONResponse(content={"message": f"Failed to process because file extension is unsupported: {file_extension}"})
+            raise HTTPException(status_code=500, detail=f"Failed to process because file extension is unsupported: {file_extension}")
+
+        # Validate timestamp
+        try:
+            start_time = datetime.strptime(timestamp, "%Y%m%d-%H%M%S.%f")
+        except:
+            raise HTTPException(status_code=500, detail="'timestamp' string does not conform to YYYYmmdd-HHMMSS.fff format")
 
         # Raw PCM is automatically converted to wave format. We do this to prevent client from
         # having to worry about reliability of transmission (in case WAV header chunk is dropped).
@@ -161,32 +187,28 @@ async def upload_chunk(
             write_wav_header = True
 
         # Look up capture session or create a new one
-        capture_file: CaptureFile = None
-        detection_service: ConversationDetectionService = None
-        if capture_uuid in app_state.capture_files_by_id:
-            capture_file = app_state.capture_files_by_id[capture_uuid]
-            detection_service = app_state.conversation_detection_service_by_id.get(capture_uuid)
-            if detection_service is None:
-                logger.error(f"Internal error: No conversation detection service exists for capture_uuid={capture_uuid}")
-                raise HTTPException(status_Code=500, detail="Internal error: Lost conversation service")
-        else:
-            # Create new capture session
-            capture_file = CaptureFile(
-                capture_directory=app_state.config.captures.capture_dir,
+        capture_file: Capture = app_state.capture_service.get_capture_file(capture_uuid=capture_uuid)
+        if capture_file is None:
+            capture_file = app_state.capture_service.create_capture_file(
                 capture_uuid=capture_uuid,
-                device_type=device_type,
-                timestamp=timestamp,
-                file_extension=file_extension
+                format=file_extension,
+                start_time=start_time,
+                device_type=device_type
             )
-            app_state.capture_files_by_id[capture_uuid] = capture_file
 
-            # ... and associated conversation detection service
-            detection_service = ConversationDetectionService(config=app_state.config, capture_filepath=capture_file.filepath)
+        # Ensure a conversation detection service has been created
+        detection_service: ConversationDetectionService = app_state.conversation_detection_service_by_id.get(capture_uuid)
+        if detection_service is None:
+            detection_service = ConversationDetectionService(
+                config=app_state.config,
+                capture_filepath=capture_file.filepath,
+                capture_timestamp=capture_file.start_time
+            )
             app_state.conversation_detection_service_by_id[capture_uuid] = detection_service
-        
+
         # Get uploaded data
         content = await file.read()
-        
+
         # Append to file
         bytes_written = 0
         if write_wav_header:
@@ -213,33 +235,27 @@ async def upload_chunk(
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
-    
+
 @router.post("/capture/process_capture")
 async def process_capture(request: Request, capture_uuid: Annotated[str, Form()], app_state: AppState = Depends(AppState.authenticate_request)):
     try:
         # Get capture file
-        filepath = find_audio_filepath(audio_directory=app_state.config.captures.capture_dir, capture_uuid=capture_uuid)
-        logger.info(f"Found file to process: {filepath}")
-        capture_file: CaptureFile = CaptureFile.from_filepath(filepath=filepath)
+        capture_file: Capture = app_state.capture_service.get_capture_file(capture_uuid=capture_uuid)
         if capture_file is None:
-            logger.error(f"Filepath does not conform to expected format and cannot be processed: {filepath}")
-            raise HTTPException(status_code=500, detail="Internal error: File is incorrectly named on server")
-        
+            logger.error(f"Capture file for capture_uuid={capture_uuid} not found! Cannot process capture.")
+            raise HTTPException(status_code=500, detail=f"Capture file for capture_uuid={capture_uuid} not found! Cannot process capture.")
+
+        # TODO: If the server dies in the middle of an upload or before /process_capture is called,
+        # this will not work well because the in-memory conversation detection state will be gone.
+        # However, users can protentially re-process the conversation manually.
+
         # Conversation detection service
         detection_service: ConversationDetectionService = app_state.conversation_detection_service_by_id.get(capture_uuid)
         if detection_service is None:
             logger.error(f"Internal error: No conversation detection service exists for capture_uuid={capture_uuid}")
             raise HTTPException(status_Code=500, detail="Internal error: Lost conversation service")
-        
-        # Finish the conversation extraction.
-        # TODO: If the server dies in the middle of an upload or before /process_capture is called,
-        # we will not be able to do this because the in-memory session data will have been lost. A
-        # more robust way to handle all this would be to 1) on first chunk, see if any existing file
-        # data exists and process it all up to the new chunk and 2) on /process_capture, delete 
-        # everything associated with the capture, remove everything from DB, and then regenerate 
-        # everything. It is a brute force solution but conceptually simple and should be reasonably
-        # robust.
-        # Conversation processing task
+
+        # Enqueue for processing
         task = ProcessAudioChunkTask(
             capture_file=capture_file,
             detection_service=detection_service,
@@ -247,12 +263,10 @@ async def process_capture(request: Request, capture_uuid: Annotated[str, Form()]
         )
         app_state.task_queue.put(task)
 
-        # Remove from app state
-        if capture_uuid in app_state.capture_files_by_id:
-            del app_state.capture_files_by_id[capture_uuid]
+        # Remove from in-memory app state
         if capture_uuid in app_state.conversation_detection_service_by_id:
             del app_state.conversation_detection_service_by_id[capture_uuid]
-        
+
         return JSONResponse(content={"message": "Conversation processed"})
     except Exception as e:
         logger.error(f"Failed to process: {e}")
@@ -265,6 +279,10 @@ async def receive_location(location: Location, db: Session = Depends(AppState.ge
     try:
         logger.info(f"Received location: {location}")
         new_location = create_location(db, location)
+        if location.capture_uuid:
+            conversation = update_latest_conversation_location(db, location.capture_uuid, location)
+            await app_state.notification_service.emit_message("update_conversation",  ConversationRead.from_orm(conversation).model_dump_json())
+
         return {"message": "Location received", "location_id": new_location.id}
     except Exception as e:
         logger.error(f"Error processing location: {e}")

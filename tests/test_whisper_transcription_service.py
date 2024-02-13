@@ -4,10 +4,10 @@ from untitledai.services.transcription.whisper_transcription_service import tran
 def test_transcribe_audio():
     test_dir = os.path.dirname(os.path.abspath(__file__))
 
-    main_audio_file_path = os.path.join(test_dir, "data/audio/test_session.wav")
+    main_audio_filepath = os.path.join(test_dir, "data/audio/test_session.wav")
     speaker_verification_audio_path = os.path.join(test_dir, "data/audio/test_speaker.m4a")
 
-    transcription_result = transcribe_audio(main_audio_file_path, speaker_verification_audio_path, "Bob")
+    transcription_result = transcribe_audio(main_audio_filepath, speaker_verification_audio_path, "Bob")
 
     assert transcription_result is not None
 

@@ -4,29 +4,34 @@ import io from 'socket.io-client';
 let socket;
 
 export const initSocket = (token) => {
-  if (!socket) {
-    socket = io(process.env.UNTITLEDAI_API_URL || '/', {
-        path: '/api/socket',
-        extraHeaders: {
-            Authorization: `Bearer ${token}`
-          }
-    });
-    console.log('Connecting to socket server');
-  }
+    if (!socket) {
+        const dev = process.env.NODE_ENV !== 'production';
+        const backendBaseUrl = dev ? 'http://127.0.0.1:8000' : '/';
+        let options = {
+            extraHeaders: {
+                Authorization: `Bearer ${token}`
+            }
+        }
+        if (!dev) {
+            options.path = '/api/socket';
+        }
+        socket = io(backendBaseUrl, options);
+        console.log('Connecting to socket server');
+    }
 
-  return socket;
+    return socket;
 };
 
 export const getSocket = () => {
-  if (!socket) {
-    throw new Error('Socket not initialized. Call initSocket(serverUrl) first.');
-  }
-  return socket;
+    if (!socket) {
+        throw new Error('Socket not initialized. Call initSocket(serverUrl) first.');
+    }
+    return socket;
 };
 
 export const disconnectSocket = () => {
-  if (socket) {
-    socket.disconnect();
-    socket = null;
-  }
+    if (socket) {
+        socket.disconnect();
+        socket = null;
+    }
 };

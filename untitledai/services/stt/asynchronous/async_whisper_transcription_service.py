@@ -19,6 +19,7 @@ class WhisperTranscriptionActor:
     def __init__(self, config):
             self._config = config
             self._transcription_model, self._diarize_model, self._verification_model = self._load_models(config)
+            logger.info(f"Running on device: {torch.cuda.is_available() and config.device == 'cuda'}")
 
     def _load_models(self, config):
         logger.info(f"Transcription model: {config.model}")
@@ -43,8 +44,8 @@ class WhisperTranscriptionActor:
 
         return output_filepath
 
-    def _compare_with_voice_sample(self, voice_sample_path, file_path):
-        score, prediction = self._verification_model.verify_files(voice_sample_path, file_path)
+    def _compare_with_voice_sample(self, voice_sample_path, filepath):
+        score, prediction = self._verification_model.verify_files(voice_sample_path, filepath)
         return score, prediction
     
     async def transcribe_audio(self, main_audio_filepath, voice_sample_filepath=None, speaker_name=None):

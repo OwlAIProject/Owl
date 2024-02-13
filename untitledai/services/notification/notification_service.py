@@ -13,3 +13,6 @@ class NotificationService:
         logger.info(f"Sending notification: {title} {body} {type} {payload}")
         if self.socket_app:
             await self.socket_app.emit_message(type, payload)
+
+    async def emit_message(self, type: str, payload=None):
+        await self.socket_app.emit_message(type, payload)

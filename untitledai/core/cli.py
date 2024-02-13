@@ -37,7 +37,7 @@ def add_options(options):
     return _add_options
 
 _config_options = [
-    click.option("--config", default="untitledai/config.yaml", help="Configuration file", type=click.File(mode="r"), callback=load_config_yaml)
+    click.option("--config", default="config.yaml", help="Configuration file", type=click.File(mode="r"), callback=load_config_yaml)
 ]
 
 
@@ -131,12 +131,13 @@ def summarize(config: Configuration, main_audio_filepath: str, voice_sample_file
 ###################################################################################################
 
 @cli.command()
+@add_options(_config_options)
 @click.option("--file", required=True, help="Audio file to send.")
 @click.option("--timestamp", help="Timestamp in YYYYmmdd-HHMMSS.fff format. If not specified, will use current time.")
 @click.option("--device-type", help="Capture device type otherwise 'unknown'.")
 @click.option("--host", default="127.0.0.1", help="Address to send to.")
 @click.option('--port', default=8000, help="Port to use.")
-def upload(file: str, timestamp: datetime | None, device_type: str | None, host: str, port: int):
+def upload(config: Configuration, file: str, timestamp: datetime | None, device_type: str | None, host: str, port: int):
     # Load file
     with open(file, "rb") as fp:
         file_contents = fp.read()
@@ -154,6 +155,9 @@ def upload(file: str, timestamp: datetime | None, device_type: str | None, host:
         timestamp = datetime.now(timezone.utc)
 
     # Upload
+    headers = {
+        "Authorization": f"Bearer {config.user.client_token}"
+    }
     data = {
          "capture_uuid": capture_uuid,
          "timestamp": timestamp.strftime("%Y%m%d-%H%M%S.%f")[:-3],
@@ -162,13 +166,13 @@ def upload(file: str, timestamp: datetime | None, device_type: str | None, host:
     files = {
         "file": (os.path.basename(file), file_contents)
     }
-    response = requests.post(url=f"http://{host}:{port}/capture/upload_chunk", files=files, data=data)
-    
+    response = requests.post(url=f"http://{host}:{port}/capture/upload_chunk", files=files, data=data, headers=headers)
+
     # If successful, request processing
     if response.status_code != 200:
         print(f"Error {response.status_code}: {response.content}")
     else:
-        response = requests.post(url=f"http://{host}:{port}/capture/process_capture", data={ "capture_uuid": capture_uuid })
+        response = requests.post(url=f"http://{host}:{port}/capture/process_capture", data={ "capture_uuid": capture_uuid }, headers=headers)
         if response.status_code != 200:
             print(f"Error {response.status_code}: {response.content}")
         print(response.content)

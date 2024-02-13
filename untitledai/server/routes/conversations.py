@@ -1,14 +1,39 @@
+import logging
 
-from fastapi import APIRouter, Depends, Query, HTTPException
+from fastapi import APIRouter, Depends, Query, HTTPException, BackgroundTasks
 from fastapi.responses import JSONResponse
 from sqlmodel import Session
 
+from fastapi.encoders import jsonable_encoder
 from ...server.app_state import AppState
-from ...models.schemas import ConversationsResponse, ConversationRead 
+from ...models.schemas import ConversationsResponse, ConversationRead, CaptureSegmentRead
 from ...database.crud import get_all_conversations, get_conversation, delete_conversation
+from ...devices import DeviceType
 from typing import List
+import asyncio
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
+
+def process_conversation_background_task(conversation_uuid: str, app_state: AppState):
+    asyncio.run(app_state.conversation_service.process_conversation_from_audio(conversation_uuid=conversation_uuid))
+
+@router.post("/conversations/{conversation_id}/retry", response_model=ConversationRead)
+def read_conversation(
+    conversation_id: int, 
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(AppState.get_db),
+    app_state: AppState = Depends(AppState.authenticate_request)
+):
+    conversation = get_conversation(db, conversation_id)
+    print(conversation)
+    if not conversation:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+    background_tasks.add_task(process_conversation_background_task, conversation.conversation_uuid, app_state)
+
+
+    return conversation
 
 @router.get("/conversations/{conversation_id}", response_model=ConversationRead)
 def read_conversation(
@@ -29,6 +54,7 @@ def read_conversations(
     app_state: AppState = Depends(AppState.authenticate_request)
 ):
     conversations = get_all_conversations(db, offset, limit)
+
     return ConversationsResponse(conversations=conversations)
 
 @router.delete("/conversations/{conversation_id}")
