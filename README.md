@@ -1,8 +1,18 @@
 # Always-on Perceptive AI
 
+<p align="center">
+<img alt="Pendant wearable" src="docs/images/featured/pendant_wearable.jpg"> <img alt="Apple Watch client app" src="docs/images/featured/apple_watch.jpg"><br>
+<img alt="Conversations" src="docs/images/featured/ios_conversations.png"> <img alt="CES 2024 expo summary" src="docs/images/featured/ios_conversation_example_ces.png"><br>
+</p>
+
+What would you do with an AI that listens to and observes everything that happens in your life? **UntitledAI** aims to explore this idea using always-on wearable devices. The convergence of powerful LLM and VLM models with low-power wearable devices opens up entirely new frontiers for human-computer interaction, including memory augmentation, pro-active life assistance, and distributed knowledge gathering. We believe in exploring this transparently and openly.
+
 
 ## Table of Contents
 
+- [Overview](#overview)
+  - [Project Objectives](#project-objectives)
+  - [Community](#community)
 - [Privacy and Security](#privacy-and-security)
 - [Setup Guide](#setup-guide)
   - [Server Setup](#server-setup)
@@ -14,6 +24,32 @@
 - [Source Code Tour](#source-code-tour)
 - [Capture Storage](#capture-storage)
 
+
+## Overview
+
+### Project Objectives
+
+**UntitledAI** is an experiment in human-computer interaction using wearable devices to observe our lives and extract information and insights from them using AI. Presently, only audio and location are captured, but we plan to incorporate vision and other modalities as well. The objectives of the project are, broadly speaking:
+
+1. Develop an always-on AI system that is *useful*, unlocking new ways to enhance our productivity, our understanding of ourselves and the world around us, and ability to connect with others.
+2. Implement specific use cases for always-on AI (e.g., productivity and memory enhancement, knowledge capture and sharing, health, etc.)
+3. Explore human-computer interaction questions: user experience, interface design, privacy, security.
+
+There are three major components to this project:
+
+1. Wearable capture devices. These include semi-custom development boards (with some assembly required) as well as off-the-shelf products like Apple Watch. We would like to develop fully custom open source hardware.
+2. AI server.
+3. Presentation clients. Applications that display information gathered by the system (e.g., transcripts, conversation summaries) and allow interaction with an online assistant. Currently, a mobile app and web app are included.
+
+### Community
+
+Please [join our Discord](https://discord.gg/TwrBFG9Z)!
+
+Social media:
+- Ethan Sutin ([Twitter](https://twitter.com/ethansutin), [GitHub](https://github.com/etown), [LinkedIn](https://www.linkedin.com/in/ethan-sutin-ba598b6/))
+- Bart Trzynadlowski ([Twitter](https://twitter.com/bartronpolygon), [GitHub](https://github.com/trzy), [LinkedIn](https://www.linkedin.com/in/bart-trzynadlowski-9b41938))
+
+
 ## Privacy and Security
 
 - **Respect local privacy and recording laws.** Regardless of what is legally permitted, we ask that users **inform other parties when recording conversations** and comply with their wishes. We ask that users be respectful and fully transparent as they explore use cases for this exciting technology. We welcome feedback and contributions that explore making the user experience more safety and privacy aware.
@@ -23,6 +59,7 @@
   - Servers should be hosted over HTTPS on domains with valid SSL certificates.
   - Use a reverse proxy (such as [ngrok](https://ngrok.com/)) when running on a personal server, which will encrypt traffic using HTTPS.
   - If you absolutely insist on running an unprotected home server, change your authorization token regularly and consider frequently deleting your database and capture directory so as not to leave a large number of conversations exposed.
+
 
 ## Setup Guide
 
@@ -61,6 +98,7 @@ The app's main screen allows recording to be toggled. Recording continues in the
 <img alt="Apple Watch app main screen" src="docs/images/capture_device_user_guides/apple_watch/content_view.png"> <img alt="Apple Watch app settings screen" src="docs/images/capture_device_user_guides/apple_watch/settings_view.png"><br>
 <i>Recording is initiated and stopped on the main screen. Settings control transfer modes.</i>
 </p>
+
 
 The settings screen allows the capture mode to be configured. There are three permutations:
 
@@ -150,6 +188,7 @@ The server also supports non-real time syncing of capture data in chunks, which 
 7. Lastly, if the capture session ends and the `/process_capture` route is used, a final `ProcessAudioChunkTask` is submitted to finalize any remaining conversation that may have been ongoing in the final chunk.
 
 Chunked uploads enter the server differently than streaming audio, use a different conversation endpointing method, but then follow the same path back to the iOS app.
+
 
 ## Capture Storage
 
