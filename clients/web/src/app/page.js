@@ -89,15 +89,17 @@ const ConversationsList = () => {
               className="block transform transition duration-300 ease-in-out hover:-translate-y-1 hover:shadow-xl"
               passHref
             >
-              <div className={`p-6 rounded-lg border border-gray-700 flex justify-between items-center`}>
-                <div>
-                  <h5 className="text-2xl font-bold tracking-tight text-white">{conversation.short_summary}</h5>
+              <div className="p-6 rounded-lg border border-gray-700 flex justify-between items-center space-x-4">
+                <div className="flex-1 min-w-0">
+                  <h5 className="text-xl sm:text-2xl font-bold tracking-tight text-white truncate">{conversation.short_summary}</h5>
                   <p className="font-normal text-gray-400 mt-2">{new Date(`${conversation.start_time}Z`).toLocaleString()}</p>
                 </div>
                 {conversation.state === 'CAPTURING' ? (
-                  <CountUpTimer startTime={conversation.start_time} />
+                  <div className="flex-shrink-0 ml-4">
+                    <CountUpTimer startTime={conversation.start_time} />
+                  </div>
                 ) : (
-                  <span className={`px-4 py-1 rounded-full text-white ${getConversationStateStyle(conversation.state)}`}>
+                  <span className={`px-4 py-1 rounded-full text-white ml-4 flex-shrink-0 ${getConversationStateStyle(conversation.state)}`}>
                     {conversation.state.replace('FAILED_PROCESSING', 'FAILED')}
                   </span>
                 )}
@@ -108,6 +110,8 @@ const ConversationsList = () => {
       </div>
     </div>
   );
+  
+  
 };
 
 export default ConversationsList;
