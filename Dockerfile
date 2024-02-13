@@ -10,7 +10,7 @@ RUN apt-get update && apt-get install -y \
     libcairo2-dev \
     portaudio19-dev \
     cmake && \
-    && apt-get clean && \
+    apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
 RUN pip install --no-cache-dir --upgrade pip && \
