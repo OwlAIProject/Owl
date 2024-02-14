@@ -1,11 +1,19 @@
 from sqlmodel import SQLModel, create_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, scoped_session
 from ..core.config import DatabaseConfiguration
 
 class Database:
     def __init__(self, config: DatabaseConfiguration):
-        self.engine = create_engine(config.url, pool_size=20, max_overflow=40, echo=True)
-        self.SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=self.engine)
+        self.engine = create_engine(
+            config.url,
+            pool_size=50,
+            max_overflow=100,
+            echo=True,
+            pool_timeout=30,
+            pool_recycle=1800
+        )
+        self.session_factory = sessionmaker(autocommit=False, autoflush=False, bind=self.engine)
+        self.SessionLocal = scoped_session(self.session_factory)
 
     def init_db(self):
         SQLModel.metadata.create_all(bind=self.engine)
@@ -16,3 +24,4 @@ class Database:
             yield db
         finally:
             db.close()
+            self.SessionLocal.remove() 
