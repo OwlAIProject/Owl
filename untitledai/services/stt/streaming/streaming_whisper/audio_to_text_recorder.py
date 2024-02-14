@@ -33,7 +33,7 @@ from multiprocessing import Process, Pipe, Event, Manager
 import faster_whisper
 import collections
 import numpy as np
-import pvporcupine
+# import pvporcupine
 import traceback
 import threading
 import webrtcvad
@@ -376,33 +376,33 @@ class AudioToTextRecorder:
                           "transcription model initialized successfully")
 
         # Setup wake word detection
-        if wake_words:
+        # if wake_words:
 
-            self.wake_words_list = [
-                word.strip() for word in wake_words.lower().split(',')
-            ]
-            sensitivity_list = [
-                float(wake_words_sensitivity)
-                for _ in range(len(self.wake_words_list))
-            ]
+        #     self.wake_words_list = [
+        #         word.strip() for word in wake_words.lower().split(',')
+        #     ]
+        #     sensitivity_list = [
+        #         float(wake_words_sensitivity)
+        #         for _ in range(len(self.wake_words_list))
+        #     ]
 
-            try:
-                self.porcupine = pvporcupine.create(
-                    keywords=self.wake_words_list,
-                    sensitivities=sensitivity_list
-                )
-                self.buffer_size = self.porcupine.frame_length
-                self.sample_rate = self.porcupine.sample_rate
+        #     try:
+        #         self.porcupine = pvporcupine.create(
+        #             keywords=self.wake_words_list,
+        #             sensitivities=sensitivity_list
+        #         )
+        #         self.buffer_size = self.porcupine.frame_length
+        #         self.sample_rate = self.porcupine.sample_rate
 
-            except Exception as e:
-                logging.exception("Error initializing porcupine "
-                                  f"wake word detection engine: {e}"
-                                  )
-                raise
+        #     except Exception as e:
+        #         logging.exception("Error initializing porcupine "
+        #                           f"wake word detection engine: {e}"
+        #                           )
+        #         raise
 
-            logging.debug("Porcupine wake word detection "
-                          "engine initialized successfully"
-                          )
+        #     logging.debug("Porcupine wake word detection "
+        #                   "engine initialized successfully"
+        #                   )
 
         # Setup voice activity detection model WebRTC
         try:
@@ -965,45 +965,45 @@ class AudioToTextRecorder:
                                 self._set_state("inactive")
 
                     # Detect wake words if applicable
-                    if self.wake_words and wake_word_activation_delay_passed:
-                        try:
-                            pcm = struct.unpack_from(
-                                "h" * self.buffer_size,
-                                data
-                                )
-                            wakeword_index = self.porcupine.process(pcm)
+                    # if self.wake_words and wake_word_activation_delay_passed:
+                    #     try:
+                    #         pcm = struct.unpack_from(
+                    #             "h" * self.buffer_size,
+                    #             data
+                    #             )
+                    #         wakeword_index = self.porcupine.process(pcm)
 
-                        except struct.error:
-                            logging.error("Error unpacking audio data "
-                                          "for wake word processing.")
-                            continue
+                        # except struct.error:
+                        #     logging.error("Error unpacking audio data "
+                        #                   "for wake word processing.")
+                        #     continue
 
-                        except Exception as e:
-                            logging.error(f"Wake word processing error: {e}")
-                            continue
+                        # except Exception as e:
+                        #     logging.error(f"Wake word processing error: {e}")
+                        #     continue
 
-                        # If a wake word is detected
-                        if wakeword_index >= 0:
+                        # # If a wake word is detected
+                        # if wakeword_index >= 0:
 
-                            # Removing the wake word from the recording
-                            samples_for_0_1_sec = int(self.sample_rate * 0.1)
-                            start_index = max(
-                                0,
-                                len(self.audio_buffer) - samples_for_0_1_sec
-                                )
-                            temp_samples = collections.deque(
-                                itertools.islice(
-                                    self.audio_buffer,
-                                    start_index,
-                                    None)
-                                )
-                            self.audio_buffer.clear()
-                            self.audio_buffer.extend(temp_samples)
+                        #     # Removing the wake word from the recording
+                        #     samples_for_0_1_sec = int(self.sample_rate * 0.1)
+                        #     start_index = max(
+                        #         0,
+                        #         len(self.audio_buffer) - samples_for_0_1_sec
+                        #         )
+                        #     temp_samples = collections.deque(
+                        #         itertools.islice(
+                        #             self.audio_buffer,
+                        #             start_index,
+                        #             None)
+                        #         )
+                        #     self.audio_buffer.clear()
+                        #     self.audio_buffer.extend(temp_samples)
 
-                            self.wake_word_detect_time = time.time()
-                            self.wakeword_detected = True
-                            if self.on_wakeword_detected:
-                                self.on_wakeword_detected()
+                        #     self.wake_word_detect_time = time.time()
+                        #     self.wakeword_detected = True
+                        #     if self.on_wakeword_detected:
+                        #         self.on_wakeword_detected()
 
                     # Check for voice activity to
                     # trigger the start of recording
