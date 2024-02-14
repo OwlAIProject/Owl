@@ -21,8 +21,9 @@ What would you do with an AI that listens to and observes everything that happen
 - [User Guides for Capture Devices](#user-guides-for-capture-devices)
   - [Apple Watch](#apple-watch)
   - [Xiao ESP32S3 Sense Board](#xiao-esp32s3-sense-board)
-- [Source Code Tour](#source-code-tour)
-- [Capture Storage](#capture-storage)
+- [Source Code Guide](#source-code-guide)
+  - [A *Tour de Source*](#a-tour-de-source)
+  - [Capture Storage](#capture-storage)
 
 
 ## Overview
@@ -143,11 +144,14 @@ select a complication, and choose the app using the digital crown. The steps are
 
 TODO: battery warning and mention potential dangers of lacking a battery protection circuit, battery discharge
 
-## Source Code Tour
+
+## Source Code Guide
+
+### A *Tour de Source*
 
 To help orient newcomers to the code base, we will trace the complete path that data takes through the system, from speech to displayed summary.
 
-### Streaming Bluetooth Device Example: Xiao ESP32S3 Sense
+#### Streaming Bluetooth Device Example: Xiao ESP32S3 Sense
 
 Bluetooth-based devices, like the Xiao ESP32S3 Sense board in this example, connect to the iOS client application (`clients/ios`) and communicate with it continuously.
 
@@ -169,7 +173,7 @@ Bluetooth-based devices, like the Xiao ESP32S3 Sense board in this example, conn
 
 That sums up the end-to-end process, which begins in a capture device client, transits through the server, and ends at the iOS client.
 
-### Chunked and Spooled Audio Example: Apple Watch
+#### Chunked and Spooled Audio Example: Apple Watch
 
 The server also supports non-real time syncing of capture data in chunks, which uses a different server route than the real-time streaming case. These can be uploaded long after a capture session has finished. Apple Watch has support for both streaming and spooling with opportunistic chunked uploads.
 
@@ -189,8 +193,7 @@ The server also supports non-real time syncing of capture data in chunks, which 
 
 Chunked uploads enter the server differently than streaming audio, use a different conversation endpointing method, but then follow the same path back to the iOS app.
 
-
-## Capture Storage
+### Capture Storage
 
 Captures are stored in the directory specified by the `capture_dir` key in the YAML configuration file. They are organized by date and capture
 device to make manual inspection easy. When conversations are detected within a capture, they are extracted into a subdirectory named after the capture file. The subdirectory will contain conversation audio files as well as transcripts and summaries in JSON form. Conversation detection may sometimes be incorrect; conversations that are too short or contain no dialog at all are not summarized and the corresponding JSON files will be absent.
