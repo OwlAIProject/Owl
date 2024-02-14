@@ -1,18 +1,55 @@
 # Always-on Perceptive AI
 
+<p align="center">
+<img alt="Pendant wearable" src="docs/images/featured/pendant_wearable.jpg"> <img alt="Apple Watch client app" src="docs/images/featured/apple_watch.jpg"><br>
+<img alt="Conversations" src="docs/images/featured/ios_conversations.png"> <img alt="CES 2024 expo summary" src="docs/images/featured/ios_conversation_example_ces.png"><br>
+</p>
+
+What would you do with an AI that listens to and observes everything that happens in your life? **UntitledAI** aims to explore this idea using always-on wearable devices. The convergence of powerful LLM and VLM models with low-power wearable devices opens up entirely new frontiers for human-computer interaction, including memory augmentation, pro-active life assistance, and distributed knowledge gathering. We believe in exploring this transparently and openly.
+
 
 ## Table of Contents
 
+- [Overview](#overview)
+  - [Project Objectives](#project-objectives)
+  - [Community](#community)
 - [Privacy and Security](#privacy-and-security)
 - [Setup Guide](#setup-guide)
   - [Server Setup](#server-setup)
-  - [iOS Application Setup](#ios-application-setup)
+  - [iOS and watchOS Application Build Instructions](#ios-and-watchos-application-build-instructions)
   - [Capture Client Setup](#capture-client-setup)
 - [User Guides for Capture Devices](#user-guides-for-capture-devices)
   - [Apple Watch](#apple-watch)
   - [Xiao ESP32S3 Sense Board](#xiao-esp32s3-sense-board)
-- [Source Code Tour](#source-code-tour)
-- [Capture Storage](#capture-storage)
+- [Source Code Guide](#source-code-guide)
+  - [A *Tour de Source*](#a-tour-de-source)
+  - [Capture Storage](#capture-storage)
+
+
+## Overview
+
+### Project Objectives
+
+**UntitledAI** is an experiment in human-computer interaction using wearable devices to observe our lives and extract information and insights from them using AI. Presently, only audio and location are captured, but we plan to incorporate vision and other modalities as well. The objectives of the project are, broadly speaking:
+
+1. Develop an always-on AI system that is *useful*, unlocking new ways to enhance our productivity, our understanding of ourselves and the world around us, and ability to connect with others.
+2. Implement specific use cases for always-on AI (e.g., productivity and memory enhancement, knowledge capture and sharing, health, etc.)
+3. Explore human-computer interaction questions: user experience, interface design, privacy, security.
+
+There are three major components to this project:
+
+1. Wearable capture devices. These include semi-custom development boards (with some assembly required) as well as off-the-shelf products like Apple Watch. We would like to develop fully custom open source hardware.
+2. AI server.
+3. Presentation clients. Applications that display information gathered by the system (e.g., transcripts, conversation summaries) and allow interaction with an online assistant. Currently, a mobile app and web app are included.
+
+### Community
+
+Please [join our Discord](https://discord.gg/TwrBFG9Z)!
+
+Social media:
+- Ethan Sutin ([Twitter](https://twitter.com/ethansutin), [GitHub](https://github.com/etown), [LinkedIn](https://www.linkedin.com/in/ethan-sutin-ba598b6/))
+- Bart Trzynadlowski ([Twitter](https://twitter.com/bartronpolygon), [GitHub](https://github.com/trzy), [LinkedIn](https://www.linkedin.com/in/bart-trzynadlowski-9b41938))
+
 
 ## Privacy and Security
 
@@ -23,6 +60,7 @@
   - Servers should be hosted over HTTPS on domains with valid SSL certificates.
   - Use a reverse proxy (such as [ngrok](https://ngrok.com/)) when running on a personal server, which will encrypt traffic using HTTPS.
   - If you absolutely insist on running an unprotected home server, change your authorization token regularly and consider frequently deleting your database and capture directory so as not to leave a large number of conversations exposed.
+
 
 ## Setup Guide
 
@@ -37,9 +75,11 @@ Once the server is installed, some configuration is necessary before it can be r
 
 - [Configuring the server](docs/server_configuration.md)
 
-### iOS Application Setup
+### iOS and watchOS Application Build Instructions
 
-TODO: write me
+The iOS app is the primary way to view and interact with conversations. The Xcode project also includes a watchOS capture client app that allows Apple Watch to be used as a wearable capture device.
+
+- [iOS and watchOS Application Build Instructions](docs/ios_instructions.md)
 
 ### Capture Client Setup
 
@@ -61,6 +101,7 @@ The app's main screen allows recording to be toggled. Recording continues in the
 <img alt="Apple Watch app main screen" src="docs/images/capture_device_user_guides/apple_watch/content_view.png"> <img alt="Apple Watch app settings screen" src="docs/images/capture_device_user_guides/apple_watch/settings_view.png"><br>
 <i>Recording is initiated and stopped on the main screen. Settings control transfer modes.</i>
 </p>
+
 
 The settings screen allows the capture mode to be configured. There are three permutations:
 
@@ -105,11 +146,14 @@ select a complication, and choose the app using the digital crown. The steps are
 
 TODO: battery warning and mention potential dangers of lacking a battery protection circuit, battery discharge
 
-## Source Code Tour
+
+## Source Code Guide
+
+### A *Tour de Source*
 
 To help orient newcomers to the code base, we will trace the complete path that data takes through the system, from speech to displayed summary.
 
-### Streaming Bluetooth Device Example: Xiao ESP32S3 Sense
+#### Streaming Bluetooth Device Example: Xiao ESP32S3 Sense
 
 Bluetooth-based devices, like the Xiao ESP32S3 Sense board in this example, connect to the iOS client application (`clients/ios`) and communicate with it continuously.
 
@@ -119,11 +163,11 @@ Bluetooth-based devices, like the Xiao ESP32S3 Sense board in this example, conn
 
 3. Frames enter the server socket in `on_audio_data()` in `untitledai/server/capture_socket.py`. The `CaptureSocketApp` object is created with the FastAPI server in `main.py`. The capture session's UUID is used to look up the appropriate `StreamingCaptureHandler` and the data is forwarded there.
 
-4. In `untitledai/server/streaming_capture_handler.py`, the audio data is appended to a file on disk and then passed along to a transcription service for real-time transcription and conversation endpoint detection. The `CaptureFile` object describes the location to which the entire capture is written. There is also a `CaptureSegmentFile`, which stores audio for the current conversation only. You can think of these as "children" of the parent capture file. A new one is created each time a conversation endpoint is detected.
+4. In `untitledai/server/streaming_capture_handler.py`, the audio data is appended to files on disk and then passed along to a transcription service for real-time transcription and conversation endpoint detection. A `Capture` object, which is recorded in the persistent database, is created and represents the capture session and file on disk. Capture files contain all audio recorded during a session. As conversations are detected, they are written out to capture *segment* files with associated `CaptureSegment` objects to represent them. These can be thought of as "children" of the parent capture file. `Conversation` objects are produced to store the conversations themselves (transcript, summaries, processing state, etc.) Whenever a conversation is created by the conversation service, a notification is pushed to the server over the socket connection to the iOS app.
 
-5. The transcription service uses a streaming transcription model (Deepgram at the time of this writing, with a local option planned) that delivers utterances to `handle_utterance()`. This in turn passes the utterance, which includes timestamps, to the endpointing service. When the endpointing service determines a conversation has ended, `on_endpoint()` is invoked. The completed conversation segment file can be transcribed more thoroughly and summarized. A task is created and dispatched to the server's async background processing queue, which is processed continuously in `main.py` (`process_queue()`). The task, still in `streaming_capture_handler.py`, simply calls `process_conversation_from_audio()` on `ConversationService`, an instance of which is created as part of the server app's shared state (`AppState`).
+5. The transcription service uses a streaming transcription model (Deepgram at the time of this writing, with a local option planned) that delivers utterances to `handle_utterance()`. This in turn passes the utterance, which includes timestamps, to the endpointing service. When the endpointing service determines a conversation has ended, `on_endpoint()` is invoked. The completed conversation segment file is then transcribed more thoroughly and summarized. A task is created and dispatched to the server's async background processing queue, which is drained continuously in `main.py` (`process_queue()`). The task, still in `streaming_capture_handler.py`, simply calls `process_conversation_from_audio()` on `ConversationService`, an instance of which was created as part of the server app's shared state (`AppState`).
 
-6. `ConversationService` in `untitledai/services/conversation/conversation_service.py` transcribes the conversation audio using a non-streaming model, creates summaries, and associates a location with the conversation based on location data sent to the server from the iOS app. All this is committed to a local database as well as to the local capture directory in the form of JSON files for easy inspection. Finally, a notification is sent via `send_notification()` on a `NotificationService` instance (defined in `untitled/services/notification/notification_service.py`). This uses the socket connection to push the newly-created conversation to the iOS app.
+6. `ConversationService` in `untitledai/services/conversation/conversation_service.py` transcribes the conversation audio using a non-streaming model, creates summaries, and associates a location with the conversation based on location data sent to the server from the iOS app. All this is committed to the database as well as the local capture directory in the form of JSON files for easy inspection. Finally, a notification is sent via `send_notification()` on a `NotificationService` instance (defined in `untitled/services/notification/notification_service.py`). This uses the socket connection to push the newly-created conversation to the iOS app.
 
 7. Back in the iOS app: `ConversationsViewModel` in `clients/ios/UntitledAI/ViewModels/ConversationsViewModel.swift` subscribes to conversation messages and updates a published property whenever they arrive. The view model object is instantiated in `ContentView`, the top-level SwiftUI view, and handed to `ConversationsView`.
 
@@ -131,7 +175,7 @@ Bluetooth-based devices, like the Xiao ESP32S3 Sense board in this example, conn
 
 That sums up the end-to-end process, which begins in a capture device client, transits through the server, and ends at the iOS client.
 
-### Chunked and Spooled Audio Example: Apple Watch
+#### Chunked and Spooled Audio Example: Apple Watch
 
 The server also supports non-real time syncing of capture data in chunks, which uses a different server route than the real-time streaming case. These can be uploaded long after a capture session has finished. Apple Watch has support for both streaming and spooling with opportunistic chunked uploads.
 
@@ -151,7 +195,7 @@ The server also supports non-real time syncing of capture data in chunks, which 
 
 Chunked uploads enter the server differently than streaming audio, use a different conversation endpointing method, but then follow the same path back to the iOS app.
 
-## Capture Storage
+### Capture Storage
 
 Captures are stored in the directory specified by the `capture_dir` key in the YAML configuration file. They are organized by date and capture
 device to make manual inspection easy. When conversations are detected within a capture, they are extracted into a subdirectory named after the capture file. The subdirectory will contain conversation audio files as well as transcripts and summaries in JSON form. Conversation detection may sometimes be incorrect; conversations that are too short or contain no dialog at all are not summarized and the corresponding JSON files will be absent.
