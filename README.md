@@ -18,9 +18,6 @@ What would you do with an AI that listens to and observes everything that happen
   - [Server Setup](#server-setup)
   - [iOS and watchOS Application Build Instructions](#ios-and-watchos-application-build-instructions)
   - [Capture Client Setup](#capture-client-setup)
-- [User Guides for Capture Devices](#user-guides-for-capture-devices)
-  - [Apple Watch](#apple-watch)
-  - [Xiao ESP32S3 Sense Board](#xiao-esp32s3-sense-board)
 - [Source Code Guide](#source-code-guide)
   - [A *Tour de Source*](#a-tour-de-source)
   - [Capture Storage](#capture-storage)
@@ -86,14 +83,7 @@ The iOS app is the primary way to view and interact with conversations. The Xcod
 Multiple capture clients are supported:
 
 - [Apple Watch](docs/apple_watch_setup.md)
-- Xiao ESP32S3 Sense Board
-
-
-## User Guides for Capture Devices
-
-### Xiao ESP32S3 Sense Board
-
-TODO: battery warning and mention potential dangers of lacking a battery protection circuit, battery discharge
+- [XIAO ESP32S3 Sense Board](docs/xiao_esp32s3_sense_setup.md)
 
 
 ## Source Code Guide
