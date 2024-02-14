@@ -12,15 +12,12 @@ What would you do with an AI that listens to and observes everything that happen
 
 - [Overview](#overview)
   - [Project Objectives](#project-objectives)
-  - [Community](#community)
+- [Contact](#contact)
 - [Privacy and Security](#privacy-and-security)
 - [Setup Guide](#setup-guide)
   - [Server Setup](#server-setup)
   - [iOS and watchOS Application Build Instructions](#ios-and-watchos-application-build-instructions)
-  - [Capture Client Setup](#capture-client-setup)
-- [User Guides for Capture Devices](#user-guides-for-capture-devices)
-  - [Apple Watch](#apple-watch)
-  - [Xiao ESP32S3 Sense Board](#xiao-esp32s3-sense-board)
+  - [Capture Device Setup](#capture-device-setup)
 - [Source Code Guide](#source-code-guide)
   - [A *Tour de Source*](#a-tour-de-source)
   - [Capture Storage](#capture-storage)
@@ -42,7 +39,7 @@ There are three major components to this project:
 2. AI server.
 3. Presentation clients. Applications that display information gathered by the system (e.g., transcripts, conversation summaries) and allow interaction with an online assistant. Currently, a mobile app and web app are included.
 
-### Community
+## Contact
 
 Please [join our Discord](https://discord.gg/TwrBFG9Z)!
 
@@ -81,19 +78,12 @@ The iOS app is the primary way to view and interact with conversations. The Xcod
 
 - [iOS and watchOS Application Build Instructions](docs/ios_instructions.md)
 
-### Capture Client Setup
+### Capture Device Setup
 
-Multiple capture clients are supported:
+Multiple capture devices are supported:
 
 - [Apple Watch](docs/apple_watch_setup.md)
-- Xiao ESP32S3 Sense Board
-
-
-## User Guides for Capture Devices
-
-### Xiao ESP32S3 Sense Board
-
-TODO: battery warning and mention potential dangers of lacking a battery protection circuit, battery discharge
+- [XIAO ESP32S3 Sense Board](docs/xiao_esp32s3_sense_setup.md)
 
 
 ## Source Code Guide
