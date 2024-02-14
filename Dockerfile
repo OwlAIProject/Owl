@@ -24,9 +24,8 @@ WORKDIR /app
 COPY . /app
 
 RUN poetry config virtualenvs.create false && \
-    poetry install -vvv
-
-RUN poetry run python -c "print('Poetry and project dependencies are installed correctly.')"
+    poetry install -vvv && \
+    rm -rf /root/.cache/pypoetry /root/.cache/pip
 
 RUN echo '#!/bin/sh\n\
 if [ -z "$CONFIG_FILE" ]; then\n\

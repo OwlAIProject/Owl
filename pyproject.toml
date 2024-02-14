@@ -34,6 +34,9 @@ sqlmodel = "^0.0.14"
 ray = {extras = ["default"], version = "^2.9.1"}
 deepgram-sdk = "^3.1.0"
 python-multipart = "^0.0.6"
+webrtcvad = "^2.0.10"
+pyaudio = "^0.2.14"
+halo = "^0.0.31"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.4.4"
