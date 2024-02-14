@@ -16,7 +16,7 @@ What would you do with an AI that listens to and observes everything that happen
 - [Privacy and Security](#privacy-and-security)
 - [Setup Guide](#setup-guide)
   - [Server Setup](#server-setup)
-  - [iOS Application Setup](#ios-application-setup)
+  - [iOS and watchOS Application Build Instructions](#ios-and-watchos-application-build-instructions)
   - [Capture Client Setup](#capture-client-setup)
 - [User Guides for Capture Devices](#user-guides-for-capture-devices)
   - [Apple Watch](#apple-watch)
@@ -75,9 +75,11 @@ Once the server is installed, some configuration is necessary before it can be r
 
 - [Configuring the server](docs/server_configuration.md)
 
-### iOS Application Setup
+### iOS and watchOS Application Build Instructions
 
-TODO: write me
+The iOS app is the primary way to view and interact with conversations. The Xcode project also includes a watchOS capture client app that allows Apple Watch to be used as a wearable capture device.
+
+- [iOS and watchOS Application Build Instructions](docs/ios_instructions.md)
 
 ### Capture Client Setup
 
