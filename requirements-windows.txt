@@ -1,0 +1,82 @@
+#
+# requirements-windows.txt
+#
+# pip requirements file for Windows. Unfortunately, poetry cannot properly resolve Windows-specific
+# dependencies, so an entirely different installation procedure must be used there.
+#
+# Installation Guide: Anaconda
+# ----------------------------
+#
+# Anaconda is highly recommended for managing your Python installation and environment. Get it
+# here: https://www.anaconda.com/download
+#
+# 1. In an Anaconda shell, create an environment (e.g., "ai") with Python 3.11.
+#
+#   conda create -n ai python=3.11
+#
+# 2. Activate it (do this each time you want to run the server, too).
+#
+#   conda activate ai
+#
+# 3. Install required packages.
+#
+#   pip install -r requirements-windows.txt
+#
+# Installation Guide: venv
+# ------------------------
+# 1. Ensure Python 3.11 is available (this is up to you).
+#
+# 2. Create an environment (we'll call it "ai_env" here).
+#
+#   python -m venv ai_env
+#
+# 3. Activate the environment (do this each time you want to run the server).
+#
+#   ai_env\scripts\activate
+#
+# 4. Install required packages.
+#
+#   pip install -r requirements-windows.txt
+#
+# Running the Server
+# ------------------
+#
+# Run e.g.:
+#
+#   python -m untitledai.core.cli --host=0.0.0.0 --config=config.yaml
+#
+pydub~=0.25.1
+speechbrain~=0.5.16
+whisperx @ git+https://github.com/m-bain/whisperx.git
+pandas~=2.1.4
+transformers~=4.36.2
+nltk~=3.8.1
+ctranslate2 >=3.22,<4
+huggingface-hub >=0.13
+tokenizers >=0.13,<0.16
+onnxruntime >=1.14,<2
+faster-whisper @ git+https://github.com/SYSTRAN/faster-whisper.git@0.10.0
+pyannote-audio==3.1.1
+pydantic~=2.5.3
+click~=8.1.7
+litellm~=1.17.4
+fastapi~=0.109.0
+uvicorn~=0.25.0
+asyncio~=3.4.3
+python-socketio~=5.11.0
+pydantic-yaml~=1.2.0
+sqlmodel~=0.0.14
+ray~=2.9.1
+deepgram-sdk~=3.1.0
+python-multipart~=0.0.6
+pvporcupine~=3.0.2
+webrtcvad~=2.0.10
+PyAudio~=0.2.14
+halo~=0.0.31
+
+# PyTorch CUDA 12.1. For a different CUDA version, change the index URL accordingly. Use the PyTorch
+# install tool if you aren't sure: https://pytorch.org/get-started/locally/
+--extra-index-url https://download.pytorch.org/whl/cu121
+torch >=2
+torchaudio >=2
+torchvision ~= 0.16.2
