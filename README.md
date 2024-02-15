@@ -39,6 +39,7 @@ There are three major components to this project:
 2. AI server.
 3. Presentation clients. Applications that display information gathered by the system (e.g., transcripts, conversation summaries) and allow interaction with an online assistant. Currently, a mobile app and web app are included.
 
+
 ## Contact
 
 Please [join our Discord](https://discord.gg/TwrBFG9Z)!

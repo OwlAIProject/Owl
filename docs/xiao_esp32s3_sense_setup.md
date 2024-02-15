@@ -13,6 +13,7 @@ Seeed Studio's [XIAO ESP32S3 Sense board](https://www.seeedstudio.com/XIAO-ESP32
 
 This board is simple to get up and running without any modifications but for a truly wearable solution, some additional work is required. This guide will cover procurement, basic set up, and instructions for building a very crude prototype wearable.
 
+
 ### Table of Contents
 
 - [Procurement](#procurement)
@@ -22,6 +23,7 @@ This board is simple to get up and running without any modifications but for a t
 - [Connecting a Battery](#connecting-a-battery)
 - [Wearable Case](#wearable-case)
 - [Resources](#resources)
+
 
 ### Procurement
 
@@ -44,6 +46,7 @@ To build a wearable version, purchase a 3.7V lithium polymer battery. Some sugge
 The batteries listed above use male JST-PH 2.0 connectors. It is *highly* recommended that additional connector cables be purchased to solder onto the XIAO board rather than attempting to solder the battery directly. This allows the battery to be easily detached and swapped.
 
 - [JPT-PH 2.0 male and female connector cables](https://www.amazon.com/Upgraded-Connector-Battery-Inductrix-Eachine/dp/B07NWD5NTN)
+
 
 ## Board Setup
 
@@ -76,6 +79,7 @@ side of the force to lift, the antenna is easy to take off.
 <img alt="Daughterboard installation" src="images/xiao_esp32s3_sense/daughterboard_installation.gif"><br>
 <i>Mount the Sense daughterboard onto the main board.</i>
 </p>
+
 
 ## Software Installation
 
@@ -132,6 +136,7 @@ The board firmware at `clients/xiao-esp32s3-sense/firmware` uses the Arduino SDK
 
 - Now the board will always run the loaded firmware until it is reprogrammed.
 
+
 ### Connecting to the iOS App
 
 The firmware makes the board act as a Bluetooth peripheral that constantly broadcasts audio packets using a specific Bluetooth service ID. It must connect to an Internet-connected device in order to forward audio packets to the server. The iOS app will automatically do this.
@@ -155,6 +160,7 @@ To test with iOS:
 <img alt="Completed conversation in list" src="images/xiao_esp32s3_sense/ios_conversation_completed.png"> <img alt="Conversation details" src="images/xiao_esp32s3_sense/ios_conversation_details.png"><br>
 <i>The completed test conversation.</i>
 </p>
+
 
 ### Connecting a Battery
 
