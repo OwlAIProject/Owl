@@ -48,7 +48,7 @@ The batteries listed above use male JST-PH 2.0 connectors. It is *highly* recomm
 - [JPT-PH 2.0 male and female connector cables](https://www.amazon.com/Upgraded-Connector-Battery-Inductrix-Eachine/dp/B07NWD5NTN)
 
 
-## Board Setup
+### Board Setup
 
 Follow Seeed Studio's [guide for setting up the board](https://wiki.seeedstudio.com/xiao_esp32s3_getting_started/). Ensure that:
 
@@ -81,7 +81,7 @@ side of the force to lift, the antenna is easy to take off.
 </p>
 
 
-## Software Installation
+### Software Installation
 
 The board firmware at `clients/xiao-esp32s3-sense/firmware` uses the Arduino SDK but with the [PlatformIO](https://platformio.org/) Visual Studio Code extension rather than the Arduino IDE. The build process is the same on Windows and macOS, and should work on Linux, too. To build and flash the firmware for the first time, follow these instructions:
 
