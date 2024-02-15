@@ -17,7 +17,6 @@ The app's main screen allows recording to be toggled. Recording continues in the
 <i>Recording is initiated and stopped on the main screen. Settings control transfer modes.</i>
 </p>
 
-
 The settings screen allows the capture mode to be configured. There are three permutations:
 
 - **Spool and upload files**: The recording is spooled to disk in chunks, which are then uploaded sequentially as soon as possible. If uploading fails (e.g., the server is down or inaccessible), the app will retry forever and keep accumulating recordings on disk. Files persist on disk even when the app is killed and will resume uploading the next time it runs.
