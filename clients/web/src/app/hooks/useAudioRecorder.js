@@ -14,7 +14,7 @@ export const useAudioRecorder = (isRecording, captureUUID) => {
       const audioCtx = new (window.AudioContext || window.webkitAudioContext)({
         sampleRate: sampleRate,
       });
-      const processor = audioCtx.createScriptProcessor(4096, 1, 1);
+      const processor = audioCtx.createScriptProcessor(256, 1, 1);
       setAudioContext(audioCtx);
       setScriptProcessor(processor);
 

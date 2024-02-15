@@ -32,6 +32,8 @@ class DeepgramConfiguration(BaseModel):
     language: str
 
 class StreamingWhisperConfiguration(BaseModel):
+    host: str
+    port: int
     model: str
     language: str
     silero_sensitivity: float

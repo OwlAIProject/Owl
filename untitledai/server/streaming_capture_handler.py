@@ -42,9 +42,7 @@ class StreamingCaptureHandler:
         self._transcript = None
         # infer from file extension
         self._stream_format = { "sample_rate": 16000, "encoding": "linear16" } if file_extension == "wav" else None
-        self._transcription_service = StreamingTranscriptionServiceFactory.get_service(
-            app_state.config, self.handle_utterance, stream_format=self._stream_format
-        )
+        self._transcription_service = StreamingTranscriptionServiceFactory.get_service(app_state.config, self._stream_format)
 
         self._endpointing_service = StreamingEndpointingService(
             timeout_seconds=app_state.config.conversation_endpointing.timeout_seconds,
@@ -68,7 +66,9 @@ class StreamingCaptureHandler:
             logger.info(f"Resuming conversation for conversation_uuid {conversation.conversation_uuid}")
             self._segment_file = conversation.capture_segment_file
             self._conversation_uuid = conversation.conversation_uuid
-            self._transcript_id
+            self._transcript_id = conversation.transcriptions[0].id
+            self._transcription_service.set_stream_format(self._stream_format)
+            self._transcription_service.set_callback(self.handle_utterance)
         else:
             await self._start_new_segment()
 
@@ -130,7 +130,10 @@ class StreamingCaptureHandler:
         )
         self._conversation_uuid = conversation.conversation_uuid
         self._transcript_id = conversation.transcriptions[0].id
+
         self._segment_file = conversation.capture_segment_file
+        self._transcription_service.set_stream_format(self._stream_format)
+        self._transcription_service.set_callback(self.handle_utterance)
 
     def finish_capture_session(self):
         if self._segment_file:

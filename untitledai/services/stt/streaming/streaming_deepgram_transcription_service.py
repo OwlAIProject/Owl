@@ -8,15 +8,21 @@ import logging
 
 logger = logging.getLogger(__name__)
 class StreamingDeepgramTranscriptionService(AbstractStreamingTranscriptionService):
-    def __init__(self, config, callback, stream_format=None):
+    def __init__(self, config, stream_format=None):
         self.config = config
         self.websocket_url = "wss://api.deepgram.com/v1/listen"
         self.websocket = None
-        self.on_utterance_callback = callback
+        self.on_utterance_callback = None
         self.stream_format = stream_format
         self.connection_lock = asyncio.Lock()
         self.is_receiving = False
         self.connection_open_time = None 
+
+    def set_callback(self, callback):
+        self.on_utterance_callback = callback
+
+    def set_stream_format(self, stream_format):
+        self._stream_format = stream_format
 
     async def _ensure_connection(self):
         async with self.connection_lock:
@@ -92,6 +98,3 @@ class StreamingDeepgramTranscriptionService(AbstractStreamingTranscriptionServic
                 await self.websocket.close()
                 self.websocket = None
                 await self._ensure_connection()
-
-    async def on_utterance(self, callback):
-        self.on_utterance_callback = callback

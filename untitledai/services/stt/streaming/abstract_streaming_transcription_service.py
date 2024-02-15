@@ -7,6 +7,10 @@ class AbstractStreamingTranscriptionService(ABC):
         pass
         
     @abstractmethod
-    async def on_utterance(self, callback):
+    def set_callback(self, callback):
+        pass
+            
+    @abstractmethod
+    def set_stream_format(self, stream_format):
         pass
     
