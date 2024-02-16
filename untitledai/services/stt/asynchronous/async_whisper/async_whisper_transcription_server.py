@@ -47,9 +47,10 @@ class AsyncWhisperTranscriptionServer:
         self._setup_routes()
 
     def _load_models(self):
-        logger.info(f"Transcription model: {self._config.model}")
+        logger.info(f"Transcription model: {self._config.model} | Device: {self._config.device} | Compute type: {self._config.compute_type} | Batch size: {self._config.batch_size} | Verification model source: {self._config.verification_model_source} | Verification model savedir: {self._config.verification_model_savedir} | Verification threshold: {self._config.verification_threshold} | HF token: {self._config.hf_token}")
         transcription_model = whisperx.load_model(self._config.model, self._config.device, compute_type=self._config.compute_type)
-        diarize_model = whisperx.DiarizationPipeline(use_auth_token=self._config.hf_token, device=self._config.device)
+
+        diarize_model = whisperx.DiarizationPipeline(model_name='pyannote/speaker-diarization@2.1', use_auth_token=self._config.hf_token, device=self._config.device)
         verification_model = SpeakerRecognition.from_hparams(source=self._config.verification_model_source, savedir=self._config.verification_model_savedir, run_opts={"device": self._config.device})
         alignment_model, alignment_metadata = whisperx.load_align_model(language_code="en", device=self._config.device)
         return transcription_model, diarize_model, verification_model, alignment_model, alignment_metadata
@@ -68,7 +69,6 @@ class AsyncWhisperTranscriptionServer:
         async def transcribe(request: TranscriptionRequest):
             try:
                 transcription_result = await self._transcribe_audio(request.main_audio_file_path, request.voice_sample_filepath, request.speaker_name)
-                print(transcription_result.utterances[0].words[0].word)
                 return transcription_result
             except Exception as e:
                 raise HTTPException(status_code=500, detail=str(e))
@@ -86,12 +86,17 @@ class AsyncWhisperTranscriptionServer:
 
         # Align whisper output
         result = whisperx.align(initial_transcription, self._alignment_model, self._alignment_metadata, audio, device=self._config.device, return_char_alignments=False)
+        logger.info(f"Transcription alignment complete.")
 
         # Speaker diarization
-        diarize_segments = self._diarize_model(audio)
-        result = whisperx.assign_word_speakers(diarize_segments, result)
+        try:
+            diarize_segments = self._diarize_model(audio)
+            logger.info(f"Speaker diarization complete. Total segments: {len(diarize_segments)}")
+            result = whisperx.assign_word_speakers(diarize_segments, result)
+        except Exception as e:
+            logger.info(f"Error occurred during assigning word speakers: {str(e)}")
+        logger.info(f"Speaker assignment complete.")
         final_transcription_data = result["segments"]
-        print(final_transcription_data)
         logger.info(f"Transcription complete. Total segments: {len(final_transcription_data)}")
 
         # Speaker verification (if voice sample file path provided) and adjust speaker labels
@@ -111,7 +116,6 @@ class AsyncWhisperTranscriptionServer:
                     speaker_label = speaker_name if score > self._config.verification_threshold else "Unknown Speaker"
                     segment["speaker"] = speaker_label  # Update speaker label for the segment
 
-        logger.info("Returning transcription data as JSON.")
         utterances = []
         for segment in final_transcription_data:
             words_list = []
@@ -136,6 +140,7 @@ class AsyncWhisperTranscriptionServer:
             utterances.append(utterance)
         final_transcription = TranscriptionResponse(utterances=utterances)
 
+        logger.info(f"Returning transcription data as JSON: {final_transcription} {final_transcription.json()}")
         return final_transcription
        
     def _convert_to_wav(self, input_filepath):
