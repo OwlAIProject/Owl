@@ -27,12 +27,30 @@ def read_conversation(
     app_state: AppState = Depends(AppState.authenticate_request)
 ):
     conversation = get_conversation(db, conversation_id)
-    print(conversation)
     if not conversation:
         raise HTTPException(status_code=404, detail="Conversation not found")
     background_tasks.add_task(process_conversation_background_task, conversation.conversation_uuid, app_state)
 
 
+    return conversation
+
+@router.post("/conversations/{conversation_id}/end", response_model=ConversationRead)
+async def end_conversation(
+    conversation_id: int, 
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(AppState.get_db),
+    app_state: AppState = Depends(AppState.authenticate_request)
+):
+    conversation = get_conversation(db, conversation_id)
+    if not conversation:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+    capture_uuid = conversation.capture_segment_file.source_capture.capture_uuid
+    if capture_uuid not in app_state.capture_handlers:
+        logger.error(f"Capture session not found: {capture_uuid}")
+        raise HTTPException(status_code=500, detail="Capture session not found")
+    capture_handler = app_state.capture_handlers[capture_uuid]
+
+    await capture_handler.on_endpoint()
     return conversation
 
 @router.get("/conversations/{conversation_id}", response_model=ConversationRead)

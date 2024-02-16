@@ -25,12 +25,22 @@ struct ConversationsView: View {
                     } label: {
                         Label("Delete", systemImage: "trash")
                     }
-                    Button {
-                        viewModel.retryConversation(conversation)
-                    } label: {
-                        Label("Retry", systemImage: "arrow.clockwise")
+                    
+                    if conversation.state == .capturing {
+                        Button {
+                            viewModel.endConversation(conversation)
+                        } label: {
+                            Label("End", systemImage: "stop.fill")
+                        }
+                        .tint(.orange)
+                    } else {
+                        Button {
+                            viewModel.retryConversation(conversation)
+                        } label: {
+                            Label("Retry", systemImage: "arrow.clockwise")
+                        }
+                        .tint(.blue)
                     }
-                    .tint(.blue)
                 }
             }
         }
@@ -81,7 +91,7 @@ struct CountUpTimerView: View {
                 self.currentTime = Date()
             }
             .animation(.easeInOut, value: currentTime)
-            .transition(.slide)
+            .transition(.opacity)
     }
 }
 

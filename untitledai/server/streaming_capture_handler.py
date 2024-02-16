@@ -75,7 +75,7 @@ class StreamingCaptureHandler:
     async def on_endpoint(self):
         logger.info(f"Endpoint detected for capture_uuid {self._capture_uuid}")
         if self._capture_file and self._segment_file:
-            self._process_conversation(self._conversation_uuid, self._capture_file, self._segment_file)
+            self._process_conversation(self._capture_file, self._segment_file)
         await self._start_new_segment()
 
     def _process_conversation(self, capture_file: Capture, segment_file: CaptureSegment):

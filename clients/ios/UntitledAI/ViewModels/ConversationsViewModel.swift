@@ -42,6 +42,12 @@ class ConversationsViewModel: ObservableObject {
         }
     }
     
+    func endConversation(_ conversation: Conversation) {
+        apiService.endConversation(conversation.id) {  success in
+           
+        }
+    }
+    
     private func setupSocketListeners() {
         socketManager.socket.on("new_conversation") { [weak self] data, ack in
             guard let self = self else { return }
