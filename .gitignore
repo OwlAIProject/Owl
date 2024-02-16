@@ -12,6 +12,10 @@ audio_cache/
 *.mp4
 *.aac
 
+# vscode
+.vscode/launch.json
+
+
 # Local voice samples
 voice_samples/
 
