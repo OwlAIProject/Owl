@@ -9,6 +9,10 @@ RUN apt-get update && apt-get install -y \
     pkg-config \
     libcairo2-dev \
     portaudio19-dev \
+    libsndfile1 \
+    libgomp1 \
+    libjpeg-dev \
+    libpng-dev \
     cmake && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
