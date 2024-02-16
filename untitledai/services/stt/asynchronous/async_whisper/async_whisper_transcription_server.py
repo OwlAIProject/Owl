@@ -43,7 +43,7 @@ class AsyncWhisperTranscriptionServer:
     def __init__(self, config: AsyncWhisperConfiguration):
         self._config = config
         self.app = FastAPI()
-        self._transcription_model, self._diarize_model, self._verification_model = self._load_models()
+        self._transcription_model, self._diarize_model, self._verification_model, self._alignment_model, self._alignment_metadata = self._load_models()
         self._setup_routes()
 
     def _load_models(self):
@@ -51,7 +51,8 @@ class AsyncWhisperTranscriptionServer:
         transcription_model = whisperx.load_model(self._config.model, self._config.device, compute_type=self._config.compute_type)
         diarize_model = whisperx.DiarizationPipeline(use_auth_token=self._config.hf_token, device=self._config.device)
         verification_model = SpeakerRecognition.from_hparams(source=self._config.verification_model_source, savedir=self._config.verification_model_savedir, run_opts={"device": self._config.device})
-        return transcription_model, diarize_model, verification_model
+        alignment_model, alignment_metadata = whisperx.load_align_model(language_code="en", device=self._config.device)
+        return transcription_model, diarize_model, verification_model, alignment_model, alignment_metadata
 
     def _setup_routes(self):
         # Main endpoint takes a file path and returns a transcription response
@@ -84,8 +85,7 @@ class AsyncWhisperTranscriptionServer:
         logger.info(f"Initial transcription complete. Total segments: {len(initial_transcription)}")
 
         # Align whisper output
-        model_a, metadata = whisperx.load_align_model(language_code=result["language"], device=self._config.device)
-        result = whisperx.align(initial_transcription, model_a, metadata, audio, device=self._config.device, return_char_alignments=False)
+        result = whisperx.align(initial_transcription, self._alignment_model, self._alignment_metadata, audio, device=self._config.device, return_char_alignments=False)
 
         # Speaker diarization
         diarize_segments = self._diarize_model(audio)

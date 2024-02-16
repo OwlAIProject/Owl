@@ -21,11 +21,11 @@ class AsyncWhisperTranscriptionService(AbstractAsyncTranscriptionService):
         url = f"http://{self._config.host}:{self._config.port}/transcribe/"
         
         try:
+            logger.info(f"Sending request to local async whisper server at {url}...")
             response = await self.http_client.post(url, json=payload)
             response.raise_for_status()
             response_string = response.text 
 
-            logger.info(f"Sending request to local async whisper server at {url}...")
             transcript_response = TranscriptionResponse.model_validate_json(response_string)
             utterances = []
             for whisper_utterance in transcript_response.utterances:

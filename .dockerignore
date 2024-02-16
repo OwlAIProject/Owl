@@ -2,6 +2,8 @@
 /captures/
 /clients/
 /docs/
+local.yaml
+db.sqlite3
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
