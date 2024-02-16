@@ -22,12 +22,12 @@ from ..services import LLMService, CaptureService, ConversationService, Notifica
 from ..database.database import Database
 from ..services.stt.asynchronous.async_transcription_service_factory import AsyncTranscriptionServiceFactory
 from .task import Task
-import ray
 import logging
 import asyncio
 from colorama import init, Fore, Style, Back
 from fastapi import Depends
 from ..services.stt.streaming.streaming_whisper.streaming_whisper_server import start_streaming_whisper_server
+from ..services.stt.asynchronous.async_whisper.async_whisper_transcription_server import start_async_transcription_server
 
 from .streaming_capture_handler import StreamingCaptureHandler
 
@@ -73,9 +73,6 @@ async def process_queue(app_state: AppState):
         else:
             await asyncio.sleep(1)
 
-def running_local_models(config: Configuration):
-    return config.async_transcription.provider == "whisper"
-
 def create_server_app(config: Configuration) -> FastAPI:
     setup_logging()
     # Database
@@ -104,13 +101,15 @@ def create_server_app(config: Configuration) -> FastAPI:
 
     @app.on_event("startup")
     async def startup_event():
-        if not ray.is_initialized() and running_local_models(config):
-            ray.init()
         # Initialize the database
         app.state._app_state.database.init_db()
         asyncio.create_task(process_queue(app.state._app_state))
         if config.streaming_transcription.provider == "whisper":
-            start_streaming_whisper_server(config.streaming_whisper)
+            start_streaming_whisper_server(config=config.streaming_whisper)
+        
+        if config.async_transcription.provider == "whisper":
+            start_async_transcription_server(config=config.async_whisper)
+
         # UPD capture for LTE-M and other low bandwidth devices
         if config.udp.enabled:
             loop = asyncio.get_running_loop()
@@ -124,8 +123,6 @@ def create_server_app(config: Configuration) -> FastAPI:
     async def shutdown_event():
         conversation_service = app.state._app_state.conversation_service
         await conversation_service.fail_processing_and_capturing_conversations()
-        if ray.is_initialized():
-            ray.shutdown()
         
     # Base routing
     @app.get("/")

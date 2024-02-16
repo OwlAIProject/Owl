@@ -3,15 +3,6 @@ import yaml
 import os
 from typing import Optional
 
-class TranscriptionConfiguration(BaseModel):
-    hf_token: str
-    device: str
-    compute_type: str
-    batch_size: int
-    model: str
-    verification_threshold: float
-    verification_model_source: str
-    verification_model_savedir: str
 
 class LLMConfiguration(BaseModel):
     model: str
@@ -30,6 +21,18 @@ class DeepgramConfiguration(BaseModel):
     api_key: str
     model: str
     language: str
+
+class AsyncWhisperConfiguration(BaseModel):
+    host: str
+    port: int
+    hf_token: str
+    device: str
+    compute_type: str
+    batch_size: int
+    model: str
+    verification_threshold: float
+    verification_model_source: str
+    verification_model_savedir: str
 
 class StreamingWhisperConfiguration(BaseModel):
     host: str
@@ -86,11 +89,11 @@ class Configuration(BaseModel):
         return cls(**config_data)
 
     
-    transcription: TranscriptionConfiguration
     llm: LLMConfiguration
     captures: CapturesConfiguration
     vad: VADConfiguration
     deepgram: DeepgramConfiguration
+    async_whisper: AsyncWhisperConfiguration
     streaming_whisper: StreamingWhisperConfiguration
     streaming_transcription: StreamingTranscriptionConfiguration
     async_transcription: AsyncTranscriptionConfiguration

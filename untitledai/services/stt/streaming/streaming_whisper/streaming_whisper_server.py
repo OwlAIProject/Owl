@@ -1,6 +1,5 @@
 import asyncio
 import websockets
-import threading
 import numpy as np
 from scipy.signal import resample
 import json
@@ -80,7 +79,7 @@ class StreamingWhisperServer:
             self._recorder.feed_audio(resampled_chunk)
 
     async def start(self):
-        start_server = websockets.serve(self.echo, "127.0.0.1", 8009)
+        start_server = websockets.serve(self.echo, self._config.host, self._config.port)
         logger.info("Server started.")
         await start_server
         await asyncio.create_task(self._recorder_task())

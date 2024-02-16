@@ -13,7 +13,7 @@ class AsyncTranscriptionServiceFactory:
         if service_type not in AsyncTranscriptionServiceFactory._instances:
             logger.info(f"Creating new {service_type} asynchronous transcription service")
             if service_type == "whisper":
-                AsyncTranscriptionServiceFactory._instances[service_type] = AsyncWhisperTranscriptionService(config.transcription)
+                AsyncTranscriptionServiceFactory._instances[service_type] = AsyncWhisperTranscriptionService(config.async_whisper)
             elif service_type == "deepgram":
                 AsyncTranscriptionServiceFactory._instances[service_type] = AsyncDeepgramTranscriptionService(config.deepgram)
             else:

@@ -37,7 +37,7 @@ def add_options(options):
     return _add_options
 
 _config_options = [
-    click.option("--config", default="config.yaml", help="Configuration file", type=click.File(mode="r"), callback=load_config_yaml)
+    click.option("--config", default="untitledai/sample_config.yaml", help="Configuration file", type=click.File(mode="r"), callback=load_config_yaml)
 ]
 
 

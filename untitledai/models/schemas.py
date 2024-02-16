@@ -153,11 +153,11 @@ class CaptureSegmentRead(BaseModel):
         }
 
 class TranscriptionRead(BaseModel):
-    id: Optional[int]
-    realtime: bool
-    model: str
-    transcription_time: float
-    conversation_id: Optional[int]
+    id: Optional[int] = None
+    realtime: Optional[bool] = None
+    model: Optional[str] = None
+    transcription_time: Optional[float] = None
+    conversation_id: Optional[int] = None
     utterances: List[UtteranceRead] = []
     class Config:
         from_attributes = True

@@ -5,9 +5,8 @@ services:
     image: etown/untitledai:latest
     environment:
       - UNTITLEDAI_TRANSCRIPTION_HF_TOKEN=${UNTITLEDAI_TRANSCRIPTION_HF_TOKEN}
-      - UNTITLEDAI_USER_CLIENT_TOKEN=${UNTITLEDAI_USER_CLIENT_TOKEN}
-      - UNTITLEDAI_DEEPGRAM_API_KEY=${UNTITLEDAI_DEEPGRAM_API_KEY}
-      - UNTITLEDAI_LLM_API_BASE_URL=${UNTITLEDAI_LLM_API_BASE_URL}
+      - UNTITLEDAI_USER_CLIENT_TOKEN=${UNTITLEDAI_USER_CLIENT_TOKEN:-change_me}
+      - UNTITLEDAI_LLM_API_BASE_URL=${UNTITLEDAI_LLM_API_BASE_URL:-http://host.docker.internal:11434}
 
     shm_size: 3g
     ports:
@@ -19,10 +18,11 @@ services:
     image: etown/untitledai-web:latest
     environment:
       - GOOGLE_MAPS_API_KEY=${GOOGLE_MAPS_API_KEY}
-      - UNTITLEDAI_USER_CLIENT_TOKEN=${UNTITLEDAI_USER_CLIENT_TOKEN}
+      - UNTITLEDAI_USER_CLIENT_TOKEN=${UNTITLEDAI_USER_CLIENT_TOKEN:-change_me}
     ports:
       - "3000:3000"
     volumes:
       - ./clients/web:/app
     depends_on:
       - backend
+

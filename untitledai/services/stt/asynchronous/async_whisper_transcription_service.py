@@ -1,121 +1,58 @@
-import ray
-
+import httpx
 from .abstract_async_transcription_service import AbstractAsyncTranscriptionService
-from ....models.schemas import Word, Utterance, Transcription
-import os
-import av
-from tempfile import NamedTemporaryFile
-import whisperx
-import asyncio
-from pydub import AudioSegment
-from speechbrain.pretrained import SpeakerRecognition
-import torch
+from ....models.schemas import Transcription, Utterance, Word
+from .async_whisper.async_whisper_transcription_server import TranscriptionResponse
 import logging
 
 logger = logging.getLogger(__name__)
 
-@ray.remote(max_concurrency=1, num_gpus=0 if not torch.cuda.is_available() else 1)
-class WhisperTranscriptionActor:
-    def __init__(self, config):
-            self._config = config
-            self._transcription_model, self._diarize_model, self._verification_model = self._load_models(config)
-            logger.info(f"Running on device: {torch.cuda.is_available() and config.device == 'cuda'}")
-
-    def _load_models(self, config):
-        logger.info(f"Transcription model: {config.model}")
-        transcription_model = whisperx.load_model(config.model, config.device, compute_type=config.compute_type)
-        diarize_model = whisperx.DiarizationPipeline(use_auth_token=config.hf_token, device=config.device)
-        verification_model = SpeakerRecognition.from_hparams(source=config.verification_model_source, savedir=config.verification_model_savedir, run_opts={"device": config.device})
-        return transcription_model, diarize_model, verification_model
-    
-    def _convert_to_wav(self, input_filepath):
-        temp_wav_file = NamedTemporaryFile(suffix='.wav', delete=False)
-        output_filepath = temp_wav_file.name
-        temp_wav_file.close()
-
-        input_container = av.open(input_filepath)
-        output_container = av.open(output_filepath, 'w')
-        stream = input_container.streams.audio[0]
-        output_stream = output_container.add_stream('pcm_s16le', rate=stream.rate)
-        for frame in input_container.decode(stream):
-            output_container.mux(output_stream.encode(frame))
-        output_container.close()
-        input_container.close()
-
-        return output_filepath
-
-    def _compare_with_voice_sample(self, voice_sample_path, filepath):
-        score, prediction = self._verification_model.verify_files(voice_sample_path, filepath)
-        return score, prediction
-    
-    async def transcribe_audio(self, main_audio_filepath, voice_sample_filepath=None, speaker_name=None):
-        if not os.path.exists(main_audio_filepath):
-            raise FileNotFoundError("Main audio file not found")
-        logger.info(f"Transcribing audio file: {main_audio_filepath}")
-        # Transcription
-        audio = whisperx.load_audio(main_audio_filepath)
-        result = self._transcription_model.transcribe(audio, batch_size=self._config.batch_size)
-        initial_transcription = result["segments"]
-        logger.info(f"Initial transcription complete. Total segments: {len(initial_transcription)}")
-
-        # Align whisper output
-        model_a, metadata = whisperx.load_align_model(language_code=result["language"], device=self._config.device)
-        result = whisperx.align(initial_transcription, model_a, metadata, audio, device=self._config.device, return_char_alignments=False)
-    
-        # Speaker diarization
-        diarize_segments = self._diarize_model(audio)
-        result = whisperx.assign_word_speakers(diarize_segments, result)
-        final_transcription_data = result["segments"]
-        logger.info(f"Transcription complete. Total segments: {len(final_transcription_data)}")
-        # Convert transcription data to Pydantic models
-        utterances = []
-        for segment in final_transcription_data:
-            words_list = []
-            for word in segment.get("words", []):
-                word_obj = Word(
-                    word=word.get("word", ""),
-                    start=word.get("start"),
-                    end=word.get("end"),
-                    score=word.get("score"),
-                    speaker=word.get("speaker")
-                )
-                words_list.append(word_obj)
-
-            speaker_label = speaker_name if speaker_name and voice_sample_filepath else segment.get("speaker", "Unknown Speaker")
-            utterance = Utterance(
-                start=segment.get("start"),
-                end=segment.get("end"),
-                text=segment.get("text", ""),
-                words=words_list,
-                speaker=speaker_label
-            )
-            utterances.append(utterance)
-
-        final_transcription = Transcription(utterances=utterances)
-        logger.info("Transcription converted to Pydantic model.")
-        # Speaker verification (if voice sample file path provided)
-        if voice_sample_filepath:
-            # Ensure voice sample file exists
-            if not os.path.exists(voice_sample_filepath):
-                raise FileNotFoundError("Voice sample file not found")
-            temp_voice_sample_filepath = voice_sample_filepath
-            if not voice_sample_filepath.endswith('.wav'):
-                temp_voice_sample_filepath = self._convert_to_wav(voice_sample_filepath)
-
-            for utterance in final_transcription.utterances:
-                for word in utterance.words:
-                    segment_audio = AudioSegment.from_file(main_audio_filepath)[word.start * 1000: word.end * 1000]
-                    with NamedTemporaryFile(suffix=".wav", delete=True) as temp_segment:
-                        segment_audio.export(temp_segment.name, format='wav')
-                        score, _ = self._compare_with_voice_sample(temp_voice_sample_filepath, temp_segment.name)
-                        if score > self._config.verification_threshold:
-                            word.speaker = speaker_name if speaker_name else 'Verified Speaker'
-
-        return final_transcription
-
 class AsyncWhisperTranscriptionService(AbstractAsyncTranscriptionService):
     def __init__(self, config):
-        self._actor = WhisperTranscriptionActor.options(max_concurrency=1).remote(config) 
+        self._config = config
+        self.http_client = httpx.AsyncClient(timeout=None) 
 
     async def transcribe_audio(self, main_audio_filepath, voice_sample_filepath=None, speaker_name=None):
-        return await self._actor.transcribe_audio.remote(main_audio_filepath, voice_sample_filepath, speaker_name)
+        payload = {
+            "main_audio_file_path": main_audio_filepath,
+            "speaker_name": speaker_name,
+            "voice_sample_filepath": voice_sample_filepath
+        }
+        
+        url = f"http://{self._config.host}:{self._config.port}/transcribe/"
+        
+        try:
+            response = await self.http_client.post(url, json=payload)
+            response.raise_for_status()
+            response_string = response.text 
+
+            logger.info(f"Sending request to local async whisper server at {url}...")
+            transcript_response = TranscriptionResponse.model_validate_json(response_string)
+            utterances = []
+            for whisper_utterance in transcript_response.utterances:
+                utterance = Utterance(
+                    start=whisper_utterance.start,
+                    end=whisper_utterance.end,
+                    text=whisper_utterance.text,
+                    speaker=whisper_utterance.speaker,
+                )
+                
+                utterance.words = [ 
+                    Word(
+                        word=whisper_word.word,
+                        start=whisper_word.start,
+                        end=whisper_word.end,
+                        score=whisper_word.score,
+                        speaker=whisper_word.speaker,
+                    ) for whisper_word in whisper_utterance.words
+                ]
+                utterances.append(utterance)
+                
+            transcript = Transcription(utterances=utterances)
+            transcript.model = "whisper"
+            logger.info(f"Transcription response: {transcript}")
+            return transcript
+        
+        except httpx.HTTPStatusError as e:
+            logger.error(f"Error response {e.response.status_code} while requesting {e.request.url!r}.")
+        except httpx.RequestError as e:
+            logger.error(f"An error occurred while requesting {e.request.url!r}.")
