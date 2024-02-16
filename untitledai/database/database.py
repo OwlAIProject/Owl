@@ -8,7 +8,7 @@ class Database:
             config.url,
             pool_size=50,
             max_overflow=100,
-            echo=True,
+            echo=False,
             pool_timeout=30,
             pool_recycle=1800
         )
