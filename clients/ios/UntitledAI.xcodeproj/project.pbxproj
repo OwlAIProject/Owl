@@ -24,6 +24,7 @@
 		AA84B1C92B604FB000FD654C /* ConversationsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA84B1C82B604FB000FD654C /* ConversationsViewModel.swift */; };
 		AA84B1CC2B606AED00FD654C /* ConversationDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA84B1CB2B606AED00FD654C /* ConversationDetailView.swift */; };
 		AA84B1CE2B606E4400FD654C /* ConversationsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA84B1CD2B606E4400FD654C /* ConversationsView.swift */; };
+		AA912DB22B7FD41F0016B808 /* DeviceBannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA912DB12B7FD41F0016B808 /* DeviceBannerView.swift */; };
 		AAA6006E2B6ED40C004200FF /* URLRequest+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAA6006D2B6ED40C004200FF /* URLRequest+Extensions.swift */; };
 		AAA6006F2B6ED40C004200FF /* URLRequest+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAA6006D2B6ED40C004200FF /* URLRequest+Extensions.swift */; };
 		AAB582132B530FD400CB72B8 /* UntitledAIApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAB582122B530FD400CB72B8 /* UntitledAIApp.swift */; };
@@ -154,6 +155,7 @@
 		AA84B1C82B604FB000FD654C /* ConversationsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConversationsViewModel.swift; sourceTree = "<group>"; };
 		AA84B1CB2B606AED00FD654C /* ConversationDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConversationDetailView.swift; sourceTree = "<group>"; };
 		AA84B1CD2B606E4400FD654C /* ConversationsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConversationsView.swift; sourceTree = "<group>"; };
+		AA912DB12B7FD41F0016B808 /* DeviceBannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceBannerView.swift; sourceTree = "<group>"; };
 		AAA6006D2B6ED40C004200FF /* URLRequest+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "URLRequest+Extensions.swift"; sourceTree = "<group>"; };
 		AAB5820F2B530FD400CB72B8 /* UntitledAI.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = UntitledAI.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		AAB582122B530FD400CB72B8 /* UntitledAIApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UntitledAIApp.swift; sourceTree = "<group>"; };
@@ -330,6 +332,7 @@
 			children = (
 				AA84B1CB2B606AED00FD654C /* ConversationDetailView.swift */,
 				AA84B1CD2B606E4400FD654C /* ConversationsView.swift */,
+				AA912DB12B7FD41F0016B808 /* DeviceBannerView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -779,6 +782,7 @@
 				AA84B1CC2B606AED00FD654C /* ConversationDetailView.swift in Sources */,
 				AA84B1C92B604FB000FD654C /* ConversationsViewModel.swift in Sources */,
 				AA84B1C32B601E1C00FD654C /* API.swift in Sources */,
+				AA912DB22B7FD41F0016B808 /* DeviceBannerView.swift in Sources */,
 				CCD7A5C62B6217900079D9D4 /* URL+Extensions.swift in Sources */,
 				AAB7147F2B64162800412DB7 /* Capture.swift in Sources */,
 				AAB582132B530FD400CB72B8 /* UntitledAIApp.swift in Sources */,

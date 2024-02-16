@@ -13,10 +13,14 @@ class BLEManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate, Obse
     static let shared = BLEManager()
     
     @Published var connectedDeviceName: String?
+    @Published var batteryLevel: Int? = nil
+    @Published var isCharging: Bool? = nil
     var centralManager: CBCentralManager!
     var connectedPeripheral: CBPeripheral?
     let serviceUUID = CBUUID(string: AppConstants.bleServiceUUID)
     let audioCharacteristicUUID = CBUUID(string: AppConstants.bleAudioCharacteristicUUID)
+    let batteryLevelCharacteristicUUID = CBUUID(string: AppConstants.batteryLevelCharacteristicUUID)
+    let chargingStateCharacteristicUUID = CBUUID(string: AppConstants.chargingStateCharacteristicUUID)
     private var frameSequencer: FrameSequencer?
     private let socketManager = SocketManager.shared
     
@@ -85,21 +89,25 @@ class BLEManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate, Obse
     }
     
     func peripheral(_ peripheral: CBPeripheral, didDiscoverCharacteristicsFor service: CBService, error: Error?) {
-        print("Discovered characteristics")
-        print(service.characteristics)
         guard let characteristics = service.characteristics else { return }
+        
         for characteristic in characteristics {
-            if characteristic.uuid.isEqual(audioCharacteristicUUID) {
+            print(characteristic)
+            switch characteristic.uuid {
+            case audioCharacteristicUUID:
                 if characteristic.properties.contains(.notify) {
-                    print("Subscribing to characteristic \(characteristic.uuid)")
                     peripheral.setNotifyValue(true, for: characteristic)
-                } else {
-                    print("Characteristic does not support notifications")
                 }
+            case batteryLevelCharacteristicUUID, chargingStateCharacteristicUUID:
+                if characteristic.properties.contains(.notify) {
+                    peripheral.setNotifyValue(true, for: characteristic)
+                }
+            default:
+                print("Found an unrecognized characteristic: \(characteristic.uuid)")
             }
         }
     }
-    
+
     func peripheral(_ peripheral: CBPeripheral, didUpdateValueFor characteristic: CBCharacteristic, error: Error?) {
         if let error = error {
             print("Error updating value: \(error.localizedDescription)")
@@ -107,11 +115,12 @@ class BLEManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate, Obse
         }
         
         guard let value = characteristic.value else {
-            print("No value received")
+            print("No value received for characteristic: \(characteristic.uuid)")
             return
         }
         
-        if characteristic.uuid.isEqual(audioCharacteristicUUID) {
+        switch characteristic.uuid {
+        case audioCharacteristicUUID:
             let capture = CaptureManager.shared.currentCapture ?? CaptureManager.shared.createCapture(deviceName: peripheral.name ?? "Unknown")
             CaptureManager.shared.reportConnect()
              
@@ -121,6 +130,20 @@ class BLEManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate, Obse
                     // TODO: append to writer
                 }
             }
+        case batteryLevelCharacteristicUUID:
+            if let level = value.first {
+                DispatchQueue.main.async {
+                    self.batteryLevel = Int(level)
+                }
+            }
+        case chargingStateCharacteristicUUID:
+            if let state = value.first {
+                DispatchQueue.main.async {
+                    self.isCharging = state != 0
+                }
+            }
+        default:
+            print("Received update from unrecognized characteristic: \(characteristic.uuid)")
         }
     }
     

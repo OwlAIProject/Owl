@@ -22,32 +22,14 @@ struct ContentView: View {
 
 struct BadgeView: View {
     @ObservedObject var captureManager = CaptureManager.shared
+    @ObservedObject var bleManager = BLEManager.shared
 
     var body: some View {
         Group {
             if let deviceName = captureManager.currentCapture?.deviceName {
-                DeviceBannerView(deviceName: deviceName)
+                DeviceBannerView(deviceName: deviceName, batteryLevel: bleManager.batteryLevel, isCharging: bleManager.isCharging, isAwaitingReconnection: captureManager.isAwaitingReconnection)
             }
         }
-    }
-}
-
-struct DeviceBannerView: View {
-    let deviceName: String
-
-    var body: some View {
-        Text(deviceName)
-            .font(.caption)
-            .fontWeight(.bold)
-            .foregroundColor(.white)
-            .padding(.horizontal, 10)
-            .padding(.vertical, 5)
-            .background(Color.blue)
-            .cornerRadius(10)
-            .overlay(
-                RoundedRectangle(cornerRadius: 10)
-                    .stroke(Color.white, lineWidth: 2)
-            )
     }
 }
 

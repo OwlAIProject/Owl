@@ -11,6 +11,8 @@ class CaptureManager: ObservableObject {
     
     @Published var currentCapture: Capture?
     
+    @Published var isAwaitingReconnection: Bool = false
+    
     private init() {
         self.currentCapture = loadCurrentCaptureFromUserDefaults()
     }
@@ -36,6 +38,7 @@ class CaptureManager: ObservableObject {
     func reportDisconnect() {
         currentCapture?.lastDisconnectTime = Date()
         saveCurrentCaptureToUserDefaults()
+        self.isAwaitingReconnection = true
         
         DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(AppConstants.bleReconnectWindowSeconds)) { [weak self] in
             guard let self = self, let capture = self.currentCapture else { return }
@@ -54,6 +57,7 @@ class CaptureManager: ObservableObject {
         if let capture = currentCapture {
             capture.lastConnectTime = Date()
             saveCurrentCaptureToUserDefaults()
+            self.isAwaitingReconnection = false
         }
     }
     
