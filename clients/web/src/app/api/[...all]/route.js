@@ -1,11 +1,11 @@
 async function fetchFromBackend(url, options) {
-    const token = process.env.UNTITLEDAI_USER_CLIENT_TOKEN;
+    const token = process.env.OWL_USER_CLIENT_TOKEN;
     const incomingUrl = new URL(url);
     const newPathname = incomingUrl.pathname.replace(/^\/api/, '');
 
     if (newPathname === '/tokens') {
         return new Response(JSON.stringify({
-            UNTITLEDAI_USER_CLIENT_TOKEN: token,
+            OWL_USER_CLIENT_TOKEN: token,
             GOOGLE_MAPS_API_KEY: process.env.GOOGLE_MAPS_API_KEY
         }), {
             status: 200,
@@ -15,7 +15,7 @@ async function fetchFromBackend(url, options) {
         });
     }
 
-    const backendBaseUrl = process.env.UNTITLEDAI_API_URL || 'http://127.0.0.1:8000';
+    const backendBaseUrl = process.env.OWL_API_URL || 'http://127.0.0.1:8000';
     const backendUrl = new URL(newPathname, backendBaseUrl);
 
     const backendOptions = {
