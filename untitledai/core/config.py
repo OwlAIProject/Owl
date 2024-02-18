@@ -68,6 +68,8 @@ class UDPConfiguration(BaseModel):
     host: str | None
     port: int | None
 
+class BingConfiguration(BaseModel):
+    subscription_key: str
 
 class Configuration(BaseModel):
 
@@ -102,3 +104,4 @@ class Configuration(BaseModel):
     conversation_endpointing: ConversationEndpointingConfiguration
     notification: NotificationConfiguration
     udp: UDPConfiguration
+    bing: BingConfiguration | None = None
