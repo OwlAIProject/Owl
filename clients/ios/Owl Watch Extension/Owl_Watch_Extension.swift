@@ -33,7 +33,7 @@ struct Owl_Watch_ExtensionEntryView : View {
 
     var body: some View {
         VStack {
-            Text("O")
+            Text("Owl")
                 .bold()
         }.padding()
     }
