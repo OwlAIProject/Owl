@@ -1,7 +1,7 @@
 from typing import List, Optional
 from sqlmodel import SQLModel, Field, Relationship
 from datetime import datetime, timezone
-from pydantic import BaseModel, validator
+from pydantic import BaseModel, HttpUrl
 from enum import Enum
 
 from .datetime_serialization import datetime_string
@@ -77,6 +77,13 @@ class Conversation(CreatedAtMixin, table=True):
     transcriptions: List[Transcription] = Relationship(back_populates="conversation")
     primary_location_id: Optional[int] = Field(default=None, foreign_key="location.id")
     primary_location: Optional[Location] = Relationship(back_populates="conversation")
+    suggested_links: List["SuggestedLink"] = Relationship(back_populates="conversation")
+
+class SuggestedLink(CreatedAtMixin, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    conversation_id: Optional[int] = Field(default=None, foreign_key="conversation.id")
+    url: str 
+    conversation: Optional['Conversation'] = Relationship(back_populates="suggested_links")
 
 class Capture(CreatedAtMixin, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -180,6 +187,7 @@ class ConversationRead(BaseModel):
     summary: Optional[str]
     short_summary: Optional[str]
     transcriptions: List[TranscriptionRead] = []
+    suggested_links: List[SuggestedLink] = []
     primary_location: Optional[LocationRead] = None
     capture_segment_file: Optional[CaptureSegmentRead]
 
