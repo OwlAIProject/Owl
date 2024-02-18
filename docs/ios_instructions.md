@@ -1,4 +1,4 @@
-# Always-on Perceptive AI
+# Owl - Always-on Perceptive AI
 
 [<< Home](../README.md)
 
@@ -19,7 +19,7 @@ Step-by-step instructions are provided here for building and installing the iOS 
 
 Upon first cloning the repository, the development team values in the Xcode project will be invalid and must be manually set.
 
-- Open the Xcode project, located at `clients/ios/UntitledAI.xcodeproj`.
+- Open the Xcode project, located at `clients/ios/Owl.xcodeproj`.
 
 - To find the targets, select the project in the left-most file browser pane, then click on each target in the target list. The *Team* field is under *Signing & Capabilities*.
 
