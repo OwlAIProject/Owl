@@ -141,8 +141,8 @@ Captures are stored in the directory specified by the `capture_dir` key in the Y
 device to make manual inspection easy. When conversations are detected within a capture, they are extracted into a subdirectory named after the capture file. The subdirectory will contain conversation audio files as well as transcripts and summaries in JSON form. Conversation detection may sometimes be incorrect; conversations that are too short or contain no dialog at all are not summarized and the corresponding JSON files will be absent.
 
 <p align="center">
-<img alt="Capture sessions from February 6, 2024" src="docs/images/capture_storage/captures_today.png"><br>
-<i>Apple Watch captures recorded on February 6, 2024, with subdirectories for conversations.</i>
+<img alt="Capture sessions from February 17, 2024" src="docs/images/capture_storage/captures_today.png"><br>
+<i>Apple Watch captures recorded on February 17, 2024, with subdirectories for conversations.</i>
 </p>
 
 <p align="center">
