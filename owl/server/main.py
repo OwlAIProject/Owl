@@ -2,7 +2,7 @@
 # main.py
 #
 # FastAPI server app. State is stored on the underlying app.state attribute. A peril of this is that
-# it breaks IDE type checking so we define a wrapper function to extract app state from FastAPI 
+# it breaks IDE type checking so we define a wrapper function to extract app state from FastAPI
 # Request or app objects.
 #
 # See this discussion: https://github.com/tiangolo/fastapi/issues/504
@@ -106,7 +106,7 @@ def create_server_app(config: Configuration) -> FastAPI:
         asyncio.create_task(process_queue(app.state._app_state))
         if config.streaming_transcription.provider == "whisper":
             start_streaming_whisper_server(config=config.streaming_whisper)
-        
+
         if config.async_transcription.provider == "whisper":
             start_async_transcription_server(config=config.async_whisper)
 
@@ -123,10 +123,10 @@ def create_server_app(config: Configuration) -> FastAPI:
     async def shutdown_event():
         conversation_service = app.state._app_state.conversation_service
         await conversation_service.fail_processing_and_capturing_conversations()
-        
+
     # Base routing
     @app.get("/")
     async def read_root(app_state: AppState = Depends(AppState.authenticate_request)):
-        return "UntitledAI is running!"
+        return "Owl is running!"
 
     return app

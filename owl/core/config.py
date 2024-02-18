@@ -45,10 +45,10 @@ class StreamingWhisperConfiguration(BaseModel):
 
 class StreamingTranscriptionConfiguration(BaseModel):
     provider: str
-    
+
 class AsyncTranscriptionConfiguration(BaseModel):
     provider: str
-    
+
 class DatabaseConfiguration(BaseModel):
     url: str
 
@@ -82,13 +82,13 @@ class Configuration(BaseModel):
         # Apply environment variable overrides
         for section, section_config in config_data.items():
             for key, val in section_config.items():
-                env_var = os.environ.get(f"UNTITLEDAI_{section.upper()}_{key.upper()}")
+                env_var = os.environ.get(f"OWL_{section.upper()}_{key.upper()}")
                 if env_var:
                     config_data[section][key] = env_var
 
         return cls(**config_data)
 
-    
+
     llm: LLMConfiguration
     captures: CapturesConfiguration
     vad: VADConfiguration

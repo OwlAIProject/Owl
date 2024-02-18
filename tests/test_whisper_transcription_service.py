@@ -1,5 +1,5 @@
 import os
-from untitledai.services.transcription.whisper_transcription_service import transcribe_audio
+from owl.services.transcription.whisper_transcription_service import transcribe_audio
 
 def test_transcribe_audio():
     test_dir = os.path.dirname(os.path.abspath(__file__))

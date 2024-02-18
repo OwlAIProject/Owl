@@ -43,7 +43,7 @@
 #
 # Run e.g.:
 #
-#   python -m untitledai.core.cli --host=0.0.0.0 --config=config.yaml
+#   python -m owl.core.cli --host=0.0.0.0 --config=config.yaml
 #
 pydub~=0.25.1
 speechbrain~=0.5.16
