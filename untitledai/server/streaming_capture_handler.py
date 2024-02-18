@@ -40,6 +40,8 @@ class StreamingCaptureHandler:
         self._transcript_id = None
         self._capture_file = None
         self._transcript = None
+        self._init_capture_session_lock = asyncio.Lock()
+        self._start_new_segment_lock = asyncio.Lock()
         # infer from file extension
         self._stream_format = { "sample_rate": 16000, "encoding": "linear16" } if file_extension == "wav" else None
         self._transcription_service = StreamingTranscriptionServiceFactory.get_service(app_state.config, self._stream_format)
@@ -51,26 +53,27 @@ class StreamingCaptureHandler:
         )
 
     async def _init_capture_session(self):
-        self._capture_file = self._app_state.capture_service.get_capture_file(capture_uuid=self._capture_uuid)
-        if not self._capture_file:
-            logger.info(f"Resuming capture session for capture_uuid {self._capture_uuid}")
-            self._capture_file = self._app_state.capture_service.create_capture_file(
-                capture_uuid=self._capture_uuid,
-                format=self._file_extension,
-                start_time=datetime.now(timezone.utc),
-                device_type=self._device_name
-            )
+        async with self._init_capture_session_lock:
+            self._capture_file = self._app_state.capture_service.get_capture_file(capture_uuid=self._capture_uuid)
+            if not self._capture_file:
+                logger.info(f"Resuming capture session for capture_uuid {self._capture_uuid}")
+                self._capture_file = self._app_state.capture_service.create_capture_file(
+                    capture_uuid=self._capture_uuid,
+                    format=self._file_extension,
+                    start_time=datetime.now(timezone.utc),
+                    device_type=self._device_name
+                )
 
-        conversation = self._app_state.conversation_service.get_capturing_conversation(self._capture_uuid)
-        if conversation:
-            logger.info(f"Resuming conversation for conversation_uuid {conversation.conversation_uuid}")
-            self._segment_file = conversation.capture_segment_file
-            self._conversation_uuid = conversation.conversation_uuid
-            self._transcript_id = conversation.transcriptions[0].id
-            self._transcription_service.set_stream_format(self._stream_format)
-            self._transcription_service.set_callback(self.handle_utterance)
-        else:
-            await self._start_new_segment()
+            conversation = self._app_state.conversation_service.get_capturing_conversation(self._capture_uuid)
+            if conversation:
+                logger.info(f"Resuming conversation for conversation_uuid {conversation.conversation_uuid}")
+                self._segment_file = conversation.capture_segment_file
+                self._conversation_uuid = conversation.conversation_uuid
+                self._transcript_id = conversation.transcriptions[0].id
+                self._transcription_service.set_stream_format(self._stream_format)
+                self._transcription_service.set_callback(self.handle_utterance)
+            else:
+                await self._start_new_segment()
 
     async def on_endpoint(self):
         logger.info(f"Endpoint detected for capture_uuid {self._capture_uuid}")
@@ -121,19 +124,20 @@ class StreamingCaptureHandler:
         await self._app_state.notification_service.emit_message("new_utterance",  {'conversation_uuid': self._conversation_uuid, 'utterance': UtteranceRead.from_orm(utterance).model_dump_json()})
 
     async def _start_new_segment(self):
-        timestamp = datetime.now(timezone.utc)  # we are streaming in real-time, so we know start time
+        async with self._start_new_segment_lock:
+            timestamp = datetime.now(timezone.utc)  # we are streaming in real-time, so we know start time
 
-        conversation = await self._app_state.conversation_service.create_conversation(
-            conversation_uuid=uuid.uuid1().hex,
-            start_time=timestamp,
-            capture_file=self._capture_file
-        )
-        self._conversation_uuid = conversation.conversation_uuid
-        self._transcript_id = conversation.transcriptions[0].id
+            conversation = await self._app_state.conversation_service.create_conversation(
+                conversation_uuid=uuid.uuid1().hex,
+                start_time=timestamp,
+                capture_file=self._capture_file
+            )
+            self._conversation_uuid = conversation.conversation_uuid
+            self._transcript_id = conversation.transcriptions[0].id
 
-        self._segment_file = conversation.capture_segment_file
-        self._transcription_service.set_stream_format(self._stream_format)
-        self._transcription_service.set_callback(self.handle_utterance)
+            self._segment_file = conversation.capture_segment_file
+            self._transcription_service.set_stream_format(self._stream_format)
+            self._transcription_service.set_callback(self.handle_utterance)
 
     def finish_capture_session(self):
         if self._segment_file:
