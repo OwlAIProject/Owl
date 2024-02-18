@@ -9,7 +9,7 @@ const handle = app.getRequestHandler();
 
 const proxy = httpProxy.createProxyServer({});
 
-const backendBaseUrl = process.env.UNTITLEDAI_API_URL || 'http://127.0.0.1:8000';
+const backendBaseUrl = process.env.OWL_API_URL || 'http://127.0.0.1:8000';
 
 app.prepare().then(() => {
   const server = http.createServer((req, res) => {
@@ -17,7 +17,7 @@ app.prepare().then(() => {
       req.url = req.url.replace('/api/socket', '')
       req.url = '/socket.io/' + req.url;
       proxy.web(req, res, {
-        target: backendBaseUrl, 
+        target: backendBaseUrl,
         ws: true,
       });
     } else {
