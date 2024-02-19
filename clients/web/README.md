@@ -40,4 +40,9 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000)
 
+You can capture via local microphone or devices via WebBluetooth:
+
+[![Owl Tutorial](http://img.youtube.com/vi/y4bqPLv-EHo/0.jpg)](https://youtube.com/shorts/y4bqPLv-EHo "Owl Tutorial")
+
+
 IMPORTANT: Currently the webapp just passes the token for authentication there is no way to log in so do not expose this to the internet!
