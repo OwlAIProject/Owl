@@ -15,7 +15,7 @@ Step-by-step instructions are provided here for building and installing the iOS 
 
 - [Enable developer mode on your devices](https://developer.apple.com/documentation/xcode/enabling-developer-mode-on-a-device). This is required in order to deploy builds from Xcode.
 
-- On iPhone, open "Settings" and then *Privacy & Security*. Scroll to the bottom to find the *Developer Mode* option.
+- On iPhone, open *Settings* and then *Privacy & Security*. Scroll to the bottom to find the *Developer Mode* option.
 
 <p align="center">
 <img alt="Signing & Capabilities" src="../docs/images/xcode/developer_mode_iphone.png"><br>
