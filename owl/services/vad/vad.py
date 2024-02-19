@@ -342,6 +342,9 @@ class StreamingVoiceActivityDetector(VoiceActivityDetector):
 
         Parameters
         ----------
+        config : Configuration
+            Program-wide configuration object, which is used to obtain the model directory.
+
         threshold : float
             Speech threshold. Silero VAD outputs speech probabilities for each audio chunk, 
             probabilities ABOVE this value are considered as SPEECH. It is better to tune this
