@@ -96,7 +96,7 @@ Multiple capture devices are supported:
 
 - [Apple Watch](docs/apple_watch_setup.md)
 - [XIAO ESP32S3 Sense Board](docs/xiao_esp32s3_sense_setup.md)
-
+- [Sony Spresense LTE-M Board](docs/sony_spresense_setup.md)
 
 ## Source Code Guide
 
