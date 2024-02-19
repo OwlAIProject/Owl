@@ -14,9 +14,17 @@ user:
 
 # Choose an LLM. To use OpenAI models, 'api_key' must be valid and 'api_base_url' must remain blank.
 llm:
-  model: gpt-4-1106-preview
-  api_base_url: 
-  api_key: your_llm_api_key_if_needed
+  # Local mistral
+    model: ollama/mistral:instruct
+    api_base_url: http://localhost:11434
+    api_key: 
+    
+  # OpenAI
+  #
+  # model: gpt-4-1106-preview
+  # api_base_url: 
+  # api_key: your_llm_api_key_if_needed
+
 
 # Which provider to use for final transcription of captures.
 async_transcription:
