@@ -15,14 +15,14 @@ Step-by-step instructions are provided here for building and installing the iOS 
 
 - [Enable developer mode on your devices](https://developer.apple.com/documentation/xcode/enabling-developer-mode-on-a-device). This is required in order to deploy builds from Xcode.
 
-- On iPhone, open "Settings" and then "Privacy & Security". Scroll to the bottom to find the "Developer Mode" option.
+- On iPhone, open "Settings" and then *Privacy & Security*. Scroll to the bottom to find the *Developer Mode* option.
 
 <p align="center">
 <img alt="Signing & Capabilities" src="../docs/images/xcode/developer_mode_iphone.png"><br>
 <i>Location of the Developer Mode setting under Privacy & Security on iPhone.</i>
 </p>
 
-- On Watch, developer mode can only be enabled on the device itself, not through the iPhone companion app. Open "Settings" and then "Privacy & Security". The "Developer Mode" option is found at the bottom.
+- On Watch, developer mode can only be enabled on the device itself, not through the iPhone companion app. Open *Settings* and then *Privacy & Security*. The *Developer Mode* option is found at the bottom.
 
 <p align="center">
 <img alt="Signing & Capabilities" src="../docs/images/xcode/developer_mode_watch.png"><br>
@@ -71,7 +71,44 @@ The server address and client token (created during [server configuration](serve
 
 ### 6. Build and Deploy
 
-TODO: write me
+#### iPhone App
+
+- Select *Owl* as the current scheme. The scheme is found near the top-center of the Xcode window, as shown below.
+
+<p align="center">
+<img alt="Scheme selection" src="../docs/images/xcode/xcode_scheme.png"><br>
+<i>Location of the scheme selection drop-down on the Xcode window.</i>
+</p>
+
+- Connect your iPhone to your Mac using the appropriate cable. After enabling developer mode, your iPhone should appear in the list of supported run destinations. On the initial connection, there may be a lengthy symbol download process. Run destinations are found next to the scheme.
+
+<p align="center">
+<img alt="Run destination selection" src="../docs/images/xcode/xcode_device.png"><br>
+<i>Location of the run destination selection drop-down on the Xcode window. Strictly Confidential is the physical device that will be used.</i>
+</p>
+
+- If your device does not appear, open *Devices and Simulators*, which can be found in the *Window* menu on the Xcode menu bar, and make sure it appears there and is enabled as a run destination.
+
+- Click the play button to build and deploy to your phone. To build without deploying, select *Build* from the *Product* menu or use the Command-B keyboard shortcut.
+
+- If any errors occur during the build or deployment process, they will be viewable in the issue navigator in the left pane.
+
+<p align="center">
+<img alt="Issue navigator showing build errors" src="../docs/images/xcode/xcode_issue_navigator.png"><br>
+<i>Issue navigator showing build errors that must be addressed. In this case, the development team must be changed.</i>
+</p>
+
+#### Watch App
+
+- Select *Owl Watch App* as the scheme. The rest of the procedure is identical to building and deploying the iPhone app. Note that deployment to Watch is often buggy and slow (this is not unique to Owl).
+
+#### How to Fix Corrupted Projects After Git Checkout
+
+Sometimes the Xcode project settings, particularly the schemes, become corrupted when checking out a new version of the repository. This usually manifests itself with missing schemes (e.g., *Owl* or *Owl Watch App* may be missing entirely). To fix this problem, close Xcode and issue the following command on the terminal, then open the project again.
+
+```
+rm -rf ~/Library/Developer/Xcode/DerivedData
+```
 
 ### 7. Reverse Proxy for HTTPS Support
 
