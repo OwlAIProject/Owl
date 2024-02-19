@@ -429,7 +429,7 @@ class StreamingVoiceActivityDetector(VoiceActivityDetector):
         """
         return not self._finished and self._last_speech is not None
 
-    def consume_samples(self, samples: torch.Tensor | AudioSegment, end_stream: bool = False, return_milliseconds: bool = False) -> List[Dict[str, int]]:
+    def consume_samples(self, samples: torch.Tensor | AudioSegment, end_stream: bool = False, return_milliseconds: bool = False) -> List[TimeSegment]:
         """
         Injest samples from an audio stream and process them if there are enough. Any leftover
         samples that do not fill a complete window will be retained until a subsequent call unless
@@ -451,10 +451,10 @@ class StreamingVoiceActivityDetector(VoiceActivityDetector):
 
         Returns
         -------
-        List[Dict[str, int]]
-            A list of dictionaries containing speech segments detected during this iteration. Time-
-            stamps are global (relative to the very beginning of the stream). Segments will be
-            returned in-order but may not be finalized until a subsequent call.
+        List[TimeSegment]
+            A list containing speech segments detected during this iteration. Timestamps are global
+            (relative to the very beginning of the stream). Segments will be returned in order but
+            may not be finalized until a subsequent call.
         """
         # Convert samples to tensor if needed
         if isinstance(samples, torch.Tensor):
