@@ -1,5 +1,7 @@
 # Owl - Always-on Perceptive AI Setup Guide
 
+[<< Home](../README.md)
+
 ## Prerequisites
 
 Before you begin, ensure you have the following installed on your system:
@@ -67,4 +69,4 @@ If you prefer using commercial models for transcription and summarization, set u
   export OWL_LLM_API_KEY=<your_api_key>
   ```
 
-[<< Back to Home](../README.md)
+[<< Home](../README.md)
