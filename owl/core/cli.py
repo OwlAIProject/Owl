@@ -10,6 +10,7 @@ import os
 import requests
 import time
 import uuid
+import subprocess
 
 import click
 from rich.console import Console
@@ -186,11 +187,26 @@ def upload(config: Configuration, file: str, timestamp: datetime | None, device_
 @add_options(_config_options)
 @click.option('--host', default='127.0.0.1', help='The interface to bind to.')
 @click.option('--port', default=8000, help='The port to bind to.')
-def serve(config: Configuration, host, port):
+@click.option('--web', is_flag=True, help='Build and start the web frontend.')
+def serve(config: Configuration, host, port, web):
     """Start the server."""
-    from .. import server
+    from .. import server  
     console = Console()
-    console.log(f"[bold green]Starting server at http://{host}:{port}...")
+
+    if web:
+        console.log("[bold green]Building and starting the web frontend...")
+        next_project_dir = "./clients/web"
+        env = os.environ.copy()
+        env['OWL_USER_CLIENT_TOKEN'] = config.user.client_token
+        try:
+            subprocess.run(["npm", "install"], check=True, cwd=next_project_dir)
+            subprocess.Popen(["npm", "run", "dev"], cwd=next_project_dir, env=env)
+            console.log("[bold green]Web server started successfully.")
+        except subprocess.CalledProcessError as e:
+            console.log("[bold red]Failed to build or start the webserver.")
+            return
+
+    console.log(f"[bold green]Starting Python server at http://{host}:{port}...")
     app = server.create_server_app(config=config)
     uvicorn.run(app, host=host, port=port, log_level="info", ws_ping_interval=None, ws_ping_timeout=None)
 
