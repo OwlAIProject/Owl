@@ -79,6 +79,7 @@ Platform-specific instructions for installing and running the server:
 
 - [macOS and Linux instructions](docs/macos_and_linux_setup.md).
 - [Windows instructions](docs/windows_setup.md).
+- [Docker instructions](docs/docker_setup.md).
 
 Once the server is installed, some configuration is necessary before it can be run:
 
