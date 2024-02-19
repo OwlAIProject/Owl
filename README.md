@@ -1,4 +1,4 @@
-# Always-on Perceptive AI
+# Owl - Always-on Perceptive AI
 
 <p align="center">
 <img alt="Pendant wearable" src="docs/images/featured/pendant_wearable.jpg"> <img alt="Apple Watch client app" src="docs/images/featured/apple_watch.jpg"><br>
@@ -118,7 +118,7 @@ Bluetooth-based devices, like the Xiao ESP32S3 Sense board in this example, conn
 
 5. The transcription service uses a streaming transcription model (Deepgram at the time of this writing, with a local option planned) that delivers utterances to `handle_utterance()`. This in turn passes the utterance, which includes timestamps, to the endpointing service. When the endpointing service determines a conversation has ended, `on_endpoint()` is invoked. The completed conversation segment file is then transcribed more thoroughly and summarized. A task is created and dispatched to the server's async background processing queue, which is drained continuously in `main.py` (`process_queue()`). The task, still in `streaming_capture_handler.py`, simply calls `process_conversation_from_audio()` on `ConversationService`, an instance of which was created as part of the server app's shared state (`AppState`).
 
-6. `ConversationService` in `owl/services/conversation/conversation_service.py` transcribes the conversation audio using a non-streaming model, creates summaries, and associates a location with the conversation based on location data sent to the server from the iOS app. All this is committed to the database as well as the local capture directory in the form of JSON files for easy inspection. Finally, a notification is sent via `send_notification()` on a `NotificationService` instance (defined in `untitled/services/notification/notification_service.py`). This uses the socket connection to push the newly-created conversation to the iOS app.
+6. `ConversationService` in `owl/services/conversation/conversation_service.py` transcribes the conversation audio using a non-streaming model, creates summaries, and associates a location with the conversation based on location data sent to the server from the iOS app. All this is committed to the database as well as the local capture directory in the form of JSON files for easy inspection. Finally, a notification is sent via `send_notification()` on a `NotificationService` instance (defined in `owl/services/notification/notification_service.py`). This uses the socket connection to push the newly-created conversation to the iOS app.
 
 7. Back in the iOS app: `ConversationsViewModel` in `clients/ios/Owl/ViewModels/ConversationsViewModel.swift` subscribes to conversation messages and updates a published property whenever they arrive. The view model object is instantiated in `ContentView`, the top-level SwiftUI view, and handed to `ConversationsView`.
 
