@@ -42,7 +42,7 @@ Upon first cloning the repository, the development team values in the Xcode proj
 <i>Location of the Team field in Xcode.</i>
 </p>
 
-- Change the development team to your personal team. Do this for each target. **Tip:** You can attempt to build the project immediately and then use the error message pane to locate all the places that *Team* must be changed.
+- Change the development team to your personal team. Do this for each target. **Tip:** You can attempt to build the project immediately and then use the issue navigator to locate all the places that *Team* must be changed.
 
 <p align="center">
 <img alt="Team selection" src="../docs/images/xcode/xcode_team_selection.png"><br>
