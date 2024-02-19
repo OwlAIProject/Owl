@@ -1,5 +1,11 @@
 # Owl - Always-on Perceptive AI
 
+[![](https://dcbadge.vercel.app/api/server/BSMSJgFQTv?style=flat)](https://discord.gg/BSMSJgFQTv)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Twitter](https://img.shields.io/twitter/url/https/twitter.com/ethansutin.svg?style=social&label=Follow%20%40ethansutin)](https://twitter.com/ethansutin)
+[![Twitter](https://img.shields.io/twitter/url/https/twitter.com/BartronPolygon.svg?style=social&label=Follow%20%40BartronPolygon)](https://twitter.com/BartronPolygon)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](http://makeapullrequest.com)
+
 <p align="center">
 <img alt="Pendant wearable" src="docs/images/featured/pendant_wearable.jpg"> <img alt="Apple Watch client app" src="docs/images/featured/apple_watch.jpg"><br>
 <img alt="Conversations" src="docs/images/featured/ios_conversations.png"> <img alt="CES 2024 expo summary" src="docs/images/featured/ios_conversation_example_ces.png"><br>
