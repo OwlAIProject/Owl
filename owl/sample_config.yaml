@@ -1,30 +1,40 @@
 #
 # sample_config.yaml
 #
-# Copy this up one level to the root of the source tree, from where the server will be run, and
-# rename to config.yaml. Change settings as needed.
+# It is recommended you copy this up one level to the root of the source tree, from where the server
+# will be run, and rename to config.yaml. Change settings as needed and specify
+# --config=config.yaml when running the server.
 #
 
-llm:
-  model: ollama/llama2
-  api_base_url: http://localhost:11434
-  api_key: your_llm_api_key_if_needed
-
-captures:
-  capture_dir: captures
-
+# Configure this with your name and a create a secure token (which must also be entered into the 
+# e.g. iOS client app)
 user:
   name: "Bob"
   client_token: your_own_secret_token
 
-vad:
-  vad_model_savedir: pretrained_models/vad
+# Choose an LLM. To use OpenAI models, 'api_key' must be valid and 'api_base_url' must remain blank.
+llm:
+  model: gpt-4-1106-preview
+  api_base_url: 
+  api_key: your_llm_api_key_if_needed
 
+# Which provider to use for final transcription of captures.
+async_transcription:
+  provider: "whisper"
+  #provider: "deepgram"
+
+# Which provider to use for streaming transcription.
+streaming_transcription:
+  provider: "whisper"
+  # provider: "deepgram"
+
+# Deepgram configuration if using Deepgram for transcription.
 deepgram:
   api_key: ""
   model: "nova-2"
   language: "en-US"
 
+# Whisper model configuration if using Whisper for transcription.
 async_whisper:
   host: "127.0.0.1"
   port: 8010
@@ -46,13 +56,11 @@ streaming_whisper:
   webrtc_sensitivity: 2
   post_speech_silence_duration: 0.5
 
-async_transcription:
-  provider: "whisper"
-  #provider: "deepgram"
+captures:
+  capture_dir: captures
 
-streaming_transcription:
-  provider: "whisper"
-  # provider: "deepgram"
+vad:
+  vad_model_savedir: pretrained_models/vad
 
 database:
   url: "sqlite:///./db.sqlite3"
@@ -64,7 +72,7 @@ conversation_endpointing:
 notification:
   apn_team_id: ""
 
-# enable for LTE-M boards
+# Enable for LTE-M boards
 udp:
   enabled: false
   host: '0.0.0.0'
