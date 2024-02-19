@@ -1,4 +1,4 @@
-# Always-on Perceptive AI
+# Owl - Always-on Perceptive AI
 
 [<< Home](../README.md)
 
@@ -9,26 +9,20 @@ The minimal steps necessary to configure the server are listed here.
 ### 1. Create config.yaml in Project Root Directory
 
 Copy `sample_config.yaml` to the root of the source tree, from where the server is run, and rename
-it to `config.yaml`, which is what the server looks for by default. This can be overridden with the
-`--config` option.
+it to `config.yaml`. When running the server, this customized configuration file can be specified by
+adding the `--config=config.yaml` command line option.
 
-### 2. Obtain a Hugging Face API Token
+Next, open `config.yaml` and configure it appropriately.
 
-- Register a [Hugging Face](https://huggingface.co) account and obtain a token (these are found under "Access Tokens" in "Settings"). This is needed for the SpeechBrain speaker verification model. Place this in the `transcription` section of `config.yaml`; for example:
+### 2. Configure User
+
+- Set your name so the AI knows who you are and choose a secret token (a string of any length) to prevent others from accessing conversations on your server. The token will also be entered into display client applications that access the server.
 
 ```
-transcription:
-  hf_token: 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
-  device: cuda
-  compute_type: int8
-  batch_size: 16
-  model: tiny
-  verification_threshold: 0.1
-  verification_model_source: speechbrain/spkrec-ecapa-voxceleb
-  verification_model_savedir: pretrained_models/spkrec-ecapa-voxceleb
+user:
+  name: "Kramer"
+  client_token: 123XYZ_this_is_my_secret_token
 ```
-
-- `transcription` also configures local transcription via Whisper if enabled.
 
 ### 3. Configure LLM
 
@@ -42,14 +36,18 @@ llm:
   api_key: sk-a1BCDEfGhI2JKlMNOPqRS3TuvwXY4ZaBCdEFghIJK5lmnO67
 ```
 
-### 4. Configure User
+### 4. Select Providers for Speech-to-Text Transcription
 
-- Set your name so the AI knows who you are and choose a secret token (a string of any length) to prevent others from accessing conversations on your server. The token will also be entered into display client applications that access the server.
+- Asynchronous transcription is used once a conversation has been detected and completed to transcribe the entire conversation.
+- Streaming transcription is used for real-time transcription of speech to support assistant-in-the-loop use cases. It is only used with streaming captures but not chunked uploads.
+- Deepgram is recommended for getting up and running quickly but Whisper may also be used locally if your server is capable of handling it.
 
 ```
-user:
-  name: "Kramer"
-  client_token: 123XYZ_this_is_my_secret_token
+streaming_transcription:
+  provider: "deepgram"
+
+async_transcription:
+  provider: "deepgram"
 ```
 
 ### 5. Obtain a Deepgram API Key
@@ -66,17 +64,38 @@ deepgram:
 - The `nova-2` model is recommended. Be aware that it has a limited number of supported languages.
 - Users requiring absolute control and privacy may elect to switch away from Deepgram but it is nevertheless the easiest way to get up and running initially.
 
-### 6. Configure Streaming and Asynchronous Transcription
+### 6. Obtain a Hugging Face API Token for Whisper and Speaker Identification Models
 
-- Streaming transcription is used for real-time transcription of speech to support assistant-in-the-loop use cases. Completed conversations are always transcribed using asynchronous transcription.
-- Set both to use Deepgram to get up and running quickly.
+- Register a [Hugging Face](https://huggingface.co) account and obtain a token (these are found under "Access Tokens" in "Settings"). 
+- Owl uses PyAnnote for diarization. Please visit the following Hugging Face model pages and accept the terms for each:
+  - [PyAnnote Segmentation Model](https://huggingface.co/pyannote/segmentation)
+  - [PyAnnote Speaker Diarization Model](https://huggingface.co/pyannote/speaker-diarization)
+- The Hugging Face token is needed for asynchronous Whisper transcription (if enabled) and the SpeechBrain speaker verification model. For example:
 
 ```
-streaming_transcription:
-  provider: "deepgram"
+async_whisper:
+  host: "127.0.0.1"
+  port: 8010
+  hf_token: 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
+  device: cpu
+  compute_type: int8
+  batch_size: 16
+  model: tiny
+  verification_threshold: 0.1
+  verification_model_source: speechbrain/spkrec-ecapa-voxceleb
+  verification_model_savedir: pretrained_models/spkrec-ecapa-voxceleb
+```
 
-async_transcription:
-  provider: "deepgram"
+### 7. Run the Server
+
+- Run the server as per the [setup instructions](../README.md#server-setup) with `--config=config.yaml`.
+
+### 8. Environment Variables
+
+Configuration file keys can be overridden with environment variables. The format is `OWL_SECTION_KEY_NAME`. For example, the Hugging Face token under the `async_whisper` section can be set in e.g. bash with: 
+
+```
+export OWL_ASYNC_WHISPER_HF_TOKEN=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
 ```
 
 [<< Home](../README.md)

@@ -1,0 +1,1481 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		AA57DF5E2B6AF6E000932943 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AA57DF5D2B6AF6E000932943 /* WidgetKit.framework */; };
+		AA57DF602B6AF6E000932943 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AA57DF5F2B6AF6E000932943 /* SwiftUI.framework */; };
+		AA57DF632B6AF6E000932943 /* Owl_Watch_Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA57DF622B6AF6E000932943 /* Owl_Watch_Extension.swift */; };
+		AA57DF672B6AF6E100932943 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AA57DF662B6AF6E100932943 /* Assets.xcassets */; };
+		AA57DF6B2B6AF6E100932943 /* Owl Watch ExtensionExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = AA57DF5B2B6AF6E000932943 /* Owl Watch ExtensionExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		AA5DC9CB2B629E770017376F /* LocationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA5DC9CA2B629E770017376F /* LocationManager.swift */; };
+		AA7E36B02B55878400789EB0 /* BLEManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA7E36AF2B55878400789EB0 /* BLEManager.swift */; };
+		AA7E36B42B558FB400789EB0 /* FrameSequencer.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA7E36B32B558FB400789EB0 /* FrameSequencer.swift */; };
+		AA7E36B62B55925300789EB0 /* SocketManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA7E36B52B55925300789EB0 /* SocketManager.swift */; };
+		AA7E36B82B55926200789EB0 /* SocketIO in Frameworks */ = {isa = PBXBuildFile; productRef = AA7E36B72B55926200789EB0 /* SocketIO */; };
+		AA7EAE672B81A011008BFC82 /* LinkMetadataView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA7EAE662B81A011008BFC82 /* LinkMetadataView.swift */; };
+		AA84B1BF2B601DC600FD654C /* Transcript.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA84B1BE2B601DC600FD654C /* Transcript.swift */; };
+		AA84B1C12B601DDD00FD654C /* Conversation.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA84B1C02B601DDD00FD654C /* Conversation.swift */; };
+		AA84B1C32B601E1C00FD654C /* API.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA84B1C22B601E1C00FD654C /* API.swift */; };
+		AA84B1C62B6041AB00FD654C /* JSONDecoder+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA84B1C52B6041AB00FD654C /* JSONDecoder+Extensions.swift */; };
+		AA84B1C92B604FB000FD654C /* ConversationsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA84B1C82B604FB000FD654C /* ConversationsViewModel.swift */; };
+		AA84B1CC2B606AED00FD654C /* ConversationDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA84B1CB2B606AED00FD654C /* ConversationDetailView.swift */; };
+		AA84B1CE2B606E4400FD654C /* ConversationsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA84B1CD2B606E4400FD654C /* ConversationsView.swift */; };
+		AA912DB22B7FD41F0016B808 /* DeviceBannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA912DB12B7FD41F0016B808 /* DeviceBannerView.swift */; };
+		AAA6006E2B6ED40C004200FF /* URLRequest+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAA6006D2B6ED40C004200FF /* URLRequest+Extensions.swift */; };
+		AAA6006F2B6ED40C004200FF /* URLRequest+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAA6006D2B6ED40C004200FF /* URLRequest+Extensions.swift */; };
+		AAB582132B530FD400CB72B8 /* OwlApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAB582122B530FD400CB72B8 /* OwlApp.swift */; };
+		AAB582152B530FD400CB72B8 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAB582142B530FD400CB72B8 /* ContentView.swift */; };
+		AAB582172B530FD600CB72B8 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AAB582162B530FD600CB72B8 /* Assets.xcassets */; };
+		AAB5821A2B530FD600CB72B8 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AAB582192B530FD600CB72B8 /* Preview Assets.xcassets */; };
+		AAB582242B530FD600CB72B8 /* OwlTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAB582232B530FD600CB72B8 /* OwlTests.swift */; };
+		AAB5822E2B530FD600CB72B8 /* OwlUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAB5822D2B530FD600CB72B8 /* OwlUITests.swift */; };
+		AAB582302B530FD600CB72B8 /* OwlUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAB5822F2B530FD600CB72B8 /* OwlUITestsLaunchTests.swift */; };
+		AAB582362B530FD600CB72B8 /* Owl Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = AAB582352B530FD600CB72B8 /* Owl Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		AAB5823B2B530FD600CB72B8 /* OwlWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAB5823A2B530FD600CB72B8 /* OwlWatchApp.swift */; };
+		AAB5823D2B530FD600CB72B8 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAB5823C2B530FD600CB72B8 /* ContentView.swift */; };
+		AAB5823F2B530FD700CB72B8 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AAB5823E2B530FD700CB72B8 /* Assets.xcassets */; };
+		AAB582422B530FD700CB72B8 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AAB582412B530FD700CB72B8 /* Preview Assets.xcassets */; };
+		AAB5824C2B530FD700CB72B8 /* Owl_Watch_AppTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAB5824B2B530FD700CB72B8 /* Owl_Watch_AppTests.swift */; };
+		AAB582562B530FD700CB72B8 /* Owl_Watch_AppUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAB582552B530FD700CB72B8 /* Owl_Watch_AppUITests.swift */; };
+		AAB582582B530FD700CB72B8 /* Owl_Watch_AppUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAB582572B530FD700CB72B8 /* Owl_Watch_AppUITestsLaunchTests.swift */; };
+		AAB5826F2B53108D00CB72B8 /* NetworkManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAB5826E2B53108D00CB72B8 /* NetworkManager.swift */; };
+		AAB582722B5310E800CB72B8 /* SocketIO in Frameworks */ = {isa = PBXBuildFile; productRef = AAB582712B5310E800CB72B8 /* SocketIO */; };
+		AAB582752B53131A00CB72B8 /* AppConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAB582742B53131900CB72B8 /* AppConstants.swift */; };
+		AAB582762B53131A00CB72B8 /* AppConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAB582742B53131900CB72B8 /* AppConstants.swift */; };
+		AAB582782B53140800CB72B8 /* CaptureManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAB582772B53140800CB72B8 /* CaptureManager.swift */; };
+		AAB714792B62B23500412DB7 /* Location.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAB714782B62B23500412DB7 /* Location.swift */; };
+		AAB7147D2B64153B00412DB7 /* CaptureManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAB7147C2B64153B00412DB7 /* CaptureManager.swift */; };
+		AAB7147F2B64162800412DB7 /* Capture.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAB7147E2B64162800412DB7 /* Capture.swift */; };
+		AAB714812B65A9D600412DB7 /* WatchConnectivityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAB714802B65A9D600412DB7 /* WatchConnectivityManager.swift */; };
+		AAB714832B65AC1A00412DB7 /* WatchConnectivityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAB714822B65AC1900412DB7 /* WatchConnectivityManager.swift */; };
+		CCD7A5BA2B6202190079D9D4 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CCD7A5B92B6202190079D9D4 /* SettingsView.swift */; };
+		CCD7A5BD2B6216060079D9D4 /* MultipartForm.swift in Sources */ = {isa = PBXBuildFile; fileRef = CCD7A5BC2B6216060079D9D4 /* MultipartForm.swift */; };
+		CCD7A5BE2B62165D0079D9D4 /* MultipartForm.swift in Sources */ = {isa = PBXBuildFile; fileRef = CCD7A5BC2B6216060079D9D4 /* MultipartForm.swift */; };
+		CCD7A5C12B6217320079D9D4 /* AudioFileWriter.swift in Sources */ = {isa = PBXBuildFile; fileRef = CCD7A5C02B6217320079D9D4 /* AudioFileWriter.swift */; };
+		CCD7A5C22B62173E0079D9D4 /* AudioFileWriter.swift in Sources */ = {isa = PBXBuildFile; fileRef = CCD7A5C02B6217320079D9D4 /* AudioFileWriter.swift */; };
+		CCD7A5C52B6217830079D9D4 /* URL+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = CCD7A5C42B6217830079D9D4 /* URL+Extensions.swift */; };
+		CCD7A5C62B6217900079D9D4 /* URL+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = CCD7A5C42B6217830079D9D4 /* URL+Extensions.swift */; };
+		CCD7A5C82B6219AD0079D9D4 /* UUID+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = CCD7A5C72B6219AD0079D9D4 /* UUID+Extensions.swift */; };
+		CCD7A5C92B621ABE0079D9D4 /* UUID+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = CCD7A5C72B6219AD0079D9D4 /* UUID+Extensions.swift */; };
+		CCD7A5CB2B621D1A0079D9D4 /* FileUploadTask.swift in Sources */ = {isa = PBXBuildFile; fileRef = CCD7A5CA2B621D1A0079D9D4 /* FileUploadTask.swift */; };
+		CCD7A5CC2B621D210079D9D4 /* FileUploadTask.swift in Sources */ = {isa = PBXBuildFile; fileRef = CCD7A5CA2B621D1A0079D9D4 /* FileUploadTask.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		AA57DF692B6AF6E100932943 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = AAB582072B530FD400CB72B8 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AA57DF5A2B6AF6E000932943;
+			remoteInfo = "Owl Watch ExtensionExtension";
+		};
+		AAB582202B530FD600CB72B8 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = AAB582072B530FD400CB72B8 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AAB5820E2B530FD400CB72B8;
+			remoteInfo = Owl;
+		};
+		AAB5822A2B530FD600CB72B8 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = AAB582072B530FD400CB72B8 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AAB5820E2B530FD400CB72B8;
+			remoteInfo = Owl;
+		};
+		AAB582372B530FD600CB72B8 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = AAB582072B530FD400CB72B8 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AAB582342B530FD600CB72B8;
+			remoteInfo = "Owl Watch App";
+		};
+		AAB582482B530FD700CB72B8 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = AAB582072B530FD400CB72B8 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AAB582342B530FD600CB72B8;
+			remoteInfo = "Owl Watch App";
+		};
+		AAB582522B530FD700CB72B8 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = AAB582072B530FD400CB72B8 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AAB582342B530FD600CB72B8;
+			remoteInfo = "Owl Watch App";
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		AA57DF6C2B6AF6E200932943 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				AA57DF6B2B6AF6E100932943 /* Owl Watch ExtensionExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AAB5825E2B530FD700CB72B8 /* Embed Watch Content */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "$(CONTENTS_FOLDER_PATH)/Watch";
+			dstSubfolderSpec = 16;
+			files = (
+				AAB582362B530FD600CB72B8 /* Owl Watch App.app in Embed Watch Content */,
+			);
+			name = "Embed Watch Content";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		AA0EF1B52B5324D50007C45C /* Owl-Watch-App-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "Owl-Watch-App-Info.plist"; sourceTree = SOURCE_ROOT; };
+		AA57DF5B2B6AF6E000932943 /* Owl Watch ExtensionExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = "Owl Watch ExtensionExtension.appex"; sourceTree = BUILT_PRODUCTS_DIR; };
+		AA57DF5D2B6AF6E000932943 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
+		AA57DF5F2B6AF6E000932943 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
+		AA57DF622B6AF6E000932943 /* Owl_Watch_Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Owl_Watch_Extension.swift; sourceTree = "<group>"; };
+		AA57DF662B6AF6E100932943 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		AA57DF682B6AF6E100932943 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		AA5DC9CA2B629E770017376F /* LocationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationManager.swift; sourceTree = "<group>"; };
+		AA7E36AF2B55878400789EB0 /* BLEManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BLEManager.swift; sourceTree = "<group>"; };
+		AA7E36B12B55895B00789EB0 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		AA7E36B32B558FB400789EB0 /* FrameSequencer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FrameSequencer.swift; sourceTree = "<group>"; };
+		AA7E36B52B55925300789EB0 /* SocketManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SocketManager.swift; sourceTree = "<group>"; };
+		AA7EAE662B81A011008BFC82 /* LinkMetadataView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LinkMetadataView.swift; sourceTree = "<group>"; };
+		AA84B1BE2B601DC600FD654C /* Transcript.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Transcript.swift; sourceTree = "<group>"; };
+		AA84B1C02B601DDD00FD654C /* Conversation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Conversation.swift; sourceTree = "<group>"; };
+		AA84B1C22B601E1C00FD654C /* API.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = API.swift; sourceTree = "<group>"; };
+		AA84B1C52B6041AB00FD654C /* JSONDecoder+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "JSONDecoder+Extensions.swift"; sourceTree = "<group>"; };
+		AA84B1C82B604FB000FD654C /* ConversationsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConversationsViewModel.swift; sourceTree = "<group>"; };
+		AA84B1CB2B606AED00FD654C /* ConversationDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConversationDetailView.swift; sourceTree = "<group>"; };
+		AA84B1CD2B606E4400FD654C /* ConversationsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConversationsView.swift; sourceTree = "<group>"; };
+		AA912DB12B7FD41F0016B808 /* DeviceBannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceBannerView.swift; sourceTree = "<group>"; };
+		AAA6006D2B6ED40C004200FF /* URLRequest+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "URLRequest+Extensions.swift"; sourceTree = "<group>"; };
+		AAB5820F2B530FD400CB72B8 /* Owl.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Owl.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		AAB582122B530FD400CB72B8 /* OwlApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OwlApp.swift; sourceTree = "<group>"; };
+		AAB582142B530FD400CB72B8 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		AAB582162B530FD600CB72B8 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		AAB582192B530FD600CB72B8 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
+		AAB5821F2B530FD600CB72B8 /* OwlTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = OwlTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		AAB582232B530FD600CB72B8 /* OwlTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OwlTests.swift; sourceTree = "<group>"; };
+		AAB582292B530FD600CB72B8 /* OwlUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = OwlUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		AAB5822D2B530FD600CB72B8 /* OwlUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OwlUITests.swift; sourceTree = "<group>"; };
+		AAB5822F2B530FD600CB72B8 /* OwlUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OwlUITestsLaunchTests.swift; sourceTree = "<group>"; };
+		AAB582352B530FD600CB72B8 /* Owl Watch App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Owl Watch App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		AAB5823A2B530FD600CB72B8 /* OwlWatchApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OwlWatchApp.swift; sourceTree = "<group>"; };
+		AAB5823C2B530FD600CB72B8 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		AAB5823E2B530FD700CB72B8 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		AAB582412B530FD700CB72B8 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
+		AAB582472B530FD700CB72B8 /* Owl Watch AppTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Owl Watch AppTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		AAB5824B2B530FD700CB72B8 /* Owl_Watch_AppTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Owl_Watch_AppTests.swift; sourceTree = "<group>"; };
+		AAB582512B530FD700CB72B8 /* Owl Watch AppUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Owl Watch AppUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		AAB582552B530FD700CB72B8 /* Owl_Watch_AppUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Owl_Watch_AppUITests.swift; sourceTree = "<group>"; };
+		AAB582572B530FD700CB72B8 /* Owl_Watch_AppUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Owl_Watch_AppUITestsLaunchTests.swift; sourceTree = "<group>"; };
+		AAB5826E2B53108D00CB72B8 /* NetworkManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkManager.swift; sourceTree = "<group>"; };
+		AAB582742B53131900CB72B8 /* AppConstants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConstants.swift; sourceTree = "<group>"; };
+		AAB582772B53140800CB72B8 /* CaptureManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureManager.swift; sourceTree = "<group>"; };
+		AAB714782B62B23500412DB7 /* Location.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Location.swift; sourceTree = "<group>"; };
+		AAB7147C2B64153B00412DB7 /* CaptureManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureManager.swift; sourceTree = "<group>"; };
+		AAB7147E2B64162800412DB7 /* Capture.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Capture.swift; sourceTree = "<group>"; };
+		AAB714802B65A9D600412DB7 /* WatchConnectivityManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchConnectivityManager.swift; sourceTree = "<group>"; };
+		AAB714822B65AC1900412DB7 /* WatchConnectivityManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchConnectivityManager.swift; sourceTree = "<group>"; };
+		CCD7A5B92B6202190079D9D4 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		CCD7A5BC2B6216060079D9D4 /* MultipartForm.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MultipartForm.swift; sourceTree = "<group>"; };
+		CCD7A5C02B6217320079D9D4 /* AudioFileWriter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioFileWriter.swift; sourceTree = "<group>"; };
+		CCD7A5C42B6217830079D9D4 /* URL+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "URL+Extensions.swift"; sourceTree = "<group>"; };
+		CCD7A5C72B6219AD0079D9D4 /* UUID+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UUID+Extensions.swift"; sourceTree = "<group>"; };
+		CCD7A5CA2B621D1A0079D9D4 /* FileUploadTask.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileUploadTask.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		AA57DF582B6AF6E000932943 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AA57DF602B6AF6E000932943 /* SwiftUI.framework in Frameworks */,
+				AA57DF5E2B6AF6E000932943 /* WidgetKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AAB5820C2B530FD400CB72B8 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AA7E36B82B55926200789EB0 /* SocketIO in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AAB5821C2B530FD600CB72B8 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AAB582262B530FD600CB72B8 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AAB582322B530FD600CB72B8 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AAB582722B5310E800CB72B8 /* SocketIO in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AAB582442B530FD700CB72B8 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AAB5824E2B530FD700CB72B8 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		AA57DF5C2B6AF6E000932943 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				AA57DF5D2B6AF6E000932943 /* WidgetKit.framework */,
+				AA57DF5F2B6AF6E000932943 /* SwiftUI.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		AA57DF612B6AF6E000932943 /* Owl Watch Extension */ = {
+			isa = PBXGroup;
+			children = (
+				AA57DF622B6AF6E000932943 /* Owl_Watch_Extension.swift */,
+				AA57DF662B6AF6E100932943 /* Assets.xcassets */,
+				AA57DF682B6AF6E100932943 /* Info.plist */,
+			);
+			path = "Owl Watch Extension";
+			sourceTree = "<group>";
+		};
+		AA7E36AD2B55872C00789EB0 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				AAB582772B53140800CB72B8 /* CaptureManager.swift */,
+				AAB5826E2B53108D00CB72B8 /* NetworkManager.swift */,
+				AAB714802B65A9D600412DB7 /* WatchConnectivityManager.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		AA7E36AE2B55877000789EB0 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				AA7E36AF2B55878400789EB0 /* BLEManager.swift */,
+				AAB7147C2B64153B00412DB7 /* CaptureManager.swift */,
+				AA7E36B52B55925300789EB0 /* SocketManager.swift */,
+				AA5DC9CA2B629E770017376F /* LocationManager.swift */,
+				AA84B1C22B601E1C00FD654C /* API.swift */,
+				AAB714822B65AC1900412DB7 /* WatchConnectivityManager.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		AA7E36B22B558FA000789EB0 /* Util */ = {
+			isa = PBXGroup;
+			children = (
+				AA7E36B32B558FB400789EB0 /* FrameSequencer.swift */,
+			);
+			path = Util;
+			sourceTree = "<group>";
+		};
+		AA84B1BD2B601C6C00FD654C /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				AA84B1BE2B601DC600FD654C /* Transcript.swift */,
+				AA84B1C02B601DDD00FD654C /* Conversation.swift */,
+				AAB714782B62B23500412DB7 /* Location.swift */,
+				AAB7147E2B64162800412DB7 /* Capture.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		AA84B1C42B60419000FD654C /* Extensions */ = {
+			isa = PBXGroup;
+			children = (
+				AA84B1C52B6041AB00FD654C /* JSONDecoder+Extensions.swift */,
+			);
+			path = Extensions;
+			sourceTree = "<group>";
+		};
+		AA84B1C72B604F7E00FD654C /* ViewModels */ = {
+			isa = PBXGroup;
+			children = (
+				AA84B1C82B604FB000FD654C /* ConversationsViewModel.swift */,
+			);
+			path = ViewModels;
+			sourceTree = "<group>";
+		};
+		AA84B1CA2B606AAB00FD654C /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				AA7EAE662B81A011008BFC82 /* LinkMetadataView.swift */,
+				AA84B1CB2B606AED00FD654C /* ConversationDetailView.swift */,
+				AA84B1CD2B606E4400FD654C /* ConversationsView.swift */,
+				AA912DB12B7FD41F0016B808 /* DeviceBannerView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		AAB582062B530FD400CB72B8 = {
+			isa = PBXGroup;
+			children = (
+				AAB582732B53130900CB72B8 /* Shared */,
+				AAB582112B530FD400CB72B8 /* Owl */,
+				AAB582222B530FD600CB72B8 /* OwlTests */,
+				AAB5822C2B530FD600CB72B8 /* OwlUITests */,
+				AAB582392B530FD600CB72B8 /* Owl Watch App */,
+				AAB5824A2B530FD700CB72B8 /* Owl Watch AppTests */,
+				AAB582542B530FD700CB72B8 /* Owl Watch AppUITests */,
+				AA57DF612B6AF6E000932943 /* Owl Watch Extension */,
+				AA57DF5C2B6AF6E000932943 /* Frameworks */,
+				AAB582102B530FD400CB72B8 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		AAB582102B530FD400CB72B8 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				AAB5820F2B530FD400CB72B8 /* Owl.app */,
+				AAB5821F2B530FD600CB72B8 /* OwlTests.xctest */,
+				AAB582292B530FD600CB72B8 /* OwlUITests.xctest */,
+				AAB582352B530FD600CB72B8 /* Owl Watch App.app */,
+				AAB582472B530FD700CB72B8 /* Owl Watch AppTests.xctest */,
+				AAB582512B530FD700CB72B8 /* Owl Watch AppUITests.xctest */,
+				AA57DF5B2B6AF6E000932943 /* Owl Watch ExtensionExtension.appex */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		AAB582112B530FD400CB72B8 /* Owl */ = {
+			isa = PBXGroup;
+			children = (
+				AA84B1CA2B606AAB00FD654C /* Views */,
+				AA84B1C72B604F7E00FD654C /* ViewModels */,
+				AA84B1BD2B601C6C00FD654C /* Models */,
+				AA7E36AE2B55877000789EB0 /* Services */,
+				AA7E36B22B558FA000789EB0 /* Util */,
+				AA84B1C42B60419000FD654C /* Extensions */,
+				AAB582142B530FD400CB72B8 /* ContentView.swift */,
+				AAB582122B530FD400CB72B8 /* OwlApp.swift */,
+				AA7E36B12B55895B00789EB0 /* Info.plist */,
+				AAB582162B530FD600CB72B8 /* Assets.xcassets */,
+				AAB582182B530FD600CB72B8 /* Preview Content */,
+			);
+			path = Owl;
+			sourceTree = "<group>";
+		};
+		AAB582182B530FD600CB72B8 /* Preview Content */ = {
+			isa = PBXGroup;
+			children = (
+				AAB582192B530FD600CB72B8 /* Preview Assets.xcassets */,
+			);
+			path = "Preview Content";
+			sourceTree = "<group>";
+		};
+		AAB582222B530FD600CB72B8 /* OwlTests */ = {
+			isa = PBXGroup;
+			children = (
+				AAB582232B530FD600CB72B8 /* OwlTests.swift */,
+			);
+			path = OwlTests;
+			sourceTree = "<group>";
+		};
+		AAB5822C2B530FD600CB72B8 /* OwlUITests */ = {
+			isa = PBXGroup;
+			children = (
+				AAB5822D2B530FD600CB72B8 /* OwlUITests.swift */,
+				AAB5822F2B530FD600CB72B8 /* OwlUITestsLaunchTests.swift */,
+			);
+			path = OwlUITests;
+			sourceTree = "<group>";
+		};
+		AAB582392B530FD600CB72B8 /* Owl Watch App */ = {
+			isa = PBXGroup;
+			children = (
+				CCD7A5B82B6201F40079D9D4 /* Views */,
+				AA7E36AD2B55872C00789EB0 /* Services */,
+				AA0EF1B52B5324D50007C45C /* Owl-Watch-App-Info.plist */,
+				AAB5823A2B530FD600CB72B8 /* OwlWatchApp.swift */,
+				AAB5823E2B530FD700CB72B8 /* Assets.xcassets */,
+				AAB582402B530FD700CB72B8 /* Preview Content */,
+			);
+			path = "Owl Watch App";
+			sourceTree = "<group>";
+		};
+		AAB582402B530FD700CB72B8 /* Preview Content */ = {
+			isa = PBXGroup;
+			children = (
+				AAB582412B530FD700CB72B8 /* Preview Assets.xcassets */,
+			);
+			path = "Preview Content";
+			sourceTree = "<group>";
+		};
+		AAB5824A2B530FD700CB72B8 /* Owl Watch AppTests */ = {
+			isa = PBXGroup;
+			children = (
+				AAB5824B2B530FD700CB72B8 /* Owl_Watch_AppTests.swift */,
+			);
+			path = "Owl Watch AppTests";
+			sourceTree = "<group>";
+		};
+		AAB582542B530FD700CB72B8 /* Owl Watch AppUITests */ = {
+			isa = PBXGroup;
+			children = (
+				AAB582552B530FD700CB72B8 /* Owl_Watch_AppUITests.swift */,
+				AAB582572B530FD700CB72B8 /* Owl_Watch_AppUITestsLaunchTests.swift */,
+			);
+			path = "Owl Watch AppUITests";
+			sourceTree = "<group>";
+		};
+		AAB582732B53130900CB72B8 /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				CCD7A5C32B62176E0079D9D4 /* Extensions */,
+				CCD7A5BF2B6217260079D9D4 /* Files */,
+				CCD7A5BB2B6215F10079D9D4 /* Util */,
+				AAB582742B53131900CB72B8 /* AppConstants.swift */,
+			);
+			path = Shared;
+			sourceTree = "<group>";
+		};
+		CCD7A5B82B6201F40079D9D4 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				AAB5823C2B530FD600CB72B8 /* ContentView.swift */,
+				CCD7A5B92B6202190079D9D4 /* SettingsView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		CCD7A5BB2B6215F10079D9D4 /* Util */ = {
+			isa = PBXGroup;
+			children = (
+				CCD7A5BC2B6216060079D9D4 /* MultipartForm.swift */,
+			);
+			path = Util;
+			sourceTree = "<group>";
+		};
+		CCD7A5BF2B6217260079D9D4 /* Files */ = {
+			isa = PBXGroup;
+			children = (
+				CCD7A5C02B6217320079D9D4 /* AudioFileWriter.swift */,
+				CCD7A5CA2B621D1A0079D9D4 /* FileUploadTask.swift */,
+			);
+			path = Files;
+			sourceTree = "<group>";
+		};
+		CCD7A5C32B62176E0079D9D4 /* Extensions */ = {
+			isa = PBXGroup;
+			children = (
+				CCD7A5C42B6217830079D9D4 /* URL+Extensions.swift */,
+				CCD7A5C72B6219AD0079D9D4 /* UUID+Extensions.swift */,
+				AAA6006D2B6ED40C004200FF /* URLRequest+Extensions.swift */,
+			);
+			path = Extensions;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		AA57DF5A2B6AF6E000932943 /* Owl Watch ExtensionExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AA57DF6F2B6AF6E200932943 /* Build configuration list for PBXNativeTarget "Owl Watch ExtensionExtension" */;
+			buildPhases = (
+				AA57DF572B6AF6E000932943 /* Sources */,
+				AA57DF582B6AF6E000932943 /* Frameworks */,
+				AA57DF592B6AF6E000932943 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "Owl Watch ExtensionExtension";
+			productName = "Owl Watch ExtensionExtension";
+			productReference = AA57DF5B2B6AF6E000932943 /* Owl Watch ExtensionExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		AAB5820E2B530FD400CB72B8 /* Owl */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AAB5825F2B530FD700CB72B8 /* Build configuration list for PBXNativeTarget "Owl" */;
+			buildPhases = (
+				AAB5820B2B530FD400CB72B8 /* Sources */,
+				AAB5820C2B530FD400CB72B8 /* Frameworks */,
+				AAB5820D2B530FD400CB72B8 /* Resources */,
+				AAB5825E2B530FD700CB72B8 /* Embed Watch Content */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				AAB582382B530FD600CB72B8 /* PBXTargetDependency */,
+			);
+			name = Owl;
+			packageProductDependencies = (
+				AA7E36B72B55926200789EB0 /* SocketIO */,
+			);
+			productName = Owl;
+			productReference = AAB5820F2B530FD400CB72B8 /* Owl.app */;
+			productType = "com.apple.product-type.application";
+		};
+		AAB5821E2B530FD600CB72B8 /* OwlTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AAB582622B530FD700CB72B8 /* Build configuration list for PBXNativeTarget "OwlTests" */;
+			buildPhases = (
+				AAB5821B2B530FD600CB72B8 /* Sources */,
+				AAB5821C2B530FD600CB72B8 /* Frameworks */,
+				AAB5821D2B530FD600CB72B8 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				AAB582212B530FD600CB72B8 /* PBXTargetDependency */,
+			);
+			name = OwlTests;
+			productName = OwlTests;
+			productReference = AAB5821F2B530FD600CB72B8 /* OwlTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		AAB582282B530FD600CB72B8 /* OwlUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AAB582652B530FD700CB72B8 /* Build configuration list for PBXNativeTarget "OwlUITests" */;
+			buildPhases = (
+				AAB582252B530FD600CB72B8 /* Sources */,
+				AAB582262B530FD600CB72B8 /* Frameworks */,
+				AAB582272B530FD600CB72B8 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				AAB5822B2B530FD600CB72B8 /* PBXTargetDependency */,
+			);
+			name = OwlUITests;
+			productName = OwlUITests;
+			productReference = AAB582292B530FD600CB72B8 /* OwlUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+		AAB582342B530FD600CB72B8 /* Owl Watch App */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AAB5825B2B530FD700CB72B8 /* Build configuration list for PBXNativeTarget "Owl Watch App" */;
+			buildPhases = (
+				AAB582312B530FD600CB72B8 /* Sources */,
+				AAB582322B530FD600CB72B8 /* Frameworks */,
+				AAB582332B530FD600CB72B8 /* Resources */,
+				AA57DF6C2B6AF6E200932943 /* Embed Foundation Extensions */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				AA57DF6A2B6AF6E100932943 /* PBXTargetDependency */,
+			);
+			name = "Owl Watch App";
+			packageProductDependencies = (
+				AAB582712B5310E800CB72B8 /* SocketIO */,
+			);
+			productName = "Owl Watch App";
+			productReference = AAB582352B530FD600CB72B8 /* Owl Watch App.app */;
+			productType = "com.apple.product-type.application";
+		};
+		AAB582462B530FD700CB72B8 /* Owl Watch AppTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AAB582682B530FD700CB72B8 /* Build configuration list for PBXNativeTarget "Owl Watch AppTests" */;
+			buildPhases = (
+				AAB582432B530FD700CB72B8 /* Sources */,
+				AAB582442B530FD700CB72B8 /* Frameworks */,
+				AAB582452B530FD700CB72B8 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				AAB582492B530FD700CB72B8 /* PBXTargetDependency */,
+			);
+			name = "Owl Watch AppTests";
+			productName = "Owl Watch AppTests";
+			productReference = AAB582472B530FD700CB72B8 /* Owl Watch AppTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		AAB582502B530FD700CB72B8 /* Owl Watch AppUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AAB5826B2B530FD700CB72B8 /* Build configuration list for PBXNativeTarget "Owl Watch AppUITests" */;
+			buildPhases = (
+				AAB5824D2B530FD700CB72B8 /* Sources */,
+				AAB5824E2B530FD700CB72B8 /* Frameworks */,
+				AAB5824F2B530FD700CB72B8 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				AAB582532B530FD700CB72B8 /* PBXTargetDependency */,
+			);
+			name = "Owl Watch AppUITests";
+			productName = "Owl Watch AppUITests";
+			productReference = AAB582512B530FD700CB72B8 /* Owl Watch AppUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		AAB582072B530FD400CB72B8 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1520;
+				LastUpgradeCheck = 1520;
+				TargetAttributes = {
+					AA57DF5A2B6AF6E000932943 = {
+						CreatedOnToolsVersion = 15.2;
+					};
+					AAB5820E2B530FD400CB72B8 = {
+						CreatedOnToolsVersion = 15.2;
+					};
+					AAB5821E2B530FD600CB72B8 = {
+						CreatedOnToolsVersion = 15.2;
+						TestTargetID = AAB5820E2B530FD400CB72B8;
+					};
+					AAB582282B530FD600CB72B8 = {
+						CreatedOnToolsVersion = 15.2;
+						TestTargetID = AAB5820E2B530FD400CB72B8;
+					};
+					AAB582342B530FD600CB72B8 = {
+						CreatedOnToolsVersion = 15.2;
+					};
+					AAB582462B530FD700CB72B8 = {
+						CreatedOnToolsVersion = 15.2;
+						TestTargetID = AAB582342B530FD600CB72B8;
+					};
+					AAB582502B530FD700CB72B8 = {
+						CreatedOnToolsVersion = 15.2;
+						TestTargetID = AAB582342B530FD600CB72B8;
+					};
+				};
+			};
+			buildConfigurationList = AAB5820A2B530FD400CB72B8 /* Build configuration list for PBXProject "Owl" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = AAB582062B530FD400CB72B8;
+			packageReferences = (
+				AAB582702B5310E800CB72B8 /* XCRemoteSwiftPackageReference "socket.io-client-swift" */,
+			);
+			productRefGroup = AAB582102B530FD400CB72B8 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				AAB5820E2B530FD400CB72B8 /* Owl */,
+				AAB5821E2B530FD600CB72B8 /* OwlTests */,
+				AAB582282B530FD600CB72B8 /* OwlUITests */,
+				AAB582342B530FD600CB72B8 /* Owl Watch App */,
+				AAB582462B530FD700CB72B8 /* Owl Watch AppTests */,
+				AAB582502B530FD700CB72B8 /* Owl Watch AppUITests */,
+				AA57DF5A2B6AF6E000932943 /* Owl Watch ExtensionExtension */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		AA57DF592B6AF6E000932943 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AA57DF672B6AF6E100932943 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AAB5820D2B530FD400CB72B8 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AAB5821A2B530FD600CB72B8 /* Preview Assets.xcassets in Resources */,
+				AAB582172B530FD600CB72B8 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AAB5821D2B530FD600CB72B8 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AAB582272B530FD600CB72B8 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AAB582332B530FD600CB72B8 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AAB582422B530FD700CB72B8 /* Preview Assets.xcassets in Resources */,
+				AAB5823F2B530FD700CB72B8 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AAB582452B530FD700CB72B8 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AAB5824F2B530FD700CB72B8 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		AA57DF572B6AF6E000932943 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AA57DF632B6AF6E000932943 /* Owl_Watch_Extension.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AAB5820B2B530FD400CB72B8 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				CCD7A5BE2B62165D0079D9D4 /* MultipartForm.swift in Sources */,
+				CCD7A5C92B621ABE0079D9D4 /* UUID+Extensions.swift in Sources */,
+				AAB714792B62B23500412DB7 /* Location.swift in Sources */,
+				AA84B1C12B601DDD00FD654C /* Conversation.swift in Sources */,
+				CCD7A5CC2B621D210079D9D4 /* FileUploadTask.swift in Sources */,
+				AAB582152B530FD400CB72B8 /* ContentView.swift in Sources */,
+				AA7E36B02B55878400789EB0 /* BLEManager.swift in Sources */,
+				AA84B1C62B6041AB00FD654C /* JSONDecoder+Extensions.swift in Sources */,
+				AAB7147D2B64153B00412DB7 /* CaptureManager.swift in Sources */,
+				AAB582752B53131A00CB72B8 /* AppConstants.swift in Sources */,
+				AA7E36B42B558FB400789EB0 /* FrameSequencer.swift in Sources */,
+				AA7E36B62B55925300789EB0 /* SocketManager.swift in Sources */,
+				AA84B1CE2B606E4400FD654C /* ConversationsView.swift in Sources */,
+				AA84B1BF2B601DC600FD654C /* Transcript.swift in Sources */,
+				AA84B1CC2B606AED00FD654C /* ConversationDetailView.swift in Sources */,
+				AA84B1C92B604FB000FD654C /* ConversationsViewModel.swift in Sources */,
+				AA84B1C32B601E1C00FD654C /* API.swift in Sources */,
+				AA7EAE672B81A011008BFC82 /* LinkMetadataView.swift in Sources */,
+				AA912DB22B7FD41F0016B808 /* DeviceBannerView.swift in Sources */,
+				CCD7A5C62B6217900079D9D4 /* URL+Extensions.swift in Sources */,
+				AAB7147F2B64162800412DB7 /* Capture.swift in Sources */,
+				AAB582132B530FD400CB72B8 /* OwlApp.swift in Sources */,
+				AA5DC9CB2B629E770017376F /* LocationManager.swift in Sources */,
+				AAA6006E2B6ED40C004200FF /* URLRequest+Extensions.swift in Sources */,
+				AAB714832B65AC1A00412DB7 /* WatchConnectivityManager.swift in Sources */,
+				CCD7A5C22B62173E0079D9D4 /* AudioFileWriter.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AAB5821B2B530FD600CB72B8 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AAB582242B530FD600CB72B8 /* OwlTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AAB582252B530FD600CB72B8 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AAB5822E2B530FD600CB72B8 /* OwlUITests.swift in Sources */,
+				AAB582302B530FD600CB72B8 /* OwlUITestsLaunchTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AAB582312B530FD600CB72B8 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AAA6006F2B6ED40C004200FF /* URLRequest+Extensions.swift in Sources */,
+				CCD7A5C82B6219AD0079D9D4 /* UUID+Extensions.swift in Sources */,
+				CCD7A5BD2B6216060079D9D4 /* MultipartForm.swift in Sources */,
+				AAB5826F2B53108D00CB72B8 /* NetworkManager.swift in Sources */,
+				AAB5823D2B530FD600CB72B8 /* ContentView.swift in Sources */,
+				AAB5823B2B530FD600CB72B8 /* OwlWatchApp.swift in Sources */,
+				CCD7A5C52B6217830079D9D4 /* URL+Extensions.swift in Sources */,
+				CCD7A5BA2B6202190079D9D4 /* SettingsView.swift in Sources */,
+				CCD7A5CB2B621D1A0079D9D4 /* FileUploadTask.swift in Sources */,
+				AAB582762B53131A00CB72B8 /* AppConstants.swift in Sources */,
+				AAB582782B53140800CB72B8 /* CaptureManager.swift in Sources */,
+				AAB714812B65A9D600412DB7 /* WatchConnectivityManager.swift in Sources */,
+				CCD7A5C12B6217320079D9D4 /* AudioFileWriter.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AAB582432B530FD700CB72B8 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AAB5824C2B530FD700CB72B8 /* Owl_Watch_AppTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AAB5824D2B530FD700CB72B8 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AAB582562B530FD700CB72B8 /* Owl_Watch_AppUITests.swift in Sources */,
+				AAB582582B530FD700CB72B8 /* Owl_Watch_AppUITestsLaunchTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		AA57DF6A2B6AF6E100932943 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AA57DF5A2B6AF6E000932943 /* Owl Watch ExtensionExtension */;
+			targetProxy = AA57DF692B6AF6E100932943 /* PBXContainerItemProxy */;
+		};
+		AAB582212B530FD600CB72B8 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AAB5820E2B530FD400CB72B8 /* Owl */;
+			targetProxy = AAB582202B530FD600CB72B8 /* PBXContainerItemProxy */;
+		};
+		AAB5822B2B530FD600CB72B8 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AAB5820E2B530FD400CB72B8 /* Owl */;
+			targetProxy = AAB5822A2B530FD600CB72B8 /* PBXContainerItemProxy */;
+		};
+		AAB582382B530FD600CB72B8 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AAB582342B530FD600CB72B8 /* Owl Watch App */;
+			targetProxy = AAB582372B530FD600CB72B8 /* PBXContainerItemProxy */;
+		};
+		AAB582492B530FD700CB72B8 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AAB582342B530FD600CB72B8 /* Owl Watch App */;
+			targetProxy = AAB582482B530FD700CB72B8 /* PBXContainerItemProxy */;
+		};
+		AAB582532B530FD700CB72B8 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AAB582342B530FD600CB72B8 /* Owl Watch App */;
+			targetProxy = AAB582522B530FD700CB72B8 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		AA57DF6D2B6AF6E200932943 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 7T2874S592;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Owl Watch Extension/Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = "Owl Watch Extension";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.owl.Owl.watchkitapp.Owl-Watch-Extension";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 10.2;
+			};
+			name = Debug;
+		};
+		AA57DF6E2B6AF6E200932943 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 7T2874S592;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Owl Watch Extension/Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = "Owl Watch Extension";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.owl.Owl.watchkitapp.Owl-Watch-Extension";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				VALIDATE_PRODUCT = YES;
+				WATCHOS_DEPLOYMENT_TARGET = 10.2;
+			};
+			name = Release;
+		};
+		AAB582592B530FD700CB72B8 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		AAB5825A2B530FD700CB72B8 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
+			};
+			name = Release;
+		};
+		AAB5825C2B530FD700CB72B8 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"Owl Watch App/Preview Content\"";
+				DEVELOPMENT_TEAM = 7T2874S592;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Owl-Watch-App-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = Owl;
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Needed for capture";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.owl.Owl;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.owl.Owl.watchkitapp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 10.2;
+			};
+			name = Debug;
+		};
+		AAB5825D2B530FD700CB72B8 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"Owl Watch App/Preview Content\"";
+				DEVELOPMENT_TEAM = 7T2874S592;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Owl-Watch-App-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = Owl;
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Needed for capture";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.owl.Owl;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.owl.Owl.watchkitapp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				VALIDATE_PRODUCT = YES;
+				WATCHOS_DEPLOYMENT_TARGET = 10.2;
+			};
+			name = Release;
+		};
+		AAB582602B530FD700CB72B8 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"Owl/Preview Content\"";
+				DEVELOPMENT_TEAM = 7T2874S592;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Owl/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Owl;
+				INFOPLIST_KEY_LSApplicationCategoryType = "";
+				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "Needed for capture";
+				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "Needed for capture";
+				INFOPLIST_KEY_NSLocationAlwaysUsageDescription = "Needed for capture";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Needed for capture";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.2;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.owl.Owl;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		AAB582612B530FD700CB72B8 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"Owl/Preview Content\"";
+				DEVELOPMENT_TEAM = 7T2874S592;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Owl/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Owl;
+				INFOPLIST_KEY_LSApplicationCategoryType = "";
+				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "Needed for capture";
+				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "Needed for capture";
+				INFOPLIST_KEY_NSLocationAlwaysUsageDescription = "Needed for capture";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Needed for capture";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.2;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.owl.Owl;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		AAB582632B530FD700CB72B8 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 7T2874S592;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.2;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.owl.OwlTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Owl.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Owl";
+			};
+			name = Debug;
+		};
+		AAB582642B530FD700CB72B8 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 7T2874S592;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.2;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.owl.OwlTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Owl.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Owl";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		AAB582662B530FD700CB72B8 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 7T2874S592;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.2;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.owl.OwlUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = Owl;
+			};
+			name = Debug;
+		};
+		AAB582672B530FD700CB72B8 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 7T2874S592;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.2;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.owl.OwlUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = Owl;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		AAB582692B530FD700CB72B8 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 7T2874S592;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.owl.Owl-Watch-AppTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Owl Watch App.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Owl Watch App";
+				WATCHOS_DEPLOYMENT_TARGET = 10.2;
+			};
+			name = Debug;
+		};
+		AAB5826A2B530FD700CB72B8 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 7T2874S592;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.owl.Owl-Watch-AppTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Owl Watch App.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Owl Watch App";
+				VALIDATE_PRODUCT = YES;
+				WATCHOS_DEPLOYMENT_TARGET = 10.2;
+			};
+			name = Release;
+		};
+		AAB5826C2B530FD700CB72B8 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 7T2874S592;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.owl.Owl-Watch-AppUITests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				TEST_TARGET_NAME = "Owl Watch App";
+				WATCHOS_DEPLOYMENT_TARGET = 10.2;
+			};
+			name = Debug;
+		};
+		AAB5826D2B530FD700CB72B8 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 7T2874S592;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.owl.Owl-Watch-AppUITests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				TEST_TARGET_NAME = "Owl Watch App";
+				VALIDATE_PRODUCT = YES;
+				WATCHOS_DEPLOYMENT_TARGET = 10.2;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		AA57DF6F2B6AF6E200932943 /* Build configuration list for PBXNativeTarget "Owl Watch ExtensionExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AA57DF6D2B6AF6E200932943 /* Debug */,
+				AA57DF6E2B6AF6E200932943 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		AAB5820A2B530FD400CB72B8 /* Build configuration list for PBXProject "Owl" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AAB582592B530FD700CB72B8 /* Debug */,
+				AAB5825A2B530FD700CB72B8 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		AAB5825B2B530FD700CB72B8 /* Build configuration list for PBXNativeTarget "Owl Watch App" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AAB5825C2B530FD700CB72B8 /* Debug */,
+				AAB5825D2B530FD700CB72B8 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		AAB5825F2B530FD700CB72B8 /* Build configuration list for PBXNativeTarget "Owl" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AAB582602B530FD700CB72B8 /* Debug */,
+				AAB582612B530FD700CB72B8 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		AAB582622B530FD700CB72B8 /* Build configuration list for PBXNativeTarget "OwlTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AAB582632B530FD700CB72B8 /* Debug */,
+				AAB582642B530FD700CB72B8 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		AAB582652B530FD700CB72B8 /* Build configuration list for PBXNativeTarget "OwlUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AAB582662B530FD700CB72B8 /* Debug */,
+				AAB582672B530FD700CB72B8 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		AAB582682B530FD700CB72B8 /* Build configuration list for PBXNativeTarget "Owl Watch AppTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AAB582692B530FD700CB72B8 /* Debug */,
+				AAB5826A2B530FD700CB72B8 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		AAB5826B2B530FD700CB72B8 /* Build configuration list for PBXNativeTarget "Owl Watch AppUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AAB5826C2B530FD700CB72B8 /* Debug */,
+				AAB5826D2B530FD700CB72B8 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		AAB582702B5310E800CB72B8 /* XCRemoteSwiftPackageReference "socket.io-client-swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/socketio/socket.io-client-swift.git";
+			requirement = {
+				branch = master;
+				kind = branch;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		AA7E36B72B55926200789EB0 /* SocketIO */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = AAB582702B5310E800CB72B8 /* XCRemoteSwiftPackageReference "socket.io-client-swift" */;
+			productName = SocketIO;
+		};
+		AAB582712B5310E800CB72B8 /* SocketIO */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = AAB582702B5310E800CB72B8 /* XCRemoteSwiftPackageReference "socket.io-client-swift" */;
+			productName = SocketIO;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = AAB582072B530FD400CB72B8 /* Project object */;
+}

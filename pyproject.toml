@@ -1,8 +1,8 @@
 [tool.poetry]
-name = "untitledai"
+name = "owl"
 version = "0.1.0"
 description = ""
-authors = ["Bart", "Ethan Sutin <ethan@sutin.net>"]
+authors = ["Bart Trzynadlowski <bart.trzy@gmail.com>", "Ethan Sutin <ethan@sutin.net>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
@@ -41,7 +41,7 @@ halo = "^0.0.31"
 pytest = "^7.4.4"
 
 [tool.poetry.scripts]
-untitledai = "untitledai.core.cli:cli"
+owl = "owl.core.cli:cli"
 
 [build-system]
 requires = ["poetry-core"]

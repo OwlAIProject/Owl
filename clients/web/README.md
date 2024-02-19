@@ -4,7 +4,7 @@
 First, set the client token environmental variable:
 
 ```bash
-export UNTITLEDAI_USER_CLIENT_TOKEN=your-client-token
+export OWL_USER_CLIENT_TOKEN=your-client-token
 ```
 
 Optionally, set the google maps token if you want maps to work:
@@ -38,6 +38,11 @@ pnpm dev
 bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) 
+Open [http://localhost:3000](http://localhost:3000)
+
+You can capture via local microphone or devices via WebBluetooth:
+
+[![Owl Tutorial](http://img.youtube.com/vi/y4bqPLv-EHo/0.jpg)](https://youtube.com/shorts/y4bqPLv-EHo "Owl Tutorial")
+
 
 IMPORTANT: Currently the webapp just passes the token for authentication there is no way to log in so do not expose this to the internet!

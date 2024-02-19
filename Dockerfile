@@ -33,9 +33,9 @@ RUN poetry config virtualenvs.create false && \
 
 RUN echo '#!/bin/sh\n\
 if [ -z "$CONFIG_FILE" ]; then\n\
-  poetry run untitledai serve --host 0.0.0.0\n\
+  poetry run owl serve --host 0.0.0.0\n\
 else\n\
-  poetry run untitledai serve --host 0.0.0.0 --config "$CONFIG_FILE"\n\
+  poetry run owl serve --host 0.0.0.0 --config "$CONFIG_FILE"\n\
 fi' > /entrypoint.sh && \
     chmod +x /entrypoint.sh
 
