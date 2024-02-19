@@ -15,6 +15,20 @@ Step-by-step instructions are provided here for building and installing the iOS 
 
 - [Enable developer mode on your devices](https://developer.apple.com/documentation/xcode/enabling-developer-mode-on-a-device). This is required in order to deploy builds from Xcode.
 
+- On iPhone, open "Settings" and then "Privacy & Security". Scroll to the bottom to find the "Developer Mode" option.
+
+<p align="center">
+<img alt="Signing & Capabilities" src="../docs/images/xcode/developer_mode_iphone.png"><br>
+<i>Location of the Developer Mode setting under Privacy & Security on iPhone.</i>
+</p>
+
+- On Watch, developer mode can only be enabled on the device itself, not through the iPhone companion app. Open "Settings" and then "Privacy & Security". The "Developer Mode" option is found at the bottom.
+
+<p align="center">
+<img alt="Signing & Capabilities" src="../docs/images/xcode/developer_mode_watch.png"><br>
+<i>Location of the Developer Mode setting under Privacy & Security on Apple Watch.</i>
+</p>
+
 ### 3. Open Xcode Project and Configure Development Team
 
 Upon first cloning the repository, the development team values in the Xcode project will be invalid and must be manually set.
