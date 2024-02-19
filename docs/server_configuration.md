@@ -66,7 +66,11 @@ deepgram:
 
 ### 6. Obtain a Hugging Face API Token for Whisper and Speaker Identification Models
 
-- Register a [Hugging Face](https://huggingface.co) account and obtain a token (these are found under "Access Tokens" in "Settings"). This is needed for asynchronous Whisper (if enabled) and the SpeechBrain speaker verification model. For example:
+- Register a [Hugging Face](https://huggingface.co) account and obtain a token (these are found under "Access Tokens" in "Settings"). 
+- Owl uses PyAnnote for diarization. Please visit the following Hugging Face model pages and accept the terms for each:
+  - [PyAnnote Segmentation Model](https://huggingface.co/pyannote/segmentation)
+  - [PyAnnote Speaker Diarization Model](https://huggingface.co/pyannote/speaker-diarization)
+- The Hugging Face token is needed for asynchronous Whisper transcription (if enabled) and the SpeechBrain speaker verification model. For example:
 
 ```
 async_whisper:
@@ -85,5 +89,13 @@ async_whisper:
 ### 7. Run the Server
 
 - Run the server as per the [setup instructions](../README.md#server-setup) with `--config=config.yaml`.
+
+### 8. Environment Variables
+
+Configuration file keys can be overridden with environment variables. The format is `OWL_SECTION_KEY_NAME`. For example, the Hugging Face token under the `async_whisper` section can be set in e.g. bash with: 
+
+```
+export OWL_ASYNC_WHISPER_HF_TOKEN=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
+```
 
 [<< Home](../README.md)
