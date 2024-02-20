@@ -111,9 +111,9 @@ Multiple capture devices are supported:
 
 To help orient newcomers to the code base, we will trace the complete path that data takes through the system, from speech to displayed summary.
 
-#### Streaming Bluetooth Device Example: Xiao ESP32S3 Sense
+#### Streaming Bluetooth Device Example: XIAO ESP32S3 Sense
 
-Bluetooth-based devices, like the Xiao ESP32S3 Sense board in this example, connect to the iOS client application (`clients/ios`) and communicate with it continuously.
+Bluetooth-based devices, like the XIAO ESP32S3 Sense board in this example, connect to the iOS client application (`clients/ios`) and communicate with it continuously.
 
 1. Audio is continuously picked up by the Sense board's microphone at 16 KHz and encoded to AAC. This reduces packets to a third of their original size, which is important because transmission consumes the most power. Packets are broadcast via BLE as fast as they are recorded in the board firmware's `loop()` function found in `clients/xiao-esp32s3-sense/firmware/src/main.cpp`.
 
