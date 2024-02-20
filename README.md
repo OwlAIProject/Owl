@@ -87,7 +87,7 @@ Platform-specific instructions for installing and running the server:
 - [Windows instructions](docs/windows_setup.md).
 - [Docker instructions](docs/docker_setup.md).
 
-Once the server is installed, some configuration is necessary before it can be run:
+Once the server is installed, it can be completely customized:
 
 - [Configuring the server](docs/server_configuration.md)
 
@@ -104,7 +104,6 @@ Multiple capture devices are supported:
 - [Apple Watch](docs/apple_watch_setup.md)
 - [XIAO ESP32S3 Sense Board](docs/xiao_esp32s3_sense_setup.md)
 - [Sony Spresense LTE-M Board](docs/sony_spresense_setup.md)
-- *Coming soon: Wearable w/ Custom Circular Case and Multi-day Battery*
 
 ## Technical Guide
 
