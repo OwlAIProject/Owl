@@ -52,7 +52,7 @@ What would you do with an AI that listens to and observes everything that happen
 
 There are three major components to this project:
 
-1. Wearable capture devices. These include semi-custom development boards (with some assembly required) as well as off-the-shelf products like Apple Watch. We would like to develop fully custom open source hardware.
+1. Wearable capture devices. These include semi-custom development [boards](docs/development_boards.md) (with some assembly required) as well as off-the-shelf products like Apple Watch. We would like to develop fully custom open source hardware.
 2. AI server.
 3. Presentation clients. Applications that display information gathered by the system (e.g., transcripts, conversation summaries) and allow interaction with an online assistant. Currently, a mobile app and web app are included.
 
