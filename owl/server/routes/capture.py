@@ -1,11 +1,12 @@
 #
-# TODO for Ethan:
-#   - Stretch: integrate my endpointing
-
-#
 # capture.py
 #
 # Capture endpoints: streaming and chunked file uploads via HTTP handled here.
+#
+# TODO
+# ----
+# - Capture socket to use same endpointing mechanism (ConversationDetectionService).
+# - Can we unify with streaming code by having chunking simply forward there via socket?
 #
 
 from datetime import datetime
