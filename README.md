@@ -14,7 +14,7 @@ What would you do with an AI that listens to and observes everything that happen
 
 ### Key Features
 * 📱 **Broad Capture Device Support:** Capture your life using custom devices based on ESP platforms, Sony Spresense, or consumer hardware like the Apple Watch. Additional device support is continually added, so anything with a sensor will be able to send data to Owl.
-* 🧠 **Flexible Inference Options:** Run completely locally or leverage commercial models. Perform inference using any model available on **Ollama**, or use commercial models like GPT-4. Utilize TTS with **Whisper** or choose commercial services like Deepgram.
+* 🧠 **Flexible Inference Options:** Run completely **locally** or leverage commercial models. Perform inference using any model available on **Ollama**, or use commercial models like GPT-4. Utilize TTS with **Whisper** or choose commercial services like Deepgram.
 * 🌐 **Capture from the Web:** Easily capture content from your desktop or any mobile phone.
 * 🎙️ **Multimodal Capture:** Engage in continuous capture of location and audio. Support for images and video coming very soon!
 * 📶 **Wide Connectivity Options:** Capture with devices supporting BLE, LTE, or WiFi.
