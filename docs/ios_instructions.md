@@ -60,6 +60,8 @@ We **strongly** recommend running the server over HTTPS in order to ensure that 
 <i>Exception domains are specified in the same place as development team.</i>
 </p>
 
+- **Note:** Don't forget to do this for the *Owl Watch App* target, too. The process must be performed for both the *Owl* **and** *Owl Watch App* targets!
+
 ### 5. Configure App Constants
 
 The server address and client token (created during [server configuration](server_configuration.md)) must be entered into their respective fields in the `AppConstants` structure, found in `Shared/AppConstants.swift`.
