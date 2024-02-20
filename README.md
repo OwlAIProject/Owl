@@ -7,8 +7,7 @@
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](http://makeapullrequest.com)
 
 <p align="center">
-<img alt="Pendant wearable" src="docs/images/featured/pendant_wearable.jpg"> <img alt="Apple Watch client app" src="docs/images/featured/apple_watch.jpg"><br>
-<img alt="Conversations" src="docs/images/featured/ios_conversations.png"> <img alt="CES 2024 expo summary" src="docs/images/featured/ios_conversation_example_ces.png"><br>
+<img alt="Capture devices" src="docs/images/featured/devices.jpg"> <img alt="Home Depot conversation" src="docs/images/featured/ios_conversation_example_home_depot.png">
 </p>
 
 What would you do with an AI that listens to and observes everything that happens in your life? **Owl** aims to explore this idea using always-on wearable devices. The convergence of powerful LLM and VLM models with low-power wearable devices opens up entirely new frontiers for human-computer interaction, including memory augmentation, pro-active life assistance, and distributed knowledge gathering. We believe in exploring this transparently and openly.
@@ -35,9 +34,10 @@ What would you do with an AI that listens to and observes everything that happen
   - [Server Setup](#server-setup)
   - [iOS and watchOS Application Build Instructions](#ios-and-watchos-application-build-instructions)
   - [Capture Device Setup](#capture-device-setup)
-- [Source Code Guide](#source-code-guide)
+- [Technical Guide](#technical-guide)
   - [A *Tour de Source*](#a-tour-de-source)
   - [Capture Storage](#capture-storage)
+- [Contributing](#contributing)
 
 
 ## Overview
@@ -105,7 +105,7 @@ Multiple capture devices are supported:
 - [XIAO ESP32S3 Sense Board](docs/xiao_esp32s3_sense_setup.md)
 - [Sony Spresense LTE-M Board](docs/sony_spresense_setup.md)
 
-## Source Code Guide
+## Technical Guide
 
 ### A *Tour de Source*
 
@@ -167,3 +167,11 @@ device to make manual inspection easy. When conversations are detected within a 
 <img alt="Conversations" src="docs/images/capture_storage/conversations.png"><br>
 <i>Conversations extracted from a particular capture.</i>
 </p>
+
+
+## Contributing
+
+We welcome discussion and contributions. Please [connect with us](#contact). To contribute, we recommend:
+
+  - [Open an issue](https://github.com/OwlAIProject/Owl/issues) and describe what you are working on so that everyone is aware and we have a chance to discuss.
+  - Fork our repo and make a pull request when your changes are ready.
