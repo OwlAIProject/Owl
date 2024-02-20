@@ -7,6 +7,11 @@
 #
 # Capture endpoints: streaming and chunked file uploads via HTTP handled here.
 #
+# TODO
+# ----
+# - Unify endpointing with chunked uploading (ConversationDetectionService).
+# - Can we unify with chunking by having chunking simply send via socket to here?
+#
 
 from datetime import datetime
 import os
