@@ -173,5 +173,5 @@ device to make manual inspection easy. When conversations are detected within a 
 
 We welcome discussion and contributions. Please [connect with us](#contact). To contribute, we recommend:
 
-  - [Open an issue](https://github.com/OwlAIProject/Owl/issues) and describe what you are working on so that everyone is aware and we have a chance to discuss.
-  - Fork our repo and make a pull request when your changes are ready.
+  - [Opening an issue](https://github.com/OwlAIProject/Owl/issues) and describing what you are working on so that everyone is aware and we have a chance to discuss.
+  - Forking our repo and making a pull request when ready.
