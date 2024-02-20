@@ -7,8 +7,7 @@
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](http://makeapullrequest.com)
 
 <p align="center">
-<img alt="Pendant wearable" src="docs/images/featured/pendant_wearable.jpg"> <img alt="Apple Watch client app" src="docs/images/featured/apple_watch.jpg"><br>
-<img alt="Conversations" src="docs/images/featured/ios_conversations.png"> <img alt="CES 2024 expo summary" src="docs/images/featured/ios_conversation_example_ces.png"><br>
+<img alt="Capture devices" src="docs/images/featured/devices.jpg"> <img alt="Home Depot conversation" src="docs/images/featured/ios_conversation_example_home_depot.png">
 </p>
 
 What would you do with an AI that listens to and observes everything that happens in your life? **Owl** aims to explore this idea using always-on wearable devices. The convergence of powerful LLM and VLM models with low-power wearable devices opens up entirely new frontiers for human-computer interaction, including memory augmentation, pro-active life assistance, and distributed knowledge gathering. We believe in exploring this transparently and openly.
