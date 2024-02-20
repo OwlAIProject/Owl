@@ -5,8 +5,8 @@
 #
 # TODO
 # ----
-# - Unify endpointing with chunked uploading (ConversationDetectionService).
-# - Can we unify with chunking by having chunking simply send via socket to here?
+# - Capture socket to use same endpointing mechanism (ConversationDetectionService).
+# - Can we unify with streaming code by having chunking simply forward there via socket?
 #
 
 from datetime import datetime
