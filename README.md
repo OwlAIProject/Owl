@@ -56,6 +56,23 @@ There are three major components to this project:
 2. AI server.
 3. Presentation clients. Applications that display information gathered by the system (e.g., transcripts, conversation summaries) and allow interaction with an online assistant. Currently, a mobile app and web app are included.
 
+## Introducing Our Reference Hardware Device: Bee 🐝
+
+<p align="center">
+  <img src="docs/images/bee/bee.png" alt="Bee Device" width="200"/>
+</p>
+
+We are thrilled to unveil "Bee," our pioneering reference hardware device tailored for AI wearable developers and aficionados. Bee distinguishes itself with a remarkable fifty-hour battery life and a sleek, compact form factor, spanning merely 1.2 inches in diameter.
+
+### Key Features of Bee:
+- 🔋 **Fifty-Hour Battery Life**: Engineered for longevity, Bee empowers you to unlock new potential by feeding your entire life as context for your personal AI, which is always by your side ready to assist.
+- 🤏 **Compact Size**: At just 1.2 inches in diameter, Bee is designed to integrate seamlessly into a myriad of wearable contexts.
+- 🌍 **Community Testing Program**: We are offering Bee to select contributors and those keen to delve into its potential and unlocking new use cases around productivity, memory, and agents.
+
+### Join Us for Early Access
+For detailed information about Bee, opportunities for participation in its testing, or to engage with a community of like-minded AI wearable enthusiasts, we invite you to [join our Discord](https://discord.gg/BSMSJgFQTv).
+
+We are eager to see what you build with Bee. 🌟
 
 ## Contact
 
