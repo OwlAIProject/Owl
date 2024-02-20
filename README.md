@@ -1,4 +1,4 @@
-# Owl - Always-on Perceptive AI
+# Owl - Always-on Wearable AI
 
 [![](https://dcbadge.vercel.app/api/server/BSMSJgFQTv?style=flat)](https://discord.gg/BSMSJgFQTv)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)

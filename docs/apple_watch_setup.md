@@ -1,4 +1,4 @@
-# Owl - Always-on Perceptive AI
+# Owl - Always-on Wearable AI
 
 [<< Home](../README.md)
 
