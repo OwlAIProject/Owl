@@ -1,8 +1,4 @@
 #
-# TODO for Ethan:
-#   - Stretch: integrate my endpointing
-
-#
 # capture.py
 #
 # Capture endpoints: streaming and chunked file uploads via HTTP handled here.
