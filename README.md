@@ -69,7 +69,7 @@ We are thrilled to unveil "Bee," our pioneering reference hardware device tailor
 - 🤏 **Compact Size**: At just 1.2 inches in diameter, Bee is designed to integrate seamlessly into a myriad of wearable contexts.
 - 🌍 **Community Testing Program**: We are offering Bee to select contributors and those keen to delve into its potential and unlocking new use cases around productivity, memory, and agents.
 
-### Join Us for Early Access
+### Join Us
 For detailed information about Bee, opportunities for participation in its testing, or to engage with a community of like-minded AI wearable enthusiasts, we invite you to [join our Discord](https://discord.gg/BSMSJgFQTv).
 
 We are eager to see what you build with Bee. 🌟
