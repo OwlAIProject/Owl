@@ -1,6 +1,8 @@
 from sqlmodel import SQLModel, create_engine
 from sqlalchemy.orm import sessionmaker, scoped_session
 from ..core.config import DatabaseConfiguration
+from alembic.config import Config
+from alembic import command
 
 class Database:
     def __init__(self, config: DatabaseConfiguration):
@@ -16,7 +18,9 @@ class Database:
         self.SessionLocal = scoped_session(self.session_factory)
 
     def init_db(self):
-        SQLModel.metadata.create_all(bind=self.engine)
+        alembic_cfg = Config("./alembic.ini")
+        alembic_cfg.set_main_option('sqlalchemy.url', str(self.engine.url))
+        command.upgrade(alembic_cfg, "head")
 
     def get_db(self):
         db = self.SessionLocal()

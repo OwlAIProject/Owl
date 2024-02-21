@@ -36,6 +36,7 @@ python-multipart = "^0.0.6"
 webrtcvad = "^2.0.10"
 pyaudio = "^0.2.14"
 halo = "^0.0.31"
+alembic = "^1.13.1"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.4.4"
