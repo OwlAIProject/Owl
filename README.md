@@ -76,7 +76,7 @@ We are eager to see what you build with Bee. 🌟
 
 ## Contact
 
-Please [join our Discord](https://discord.gg/TwrBFG9Z)!
+Please [join our Discord](https://discord.gg/a2UJkDbTBt)!
 
 Social media:
 - Ethan Sutin ([Twitter](https://twitter.com/ethansutin), [GitHub](https://github.com/etown), [LinkedIn](https://www.linkedin.com/in/ethan-sutin-ba598b6/))
