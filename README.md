@@ -70,7 +70,7 @@ We are thrilled to unveil "Bee," our pioneering reference hardware device tailor
 - 🌍 **Community Testing Program**: We are offering Bee to select contributors and those keen to delve into its potential and unlocking new use cases around productivity, memory, and agents.
 
 ### Join Us
-For detailed information about Bee, opportunities for participation in its testing, or to engage with a community of like-minded AI wearable enthusiasts, we invite you to [join our Discord](https://discord.gg/BSMSJgFQTv).
+For detailed information about Bee, opportunities for participation in its testing, or to engage with a community of like-minded AI wearable enthusiasts, we invite you to [join our Discord](https://discord.gg/a2UJkDbTBt).
 
 We are eager to see what you build with Bee. 🌟
 
