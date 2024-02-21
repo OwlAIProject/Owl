@@ -43,7 +43,7 @@ struct ConversationDetailView: View {
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack {
                             ForEach(suggestedLinks, id: \.url) { suggestedLink in
-                                LinkMetadataView(vm: LinkViewModel(link: suggestedLink.url))
+                                LinkMetadataView(linkPreview: LinkPreviewViewModel(url: URL(string: suggestedLink.url)!))
                             }
                         }
                     }
