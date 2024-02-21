@@ -1,4 +1,4 @@
-# Owl - Always-on Perceptive AI
+# Owl - Always-on Wearable AI
 
 [![](https://dcbadge.vercel.app/api/server/BSMSJgFQTv?style=flat)](https://discord.gg/BSMSJgFQTv)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -7,18 +7,17 @@
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](http://makeapullrequest.com)
 
 <p align="center">
-<img alt="Pendant wearable" src="docs/images/featured/pendant_wearable.jpg"> <img alt="Apple Watch client app" src="docs/images/featured/apple_watch.jpg"><br>
-<img alt="Conversations" src="docs/images/featured/ios_conversations.png"> <img alt="CES 2024 expo summary" src="docs/images/featured/ios_conversation_example_ces.png"><br>
+<img alt="Capture devices" src="docs/images/featured/devices.jpg"> <img alt="Home Depot conversation" src="docs/images/featured/ios_conversation_example_home_depot.png">
 </p>
 
 What would you do with an AI that listens to and observes everything that happens in your life? **Owl** aims to explore this idea using always-on wearable devices. The convergence of powerful LLM and VLM models with low-power wearable devices opens up entirely new frontiers for human-computer interaction, including memory augmentation, pro-active life assistance, and distributed knowledge gathering. We believe in exploring this transparently and openly.
 
 ### Key Features
 * 📱 **Broad Capture Device Support:** Capture your life using custom devices based on ESP platforms, Sony Spresense, or consumer hardware like the Apple Watch. Additional device support is continually added, so anything with a sensor will be able to send data to Owl.
+* 🧠 **Flexible Inference Options:** Run completely **locally** or leverage commercial models. Perform inference using any model available on **Ollama**, or use commercial models like GPT-4. Utilize TTS with **Whisper** or choose commercial services like Deepgram.
 * 🌐 **Capture from the Web:** Easily capture content from your desktop or any mobile phone.
 * 🎙️ **Multimodal Capture:** Engage in continuous capture of location and audio. Support for images and video coming very soon!
 * 📶 **Wide Connectivity Options:** Capture with devices supporting BLE, LTE, or WiFi.
-* 🧠 **Flexible Inference Options:** Run completely locally or leverage commercial models. Perform inference using any model available on Ollama, or use commercial models like GPT-4. Utilize TTS with Whisper or choose commercial services like Deepgram.
 * 🚶‍♂️ **Interactive AI on the Go:** Interact with your AI effortlessly through native iOS and web interfaces (Android support coming soon!).
 * 🔊 **Speaker Verification:** Your AI learns your voice so it knows when it’s you talking.
 * 📡 **Streaming and Offline Modes:** Stream your life to your AI in real-time for proactive assistance, or switch to offline mode in network-constrained environments.
@@ -35,9 +34,10 @@ What would you do with an AI that listens to and observes everything that happen
   - [Server Setup](#server-setup)
   - [iOS and watchOS Application Build Instructions](#ios-and-watchos-application-build-instructions)
   - [Capture Device Setup](#capture-device-setup)
-- [Source Code Guide](#source-code-guide)
+- [Technical Guide](#technical-guide)
   - [A *Tour de Source*](#a-tour-de-source)
   - [Capture Storage](#capture-storage)
+- [Contributing](#contributing)
 
 
 ## Overview
@@ -52,14 +52,31 @@ What would you do with an AI that listens to and observes everything that happen
 
 There are three major components to this project:
 
-1. Wearable capture devices. These include semi-custom development boards (with some assembly required) as well as off-the-shelf products like Apple Watch. We would like to develop fully custom open source hardware.
+1. Wearable capture devices. These include semi-custom development [boards](docs/development_boards.md) (with some assembly required) as well as off-the-shelf products like Apple Watch. We would like to develop fully custom open source hardware.
 2. AI server.
 3. Presentation clients. Applications that display information gathered by the system (e.g., transcripts, conversation summaries) and allow interaction with an online assistant. Currently, a mobile app and web app are included.
 
+## Introducing Our Reference Hardware Device: Bee 🐝
+
+<p align="center">
+  <img src="docs/images/bee/bee.png" alt="Bee Device" width="200"/>
+</p>
+
+We are thrilled to unveil "Bee," our pioneering reference hardware device tailored for AI wearable developers and aficionados. Bee distinguishes itself with a remarkable fifty-hour battery life and a sleek, compact form factor, spanning merely 1.2 inches in diameter.
+
+### Key Features of Bee:
+- 🔋 **Fifty-Hour Battery Life**: Engineered for longevity, Bee empowers you to unlock new potential by feeding your entire life as context for your personal AI, which is always by your side ready to assist.
+- 🤏 **Compact Size**: At just 1.2 inches in diameter, Bee is designed to integrate seamlessly into a myriad of wearable contexts.
+- 🌍 **Community Testing Program**: We are offering Bee to select contributors and those keen to delve into its potential and unlocking new use cases around productivity, memory, and agents.
+
+### Join Us
+For detailed information about Bee, opportunities for participation in its testing, or to engage with a community of like-minded AI wearable enthusiasts, we invite you to [join our Discord](https://discord.gg/a2UJkDbTBt).
+
+We are eager to see what you build with Bee. 🌟
 
 ## Contact
 
-Please [join our Discord](https://discord.gg/TwrBFG9Z)!
+Please [join our Discord](https://discord.gg/a2UJkDbTBt)!
 
 Social media:
 - Ethan Sutin ([Twitter](https://twitter.com/ethansutin), [GitHub](https://github.com/etown), [LinkedIn](https://www.linkedin.com/in/ethan-sutin-ba598b6/))
@@ -87,7 +104,7 @@ Platform-specific instructions for installing and running the server:
 - [Windows instructions](docs/windows_setup.md).
 - [Docker instructions](docs/docker_setup.md).
 
-Once the server is installed, some configuration is necessary before it can be run:
+Once the server is installed, it can be completely customized:
 
 - [Configuring the server](docs/server_configuration.md)
 
@@ -105,15 +122,15 @@ Multiple capture devices are supported:
 - [XIAO ESP32S3 Sense Board](docs/xiao_esp32s3_sense_setup.md)
 - [Sony Spresense LTE-M Board](docs/sony_spresense_setup.md)
 
-## Source Code Guide
+## Technical Guide
 
 ### A *Tour de Source*
 
 To help orient newcomers to the code base, we will trace the complete path that data takes through the system, from speech to displayed summary.
 
-#### Streaming Bluetooth Device Example: Xiao ESP32S3 Sense
+#### Streaming Bluetooth Device Example: XIAO ESP32S3 Sense
 
-Bluetooth-based devices, like the Xiao ESP32S3 Sense board in this example, connect to the iOS client application (`clients/ios`) and communicate with it continuously.
+Bluetooth-based devices, like the XIAO ESP32S3 Sense board in this example, connect to the iOS client application (`clients/ios`) and communicate with it continuously.
 
 1. Audio is continuously picked up by the Sense board's microphone at 16 KHz and encoded to AAC. This reduces packets to a third of their original size, which is important because transmission consumes the most power. Packets are broadcast via BLE as fast as they are recorded in the board firmware's `loop()` function found in `clients/xiao-esp32s3-sense/firmware/src/main.cpp`.
 
@@ -167,3 +184,11 @@ device to make manual inspection easy. When conversations are detected within a 
 <img alt="Conversations" src="docs/images/capture_storage/conversations.png"><br>
 <i>Conversations extracted from a particular capture.</i>
 </p>
+
+
+## Contributing
+
+We welcome discussion and contributions. Please [connect with us](#contact). To contribute, we recommend:
+
+  - [Opening an issue](https://github.com/OwlAIProject/Owl/issues) and describing what you are working on so that everyone is aware and we have a chance to discuss.
+  - Forking our repo and making a pull request when ready.

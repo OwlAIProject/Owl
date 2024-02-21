@@ -1,4 +1,4 @@
-# Owl - Always-on Perceptive AI Setup Guide
+# Owl - Always-on Wearable AI Setup Guide
 
 ## Prerequisites
 

@@ -1,4 +1,4 @@
-# Owl - Always-on Perceptive AI
+# Owl - Always-on Wearable AI
 
 [<< Home](../README.md)
 
@@ -59,6 +59,8 @@ We **strongly** recommend running the server over HTTPS in order to ensure that 
 <img alt="Signing & Capabilities" src="../docs/images/xcode/xcode_signing_and_capabilities.png"><br>
 <i>Exception domains are specified in the same place as development team.</i>
 </p>
+
+- **Note:** Don't forget to do this for the *Owl Watch App* target, too. The process must be performed for both the *Owl* **and** *Owl Watch App* targets!
 
 ### 5. Configure App Constants
 
