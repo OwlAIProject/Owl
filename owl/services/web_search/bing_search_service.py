@@ -1,5 +1,5 @@
 import httpx
-from ...models.schemas import BingSearchResponse
+from ...models.bing import BingSearchResponse
 
 class BingSearchService:
     def __init__(self, config):

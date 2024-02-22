@@ -1,7 +1,7 @@
 from typing import List, Optional
 from sqlmodel import SQLModel, Field, Relationship
 from datetime import datetime, timezone
-from pydantic import BaseModel, HttpUrl
+from pydantic import BaseModel
 from enum import Enum
 
 from .datetime_serialization import datetime_string
@@ -106,36 +106,6 @@ class CaptureSegment(CreatedAtMixin, table=True):
 
     conversation: Optional[Conversation] = Relationship(back_populates="capture_segment_file")
 
-#  Bing Search API Response Models
-class RichFactItem(BaseModel):
-    text: str
-
-class RichFact(BaseModel):
-    label: Optional[RichFactItem] = None
-    items: List[RichFactItem] = []
-    hint: Optional[RichFactItem] = None
-
-class WebPage(BaseModel):
-    id: HttpUrl
-    name: str
-    url: HttpUrl
-    isFamilyFriendly: bool
-    displayUrl: HttpUrl
-    snippet: str
-    dateLastCrawled: str
-    language: str
-    isNavigational: bool
-    richFacts: Optional[List[RichFact]] = None 
-
-class WebPages(BaseModel):
-    webSearchUrl: HttpUrl
-    totalEstimatedMatches: int
-    value: List[WebPage]
-
-class BingSearchResponse(BaseModel):
-    _type: str
-    queryContext: dict
-    webPages: WebPages
 
 #  API Response Models
 #  https://sqlmodel.tiangolo.com/tutorial/fastapi/relationships/#dont-include-all-the-data
