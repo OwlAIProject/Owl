@@ -85,3 +85,7 @@ udp:
   enabled: false
   host: '0.0.0.0'
   port: 8001
+
+# To enable web search
+# bing:
+#   subscription_key: your_bing_subscription_service_key
