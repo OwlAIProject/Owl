@@ -1,8 +1,9 @@
 import httpx
 from ...models.bing import BingSearchResponse
+from ...core.config import BingConfiguration
 
 class BingSearchService:
-    def __init__(self, config):
+    def __init__(self, config: BingConfiguration):
         self._config = config
         self._base_url = "https://api.bing.microsoft.com/v7.0/search"
         self._headers = {"Ocp-Apim-Subscription-Key": self._config.subscription_key}
