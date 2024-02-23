@@ -101,30 +101,32 @@ class AsyncWhisperTranscriptionServer:
 
         # Speaker verification (if voice sample file path provided) and adjust speaker labels
         if voice_sample_filepath:
-            # Ensure voice sample file exists
             if not os.path.exists(voice_sample_filepath):
                 raise FileNotFoundError("Voice sample file not found")
             temp_voice_sample_filepath = voice_sample_filepath
             if not voice_sample_filepath.endswith('.wav'):
                 temp_voice_sample_filepath = self._convert_to_wav(voice_sample_filepath)
-
+            full_audio = AudioSegment.from_file(main_audio_filepath)
             for segment in final_transcription_data:
-                segment_audio = AudioSegment.from_file(main_audio_filepath)[segment.get("start") * 1000: segment.get("end") * 1000]
+                # Extract the segment directly from the full audio loaded in memory
+                start_ms = segment.get("start") * 1000  
+                end_ms = segment.get("end") * 1000  
+                segment_audio = full_audio[start_ms:end_ms]
+        
                 with NamedTemporaryFile(suffix=".wav", delete=True) as temp_segment:
                     segment_audio.export(temp_segment.name, format='wav')
                     score, _ = self._compare_with_voice_sample(temp_voice_sample_filepath, temp_segment.name)
-                    speaker_label = speaker_name if score > self._config.verification_threshold else "Unknown Speaker"
-                    segment["speaker"] = speaker_label  # Update speaker label for the segment
-
+                    if score > self._config.verification_threshold:
+                        segment["speaker"] = speaker_name 
         utterances = []
         for segment in final_transcription_data:
             words_list = []
             for word in segment.get("words", []):
                 word_obj = WhisperWord(
                     word=word.get("word", ""),
-                    start=word.get("start"),
-                    end=word.get("end"),
-                    score=word.get("score"),
+                    start=word.get("start", -1),
+                    end=word.get("end", -1),
+                    score=word.get("score", -1),
                     speaker=word.get("speaker")
                 )
                 words_list.append(word_obj)
