@@ -11,6 +11,8 @@ import requests
 import time
 import uuid
 import subprocess
+from alembic import command
+from alembic.config import Config
 
 import click
 from rich.console import Console
@@ -178,6 +180,27 @@ def upload(config: Configuration, file: str, timestamp: datetime | None, device_
             print(f"Error {response.status_code}: {response.content}")
         print(response.content)
 
+####################################################################################################
+# Database
+####################################################################################################
+        
+@cli.command()
+@add_options(_config_options) 
+@click.option('--message', '-m', required=True, help='Migration message')
+def create_migration(config: Configuration, message: str):
+    """Generate a new migration script for schema changes."""
+    console = Console()
+    console.log("[bold green]Generating new migration script...")
+
+    alembic_cfg_path = "./alembic.ini"
+    alembic_cfg = Config(alembic_cfg_path)
+
+    alembic_cfg.set_main_option("sqlalchemy.url", config.database.url)
+
+    # Generate the migration script with Alembic
+    command.revision(alembic_cfg, autogenerate=True, message=message)
+
+    console.log(f"[bold green]Migration script generated with message: '{message}'")
 
 ####################################################################################################
 # Server
