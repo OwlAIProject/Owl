@@ -9,18 +9,19 @@ from ..conversation.transcript_summarizer import TranscriptionSummarizer
 from ...database.crud import create_transcription, create_conversation, find_most_common_location, create_capture_file_segment_file_ref, update_conversation_state, get_conversation_by_conversation_uuid, get_capturing_conversation_by_capture_uuid 
 from ...database.database import Database
 from ...core.config import Configuration
-from ...models.schemas import Transcription, Conversation, ConversationState, Capture, CaptureSegment, TranscriptionRead, ConversationRead
+from ...models.schemas import Transcription, Conversation, ConversationState, Capture, CaptureSegment, TranscriptionRead, ConversationRead, SuggestedLink
 from ...files import CaptureDirectory
 
 logger = logging.getLogger(__name__)
 
 class ConversationService:
-    def __init__(self, config: Configuration, database: Database, transcription_service: AbstractAsyncTranscriptionService, notification_service):
+    def __init__(self, config: Configuration, database: Database, transcription_service: AbstractAsyncTranscriptionService, notification_service, bing_search_service=None):
         self._config = config
         self._database = database
         self._transcription_service = transcription_service
         self._notification_service = notification_service
         self._summarizer = TranscriptionSummarizer(config)
+        self._bing_search_service = bing_search_service
 
     async def create_conversation(self, conversation_uuid: str, start_time: datetime, capture_file: Capture) -> Conversation:
         with next(self._database.get_db()) as db:
@@ -135,12 +136,21 @@ class ConversationService:
                 if most_common_location:
                     logger.info(f"Identified conversation primary location: {most_common_location}")
 
+                suggested_links = []
+                if self._bing_search_service:
+                    query = await self._summarizer.get_query_from_summary(summary_text)
+                    logger.info(f"Searching for suggested links: {query}")
+                    bing_results = await self._bing_search_service.search(query)
+                    for result in bing_results.webPages.value:
+                        suggested_links.append(SuggestedLink(url=str(result.url)))
+
                 conversation.end_time = conversation_end_time
                 conversation.summary = summary_text
                 conversation.short_summary = short_summary_text
                 conversation.start_time = conversation_start_time
                 conversation.transcriptions.append(saved_transcription)
                 conversation.primary_location_id = most_common_location.id if most_common_location else None
+                conversation.suggested_links = suggested_links
         
                 # Link transcription to conversation
                 saved_transcription.conversation_id = conversation.id

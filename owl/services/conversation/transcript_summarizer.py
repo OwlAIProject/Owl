@@ -1,7 +1,7 @@
 from ...models.schemas import Transcription
 from ...services.llm.llm_service import LLMService
 from ...core.config import Configuration
-from ...prompts import summarization_system_message, short_summarization_system_message
+from ...prompts import summarization_system_message, short_summarization_system_message, suggest_links_system_message
 
 class TranscriptionSummarizer:
     def __init__(self, config: Configuration):
@@ -33,6 +33,18 @@ class TranscriptionSummarizer:
             messages=[
                 {"content": system_message, "role": "system"},
                 {"content": user_message, "role": "user"}
+            ]
+        )
+        
+        return response.choices[0].message.content
+    
+    async def get_query_from_summary(self, summary: str) -> str:
+        system_message = suggest_links_system_message(config=self._config)
+
+        response = await self._llm_service.async_llm_completion(
+            messages=[
+                {"content": system_message, "role": "system"},
+                {"content": summary, "role": "user"}
             ]
         )
         

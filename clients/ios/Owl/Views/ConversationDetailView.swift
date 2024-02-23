@@ -28,7 +28,7 @@ struct ConversationDetailView: View {
 
                     Divider().padding(.vertical)
                 }
-
+  
                 if let primaryLocation = conversation.primaryLocation {
                     Map(coordinateRegion: .constant(MKCoordinateRegion(center: primaryLocation.coordinate, span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05))), interactionModes: [], annotationItems: [primaryLocation]) { location in
                         MapMarker(coordinate: location.coordinate)
@@ -38,7 +38,18 @@ struct ConversationDetailView: View {
 
                     Divider().padding(.vertical)
                 }
-
+                
+                if let suggestedLinks = conversation.suggestedLinks, !suggestedLinks.isEmpty {
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack {
+                            ForEach(suggestedLinks, id: \.url) { suggestedLink in
+                                LinkMetadataView(linkPreview: LinkPreviewViewModel(url: URL(string: suggestedLink.url)!))
+                            }
+                        }
+                    }
+                    Divider().padding(.vertical)
+                }
+                
                 if let transcription = transcriptToShow {
                     MetadataView(conversation: conversation, transcription: transcription)
 

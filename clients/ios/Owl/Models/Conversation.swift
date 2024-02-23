@@ -18,6 +18,10 @@ enum ConversationState: String, Codable {
     case failedProcessing = "FAILED_PROCESSING"
 }
 
+struct SuggestedLink: Codable {
+    var url: String
+}
+
 struct Conversation: Codable {
     var id: Int
     var startTime: Date
@@ -31,7 +35,8 @@ struct Conversation: Codable {
     var state: ConversationState
     var transcriptions: [Transcription]
     var primaryLocation: Location?
-
+    var suggestedLinks: [SuggestedLink]?
+    
     enum CodingKeys: String, CodingKey {
         case id
         case startTime = "start_time"
@@ -45,6 +50,7 @@ struct Conversation: Codable {
         case state
         case transcriptions
         case primaryLocation = "primary_location"
+        case suggestedLinks = "suggested_links"
     }
     var realtimeTranscript: Transcription? {
         transcriptions.first(where: { $0.realtime == true })

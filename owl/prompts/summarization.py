@@ -1,6 +1,5 @@
 from ..core.config import Configuration
 
-
 def summarization_system_message(config: Configuration) -> str:
     return f"""
 You are the world's most advanced AI assistant. You are given the transcript of an interaction. One
@@ -22,5 +21,3 @@ can be mislabeled. Do your best to infer the participants based on the context, 
 to the speaker ids in the summary because they alone are not useful. Your job is to return a one
 sentence summary of the interaction on behalf of {config.user.name}. It should capture the
 overall significance of the interaction but not exceed one sentence.""".replace("\n", " ")
-
-    
