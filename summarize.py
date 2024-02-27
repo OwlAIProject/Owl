@@ -1,6 +1,35 @@
-# https://towardsdatascience.com/summarize-podcast-transcripts-and-long-texts-better-with-nlp-and-ai-e04c89d3b2cb?gi=f7aa54cb54c3
-# https://github.com/thamsuppp/llm_summary_medium/blob/master/summarizing_llm.ipynb
-# https://towardsdatascience.com/louvain-algorithm-93fde589f58c
+#
+# summarize.py
+#
+# Summarization method inspired by:
+#   https://towardsdatascience.com/summarize-podcast-transcripts-and-long-texts-better-with-nlp-and-ai-e04c89d3b2cb?gi=f7aa54cb54c3
+#   https://github.com/thamsuppp/llm_summary_medium/blob/master/summarizing_llm.ipynb
+#   https://towardsdatascience.com/louvain-algorithm-93fde589f58c
+#
+# Essentially, the procedure is:
+#   - Split transcript into overlapping chunks of N sentences.
+#   - Summarize each chunk into a "title" and "summary".
+#   - Embed either each chunk summary or chunk title.
+#   - Run a clustering algorithm on embeddings to detect "topics". In my tests, embedding the chunk
+#     titles yields much better results.
+#   - The clustering algorithm produces T topics, each represented as an array of M titles. These
+#     titles must be reduced (summarized) into single topic titles. The same process is performed 
+#     for the chunk summaries associated with each of the individual titles. E.g., if a topic was
+#     found consisting of 4 chunks, those 4 chunk summaries are concatenated and summarized into a
+#     single "topical summary" in a process that is analogous to the topic title summarization.
+#   - At last, the final summary is produced by taking all of the topic summaries, concatenating
+#     them, and running a summarization step. There is however an option to use the raw transcript
+#     chunks here rather than their summaries.
+#
+# Conclusions:
+#   - This produces an inferior summarization but the topic clustering is interesting and
+#     potentially useful.
+#
+# Follow-ups:
+#   - Perform NER on topic-clustered transcript lines? Can we identify conversation objectives and
+#     what would be the most relevant entities here? Does NER simply work better on smaller chunks
+#    (perhaps even initial chunk level)?
+#
 
 import asyncio
 from dataclasses import dataclass
@@ -36,7 +65,7 @@ def split_into_chunks(sentences: List[str], length: int, overlap: int) -> List[s
     chunks = []
     stride = length - overlap
     for i in range(0, len(sentences), stride):
-        chunk = sentences[i : i + length]
+        chunk = "\n".join(sentences[i : i + length])
         chunks.append(chunk)
     return chunks
 
@@ -85,24 +114,27 @@ class ChunkSummary:
     entities: str
 
 async def summarize_one_chunk(client: openai.AsyncOpenAI, chunk: str) -> ChunkSummary:
-    prompt = f"""
-Given the following conversation transcript chunk, produce a summary in the following format:
+    system_message = f"""
+You are a smart AI assistant and are given transcript segments to analyze by the user. Speaker IDs are provided but may
+be mislabeled. Do NOT refer to speaker IDs in your summary. Produce a summary with the following format:
 
-TITLE={{informative title}}
-SUMMARY=A short summary (1 to 3 sentences), making sure to preserve all proper nouns and named entities.
-ENTITIES=A list of named entities mentioned (uniquely identifiable proper nouns), each in format: {{entity}}: {{why it was mentioned}}
-
-Transcript:
-
-{chunk}
+TITLE={{informative title concisely describing the topic of conversation}}
+SUMMARY={{An informative summary (100-200 words). Rephrase the conversation in an essay form addressed
+to a third party not present at the conversation. Preserve all information, proper nouns, named entities.}}
 """
+#ENTITIES=A list of named entities mentioned (uniquely identifiable proper nouns), each in format: {{entity}}: {{why it was mentioned}}
+
     # Get summary from LLM
     response = await client.chat.completions.create(
         model="gpt-3.5-turbo-1106",
         messages=[
             {
+                "role": "system",
+                "content": system_message
+            },
+            {
                 "role": "user",
-                "content": prompt
+                "content": chunk
             }
         ]
     )
@@ -141,8 +173,8 @@ async def summarize_chunks(client: openai.AsyncOpenAI, chunks: List[str], max_pa
 # Embedding
 ####################################################################################################
 
-async def embed_text(client: openai.AsyncOpenAI, text: ChunkSummary) -> np.ndarray:
-   text = text.replace("\n", " ")  
+async def embed_text(client: openai.AsyncOpenAI, text: str) -> np.ndarray:
+   text = text.replace("\n", " ") 
    response = await client.embeddings.create(input = [ text ], model="text-embedding-3-small")
    return np.array(response.data[0].embedding)
 
@@ -266,7 +298,7 @@ async def summarize_chunk_titles_into_topic_titles(client: openai.AsyncOpenAI, c
     topic_titles = []
     for chunk_idxs in topics.chunk_idxs_with_same_topic:
         titles = "\n".join([ chunk_summaries[idx].title for idx in chunk_idxs ])
-        prompt = f"Write an informative title summarizing the following set of titles and make sure the new title captures as much information as possible. Output only the title, no quotes:\n{titles}"
+        prompt = f"Write an informative topic line summarizing the following set of topics and make sure the new topic captures as much information as possible. Output only the topic, no quotes:\n{titles}"
         response = await client.chat.completions.create(
             model="gpt-3.5-turbo-1106",
             messages=[
@@ -283,7 +315,7 @@ async def summarize_chunk_summaries_into_topical_summaries(client: openai.AsyncO
     topical_summaries = []
     for chunk_idxs in topics.chunk_idxs_with_same_topic:
         summaries = "\n".join([ chunk_summaries[idx].summary for idx in chunk_idxs ])
-        prompt = f"Write a concise summary of approximately {num_sentences} sentences, capturing as much information as possible, of the following text:\n{summaries}"
+        prompt = f"Write a concise summary of approximately {num_sentences} sentences, capturing as much information as possible and preserving all proper nouns and named entities, of the following text:\n{summaries}"
         response = await client.chat.completions.create(
             model="gpt-3.5-turbo-1106",
             messages=[
@@ -296,12 +328,97 @@ async def summarize_chunk_summaries_into_topical_summaries(client: openai.AsyncO
         topical_summaries.append(response.choices[0].message.content)
     return topical_summaries
 
+# This version takes the raw (can be cleaned-up) transcript chunks rather than their summaries
+async def summarize_transcript_chunks_into_topical_summaries(client: openai.AsyncOpenAI, chunks: List[str], topics: TopicClusteringResult, num_sentences: int = 5) -> List[str]:
+    topical_summaries = []
+    for chunk_idxs in topics.chunk_idxs_with_same_topic:
+        transcript_lines = "\n".join([ chunks[idx] for idx in chunk_idxs ])
+        prompt = f"""
+You are a smart AI assistant and are given transcript segments to analyze by the user. Speaker IDs
+are provided but may be mislabeled. Do NOT refer to speaker IDs in your summary. Produce a summary
+approximately {num_sentences} long, preserving all proper nouns and named entities:
+
+{transcript_lines}
+"""
+        response = await client.chat.completions.create(
+            model="gpt-3.5-turbo-1106",
+            messages=[
+                {
+                    "role": "user",
+                    "content": prompt
+                }
+            ]
+        )
+        topical_summaries.append(response.choices[0].message.content)
+    return topical_summaries
+
+
+####################################################################################################
+# Final Summarization
+####################################################################################################
+
+async def produce_single_summary_from_chunk_summaries(client: openai.AsyncOpenAI, topics: List[str], summaries: List[str]) -> str:
+    assert len(topics) == len(summaries)
+    num_summaries = len(topics)
+    summaries = "\n".join([ f"TOPIC: {topics[i]}\SUMMARY: {summaries[i]}\n" for i in range(num_summaries) ])
+    system_message = f"""
+You are the world's smartest AI assistant and have been given a series of summaries, by topic, extracted from a conversation.
+Your task is to produce a final recap of everything in the following format:
+
+SUMMARY:
+{{An essay re-stating the conversation, covering each topic in ~75 words, and preserving as much information as possible.
+Incorporate all named entities and proper nouns from the input text. Make sure the summary flows
+logically from topic to topic. Do not use filler phrases mentioning topic and conversation explicitly, focus on the content
+of the conversation and try to re-state it to convey all the information it covered.}}
+
+TAKEAWAYS:
+{{Bullet-point list of key takeaways, action items, and things to follow up on.}}
+"""
+    response = await client.chat.completions.create(
+        model="gpt-3.5-turbo-1106",
+        messages=[
+            {
+                "role": "system",
+                "content": system_message
+            },
+            {
+                "role": "user",
+                "content": f"{summaries}"
+            }
+        ]
+    )
+    return response.choices[0].message.content
+
+
+####################################################################################################
+# Main Program
+####################################################################################################
+
 async def main():
-    transcript = load_transcript(filepath="captures/20240222/apple_watch/20240222-174631.547_da79653060da41f184eb2aa3c1008789/20240222-175257.181_75f102ded1ab11ee9aeaa4b1c10ba08a_conversation.json")
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--no-cleanup", action="store_true", help="Do not clean up transcript before processing")
+    parser.add_argument("--topic-embedding", metavar="source", action="store", default="title", help="Embedding source for topic clustering ('title' (default) or 'summary')")
+    parser.add_argument("--summarize-raw-transcript", action="store_true", help="For final summary, use the original raw transcript chunks rather than topic summaries")
+    parser.add_argument("--plot", action="store_true", help="Plot figures")
+    options = parser.parse_args()
+
+    # Validate options
+    assert options.topic_embedding in [ "title", "summary" ]
+
+    # Load file and split into chunks
+    filepath = "captures/20240222/apple_watch/20240222-174631.547_da79653060da41f184eb2aa3c1008789/20240222-175257.181_75f102ded1ab11ee9aeaa4b1c10ba08a_conversation.json"  # convo at Blue Bottle
+    #filepath = "captures/20240206/apple_watch/20240206-090533.805_a0fe1f04ca9d11ee96b8a4b1c10ba08a/20240206-090830.671_815d306bcaa411ee8caea4b1c10ba08a_conversation.json"   # convo at doctor office
+    transcript = load_transcript(filepath=filepath)
     chunks = split_into_chunks(sentences=transcript, length=10, overlap=2)
 
+    # OpenAI client
     client = openai.AsyncOpenAI()
-    clean_chunks = await clean_up_chunks(client=client, chunks=chunks)
+
+    # Optionally clean up chunks
+    clean_chunks = chunks if options.no_cleanup else await clean_up_chunks(client=client, chunks=chunks)
+
+    # Create chunk summaries (title and summary for each)
     chunk_summaries = await summarize_chunks(client=client, chunks=clean_chunks)
     for i in range(len(chunk_summaries)):
         print(f"Summary {i}:")
@@ -310,28 +427,29 @@ async def main():
         print(f"  Entities: {chunk_summaries[i].entities}")
         print("")
         print("  Transcript:")
-        for sentence in chunks[i]:
+        for sentence in chunks[i].splitlines():
             print(f"    {sentence}")
         print("")
 
     # To embed chunks and find similarity between them, we can embed either the titles or summaries
     # themselves. Titles seem to work better.
-    chunk_embeddings = await embed_chunk_titles(client=client, summaries=chunk_summaries)
+    if options.topic_embedding == "title":
+        chunk_embeddings = await embed_chunk_titles(client=client, summaries=chunk_summaries)
+    else:
+        chunk_embeddings = await embed_chunk_summaries(client=client, summaries=chunk_summaries)
     chunk_similarity_matrix = calculate_similarities(embeddings=chunk_embeddings)
-
-    # Draw a heatmap with the summary_similarity_matrix
-    plt.figure()
-    # Color scheme blues
-    plt.imshow(chunk_similarity_matrix, cmap = 'Blues')
-    plt.show()
 
     # Set num_topics to be 1/4 of the number of chunks, or 8, which ever is smaller
     num_topics = min(int(len(chunks) / 4), 8)
     topics = find_topics_louvain(chunk_similarity_matrix, num_topics = num_topics, bonus_constant = 0.2)
     print(topics)
-    topic_titles = await summarize_chunk_titles_into_topic_titles(client=client, chunk_summaries=chunk_summaries, topics=topics)
-    topic_summaries = await summarize_chunk_summaries_into_topical_summaries(client=client, chunk_summaries=chunk_summaries, topics=topics)
 
+    # Arrays of topic titles and topic summaries
+    topic_titles = await summarize_chunk_titles_into_topic_titles(client=client, chunk_summaries=chunk_summaries, topics=topics)
+    if options.summarize_raw_transcript:
+        topic_summaries = await summarize_transcript_chunks_into_topical_summaries(client=client, chunks=clean_chunks, topics=topics)
+    else:
+        topic_summaries = await summarize_chunk_summaries_into_topical_summaries(client=client, chunk_summaries=chunk_summaries, topics=topics)
 
     print("")
     print("--")
@@ -350,6 +468,25 @@ async def main():
     print("")
     print("--")
 
+    # Single summary
+    final_summary = await produce_single_summary_from_chunk_summaries(client=client, topics=topic_titles, summaries=topic_summaries)
+    print("Final Summary:")
+    print(final_summary)
+
+    # Plots
+    if options.plot:
+        # Draw a heatmap with the summary_similarity_matrix
+        plt.figure()
+        plt.imshow(chunk_similarity_matrix, cmap = 'Blues')
+        plt.show()
+
+        # Plot a heatmap of the topics array, showing how many topics and how they are distributed
+        # throughout the chunks
+        plt.figure(figsize = (10, 4))
+        plt.imshow(np.array(topics.topic_idx_each_chunk).reshape(1, -1), cmap = 'tab20')
+        # Draw vertical black lines for every 1 of the x-axis 
+        for i in range(1, len(topics.topic_idx_each_chunk)):
+            plt.axvline(x = i - 0.5, color = 'black', linewidth = 0.5)
 
 if __name__ == "__main__":
     asyncio.run(main())
