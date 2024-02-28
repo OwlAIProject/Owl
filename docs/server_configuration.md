@@ -98,4 +98,38 @@ Configuration file keys can be overridden with environment variables. The format
 export OWL_ASYNC_WHISPER_HF_TOKEN=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
 ```
 
+On Windows, the equivalent command uses `set` and is:
+
+```
+set OWL_ASYNC_WHISPER_HF_TOKEN=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
+```
+
+However, this will create a variable that only persists in the current shell. To permanently add environment variables, press the ⊞ (Windows) key to bring up the start menu then type `environment`. Click the shortcut to the environment variable dialog.
+
+<p align="center">
+<img alt="System Properties shortcut in Start menu" src="../docs/images/windows/windows_env_vars_1.png"><br>
+<i>Type "environment" in the Start menu to reveal a shortcut to the System Properties dialog.</i>
+</p>
+
+This will bring up System Properties. Click the "Environment Variables..." button on the bottom.
+
+<p align="center">
+<img alt="System Properties dialog" src="../docs/images/windows/windows_env_vars_2.png"><br>
+<i>The System Properties dialog. Environment variables are accessed at the bottom.</i>
+</p>
+
+To add variables under your personal account, press the top-most "New..." button. To add them for all accounts, press the buttom one (under "System variables"). Enter each variable this way and then make sure to click OK. From now on, any new Command Prompt window will have these variables set.
+
+<p align="center">
+<img alt="Environment Variables dialog" src="../docs/images/windows/windows_env_vars_3.png"><br>
+<i>Environment Variables dialog, allowing account-local or system-wide variables to be set.</i>
+</p>
+
+<p align="center">
+<img alt="Entering new environment variable" src="../docs/images/windows/windows_env_vars_4.png"><br>
+<i>Entering an environment variable.</i>
+</p>
+
+ 
+
 [<< Home](../README.md)
