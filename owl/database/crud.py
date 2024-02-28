@@ -1,5 +1,5 @@
 from sqlmodel import SQLModel, Session, select
-from ..models.schemas import Transcription, Conversation, Utterance, Location, CaptureSegment, Capture, ConversationState
+from ..models.schemas import Transcription, Conversation, Utterance, Location, CaptureSegment, Capture, ConversationState, Image
 from typing import List, Optional
 from sqlalchemy.orm import joinedload, selectinload
 from sqlalchemy import desc, func, or_
@@ -7,6 +7,12 @@ from datetime import datetime
 import logging
 
 logger = logging.getLogger(__name__)
+
+def create_image(db: Session, image: Image) -> Image:
+    db.add(image)
+    db.commit()
+    db.refresh(image)
+    return image
 
 def create_utterance(db: Session, utterance: Utterance) -> Utterance:
     db.add(utterance)
