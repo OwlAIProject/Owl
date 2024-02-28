@@ -78,6 +78,7 @@ class Conversation(CreatedAtMixin, table=True):
     primary_location_id: Optional[int] = Field(default=None, foreign_key="location.id")
     primary_location: Optional[Location] = Relationship(back_populates="conversation")
     suggested_links: List["SuggestedLink"] = Relationship(back_populates="conversation")
+    images: List["Image"] = Relationship(back_populates="conversation")
 
 class SuggestedLink(CreatedAtMixin, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -94,6 +95,7 @@ class Capture(CreatedAtMixin, table=True):
     duration: Optional[float]
 
     capture_segment_files: List["CaptureSegment"] = Relationship(back_populates="source_capture")
+    images: List["Image"] = Relationship(back_populates="source_capture")
 
 class CaptureSegment(CreatedAtMixin, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -106,6 +108,15 @@ class CaptureSegment(CreatedAtMixin, table=True):
 
     conversation: Optional[Conversation] = Relationship(back_populates="capture_segment_file")
 
+class Image(CreatedAtMixin, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    filepath: str = Field(...)
+    captured_at: datetime
+    conversation_uuid: str
+    source_capture_id: int = Field(default=None, foreign_key="capture.id")
+    source_capture: Capture = Relationship(back_populates="images")
+    conversation_id: Optional[int] = Field(default=None, foreign_key="conversation.id")
+    conversation: Optional["Conversation"] = Relationship(back_populates="images")
 
 #  API Response Models
 #  https://sqlmodel.tiangolo.com/tutorial/fastapi/relationships/#dont-include-all-the-data

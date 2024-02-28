@@ -64,6 +64,16 @@ class CaptureDirectory:
         # Create the directory
         os.makedirs(name=our_dir, exist_ok=True)
 
+        return filepath    
+    
+    def get_image_filepath(self, capture_file: Capture, conversation_uuid: str, timestamp: datetime, extension: str) -> str:
+        our_dir = self.get_capture_segment_directory(capture_file=capture_file)
+        images_dir = os.path.join(our_dir, "images")
+        os.makedirs(name=images_dir, exist_ok=True)
+        clean_extension = extension.lstrip(".")
+        filename = f"{self._timestamp_string(timestamp)}_{conversation_uuid}.{clean_extension}"
+        filepath = os.path.join(images_dir, filename)
+
         return filepath
     
     def get_capture_segment_directory(self, capture_file: Capture):
