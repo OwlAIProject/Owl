@@ -391,6 +391,94 @@ TAKEAWAYS:
 
 
 ####################################################################################################
+# Information Extraction
+####################################################################################################
+
+def aggregate_transcript_chunks_by_topic(chunks: List[str], topics: TopicClusteringResult) -> List[str]:
+    # Take all chunks associated with a topic and arrange them like so:
+    #
+    #   <segment-1>
+    #   Speaker 0: ...
+    #   Speaker 1: ...
+    #   ...
+    #   </segment-1>
+    #   <segment-2>
+    #   Speaker 0: ...
+    #   Speaker 1: ...
+    #   ...
+    #   </segment-2>
+    #   ...
+    # 
+    # Hopefully the segment tags help GPT understand that these are disjointed segments.
+    #
+    transcript_chunks_each_topic = []
+    for chunk_idxs in topics.chunk_idxs_with_same_topic:
+        pieces = []
+        for idx in chunk_idxs:
+            pieces.append(f"<segment-{idx}>")
+            pieces.append(chunks[idx])
+            pieces.append(f"</segment-{idx}>")
+        transcript_chunks_each_topic.append("\n".join(pieces))
+    return transcript_chunks_each_topic
+
+async def extract_from_each_topic(client: openai.AsyncOpenAI, transcript_chunks_each_topic: List[str], topic_titles: List[str]) -> List[str]:
+    assert len(transcript_chunks_each_topic) == len(topic_titles)
+#     system_message = """
+# You are the world's smartest AI assistant. You help your user by listening in on conversations and 
+# analyzing them for relevant information, recommendations, and insights. Your input is in the form of
+# transcript lines, labeled by speaker ID, representing segments of conversation. The segments may have
+# overlapping lines. All segments have a related topic or theme, which is also stated.
+
+# For each input you are given, extract the specific named entities that appear to have been recommended by any
+# speaker as something that should be investigated, looked into, or otherwise followed up on. Each 
+# should appear on its own line with format:
+
+# - {specific named entity}: {why it is important and what to do next with it}
+
+# If no important entities exist, just emit "NONE". Omit non-specific entities; ONLY list specific ones.
+# Omit generic concepts or categories. Omit entities which are unrelated or weakly related to the topic.
+# """
+    system_message = """
+You are the world's smartest AI assistant. You help your user by listening in on conversations and 
+analyzing them for relevant information, recommendations, and insights. Your input is in the form of
+transcript lines, labeled by speaker ID, representing segments of conversation. The segments may have
+overlapping lines. All segments have a related topic or theme, which is also stated.
+
+When given a transcript, determine what each speaker is most interested in and what information they
+most desire. Then, extract the specific named entities that appear to have been recommended to each
+speaker as something that should be investigated, looked into, or otherwise followed up. For each
+speaker, output in this format:
+
+SPEAKER {n}
+INTERESTS:
+{what speaker is interested in and information they want}
+USEFUL INFO:
+{list of: - {specific named entity}: {why it is important and what to do next with it}}
+"""
+    outputs = []
+    for i in range(len(transcript_chunks_each_topic)):
+        transcript_chunks = transcript_chunks_each_topic[i]
+        topic = topic_titles[i]
+
+        response = await client.chat.completions.create(
+            model="gpt-4-1106-preview",
+#            model="gpt-3.5-turbo-1106",
+            messages=[
+                {
+                    "role": "system",
+                    "content": system_message
+                },
+                {
+                    "role": "user",
+                    "content": f"<topic>{topic}</topic>\n{transcript_chunks}"
+                }
+            ]
+        )
+        outputs.append(response.choices[0].message.content)
+    return outputs
+
+        
+####################################################################################################
 # Main Program
 ####################################################################################################
 
@@ -467,6 +555,14 @@ async def main():
 
     print("")
     print("--")
+
+    # Tests
+    # transcript_chunks_each_topic = aggregate_transcript_chunks_by_topic(chunks=clean_chunks, topics=topics)
+    # y = await extract_from_each_topic(client=client, transcript_chunks_each_topic=transcript_chunks_each_topic, topic_titles=topic_titles)
+    # for i in range(len(y)):
+    #     print(f"Topic: {topic_titles[i]}")
+    #     print("  \n".join(y[i].splitlines()))
+    # return
 
     # Single summary
     final_summary = await produce_single_summary_from_chunk_summaries(client=client, topics=topic_titles, summaries=topic_summaries)
