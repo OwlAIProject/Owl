@@ -92,8 +92,12 @@ class AudioStreamer(private val context: Context, private val captureUUID: Strin
         if (inputBufferIndex >= 0) {
             val inputBuffer = audioEncoder?.getInputBuffer(inputBufferIndex)
             inputBuffer?.clear()
-            inputBuffer?.put(input, 0, length)
-            audioEncoder?.queueInputBuffer(inputBufferIndex, 0, length, System.nanoTime() / 1000, 0)
+
+            // Don't allow buffer to overflow
+            val bytesToEncode = minOf(inputBuffer?.remaining() ?: 0, length)
+
+            inputBuffer?.put(input, 0, bytesToEncode)
+            audioEncoder?.queueInputBuffer(inputBufferIndex, 0, bytesToEncode, System.nanoTime() / 1000, 0)
         }
 
         var outputBufferIndex = audioEncoder?.dequeueOutputBuffer(bufferInfo, 10000) ?: -1
