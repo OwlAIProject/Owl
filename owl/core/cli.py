@@ -13,6 +13,9 @@ import uuid
 import subprocess
 from alembic import command
 from alembic.config import Config
+from ..database.database import Database
+from ..database.crud import create_person, create_voice_sample
+from ..models.schemas import Person, VoiceSample
 
 import click
 from rich.console import Console
@@ -201,6 +204,40 @@ def create_migration(config: Configuration, message: str):
     command.revision(alembic_cfg, autogenerate=True, message=message)
 
     console.log(f"[bold green]Migration script generated with message: '{message}'")
+
+####################################################################################################
+# Persons
+####################################################################################################
+        
+@cli.command()
+@add_options(_config_options) 
+@click.option('--first-name', required=True, help='First name of the person')
+@click.option('--last-name', required=True, help='Last name of the person')
+@click.option('--voice-sample-path', required=True, help='Path to the voice sample file')
+def enroll_speaker(config: Configuration, first_name: str, last_name: str, voice_sample_path: str):
+    """Enroll a new person with a voice sample."""
+    console = Console()
+    console.log("[bold green]Enrolling speaker...")
+
+    database = Database(config.database)
+    with next(database.get_db()) as db:
+        person = create_person(db, Person(first_name=first_name, last_name=last_name))
+    sample_directory = config.speaker_identification.voice_sample_directory
+    sample_directory = os.path.join(sample_directory, str(person.id))
+    os.makedirs(sample_directory, exist_ok=True)
+
+    filename = os.path.basename(voice_sample_path)
+    extension = os.path.splitext(filename)[1]
+
+    sample_file_path = os.path.join(sample_directory, f"{uuid.uuid1().hex}.{extension[1:]}")
+
+    with next(database.get_db()) as db:
+        voice_sample = create_voice_sample(db, VoiceSample(person_id=person.id, filepath=sample_file_path))
+    with open(voice_sample_path, "rb") as f:
+        with open(sample_file_path, "wb") as f2:
+            f2.write(f.read())
+
+    console.log(f"[bold green]Enrolled new person: '{person.id} ({voice_sample.id})'")
 
 ####################################################################################################
 # Server

@@ -86,6 +86,10 @@ udp:
   host: '0.0.0.0'
   port: 8001
 
+speaker_identification:
+  provider: speech_brain
+  voice_sample_directory: voice_samples
+  
 # To enable web search
 # bing:
 #   subscription_key: your_bing_subscription_service_key
