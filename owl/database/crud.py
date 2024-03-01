@@ -20,6 +20,9 @@ def create_voice_sample(db: Session, voice_sample: VoiceSample) -> VoiceSample:
     db.refresh(voice_sample)
     return voice_sample
 
+def get_persons(db: Session) -> List[Person]:
+    return db.query(Person).all()
+
 def create_utterance(db: Session, utterance: Utterance) -> Utterance:
     db.add(utterance)
     db.commit()

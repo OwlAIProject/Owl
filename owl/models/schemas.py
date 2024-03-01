@@ -136,6 +136,15 @@ class WordRead(BaseModel):
     class Config:
         from_attributes=True
 
+class PersonRead(BaseModel):
+    id: Optional[int]
+    first_name: str
+    last_name: Optional[str]
+
+    class Config:
+        from_attributes=True
+
+
 class UtteranceRead(BaseModel):
     id: Optional[int]
     start: Optional[float]
@@ -143,6 +152,8 @@ class UtteranceRead(BaseModel):
     spoken_at: Optional[datetime]
     text: Optional[str]
     speaker: Optional[str]
+    person: Optional[PersonRead] = None
+    
     class Config:
         from_attributes=True
         json_encoders = {
