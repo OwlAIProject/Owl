@@ -1,8 +1,9 @@
 from abc import ABC, abstractmethod
-from ....models.schemas import Transcript
+from ....models.schemas import Transcription, Person
+from typing import List
 
 class AbstractSpeakerIdentificationService(ABC):
     
     @abstractmethod
-    async def identifiy_speakers(self, transcript: Transcript, persons) -> Transcript:
+    async def identify_speakers(self, transcript: Transcription, persons: List[Person]) -> Transcription:
         pass

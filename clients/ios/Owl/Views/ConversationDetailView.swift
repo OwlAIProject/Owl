@@ -57,7 +57,7 @@ struct ConversationDetailView: View {
                     if !transcription.utterances.isEmpty {
                         ForEach(transcription.utterances, id: \.id) { utterance in
                             HStack {
-                                Text("\(utterance.speaker ?? "Unknown"):")
+                                Text("\(utterance.person?.firstName ?? utterance.speaker ?? "Unknown"):")
                                     .fontWeight(.semibold)
                                     .foregroundColor(.blue)
 

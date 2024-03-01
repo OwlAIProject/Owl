@@ -21,6 +21,7 @@ from .udp_capture_socket import UDPCaptureSocketApp
 from ..services import LLMService, CaptureService, ConversationService, NotificationService, BingSearchService
 from ..database.database import Database
 from ..services.stt.asynchronous.async_transcription_service_factory import AsyncTranscriptionServiceFactory
+from ..services.stt.speaker_identification.speaker_identification_service_factory import SpeakerIdentificationServiceFactory
 from .task import Task
 import logging
 import asyncio
@@ -83,7 +84,8 @@ def create_server_app(config: Configuration) -> FastAPI:
     notification_service = NotificationService(config.notification)
     capture_service = CaptureService(config=config, database=database)
     bing_search_service = BingSearchService(config=config.bing) if config.bing else None
-    conversation_service = ConversationService(config, database, transcription_service, notification_service, bing_search_service)
+    speaker_identification_service = SpeakerIdentificationServiceFactory.get_service(config=config) if config.speaker_identification else None
+    conversation_service = ConversationService(config, database, transcription_service, notification_service, bing_search_service, speaker_identification_service)
 
     # Create server app
     app = FastAPI()

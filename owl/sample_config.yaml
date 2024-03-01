@@ -89,6 +89,9 @@ udp:
 speaker_identification:
   provider: speech_brain
   voice_sample_directory: voice_samples
+
+speech_brain:
+  threshold: 0.2
   
 # To enable web search
 # bing:
