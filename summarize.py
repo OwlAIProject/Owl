@@ -451,10 +451,11 @@ speaker, output in this format:
 
 SPEAKER {n}
 INTERESTS:
-{what speaker is interested in and information they want}
+{what speaker is interested in and information they want. extract the single most important thing and what to do next into one concise sentence}
 USEFUL INFO:
-{list of: - {specific named entity}: {why it is important and what to do next with it}}
+{list of: - {specific named entity related to interests}: {concise single sentence why it is important and what to do next with it}}
 """
+
     outputs = []
     for i in range(len(transcript_chunks_each_topic)):
         transcript_chunks = transcript_chunks_each_topic[i]
@@ -557,12 +558,12 @@ async def main():
     print("--")
 
     # Tests
-    # transcript_chunks_each_topic = aggregate_transcript_chunks_by_topic(chunks=clean_chunks, topics=topics)
-    # y = await extract_from_each_topic(client=client, transcript_chunks_each_topic=transcript_chunks_each_topic, topic_titles=topic_titles)
-    # for i in range(len(y)):
-    #     print(f"Topic: {topic_titles[i]}")
-    #     print("  \n".join(y[i].splitlines()))
-    # return
+    transcript_chunks_each_topic = aggregate_transcript_chunks_by_topic(chunks=clean_chunks, topics=topics)
+    y = await extract_from_each_topic(client=client, transcript_chunks_each_topic=transcript_chunks_each_topic, topic_titles=topic_titles)
+    for i in range(len(y)):
+        print(f"Topic: {topic_titles[i]}")
+        print("  \n".join(y[i].splitlines()))
+    return
 
     # Single summary
     final_summary = await produce_single_summary_from_chunk_summaries(client=client, topics=topic_titles, summaries=topic_summaries)
