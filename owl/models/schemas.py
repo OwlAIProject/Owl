@@ -1,6 +1,7 @@
 from typing import List, Optional
 from sqlmodel import SQLModel, Field, Relationship, Column, JSON
 from datetime import datetime, timezone
+import math
 from pydantic import BaseModel
 from enum import Enum
 
@@ -38,6 +39,18 @@ class Utterance(CreatedAtMixin, table=True):
     words: List[Word] = Relationship(back_populates="utterance", sa_relationship_kwargs={"cascade": "all, delete-orphan"})
     person_id: Optional[int] = Field(default=None, foreign_key="person.id")
     person: Optional["Person"] = Relationship(back_populates="utterances")
+
+    def start_millis(self) -> int:
+        return int(self.start * 1000)
+
+    def end_millis(self) -> int:
+        return int(math.ceil(self.end * 1000))
+    
+    def duration(self) -> float:
+        return self.end - self.start
+    
+    def duration_millis(self) -> int:
+        return self.end_millis() - self.start_millis()
 
 class Transcription(CreatedAtMixin, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)

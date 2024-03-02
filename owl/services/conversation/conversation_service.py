@@ -117,7 +117,7 @@ class ConversationService:
                         logger.info("No persons found in the database. Skipping speaker identification.")
                     else:
                         start_time = time.time()
-                        transcription = await self._speaker_identification_service.identify_speakers(transcription, persons)
+                        transcription = await self._speaker_identification_service.identify_speakers(transcript=transcription, conversation=conversation, persons=persons)
                         logger.info(f"Speaker identification complete in {time.time() - start_time:.2f} seconds")
 
                 for utterance in transcription.utterances:
