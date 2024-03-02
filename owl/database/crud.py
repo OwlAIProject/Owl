@@ -1,5 +1,5 @@
 from sqlmodel import SQLModel, Session, select
-from ..models.schemas import Transcription, Conversation, Utterance, Location, CaptureSegment, Capture, ConversationState
+from ..models.schemas import Transcription, Conversation, Utterance, Location, CaptureSegment, Capture, ConversationState, Person, VoiceSample
 from typing import List, Optional
 from sqlalchemy.orm import joinedload, selectinload
 from sqlalchemy import desc, func, or_
@@ -7,6 +7,21 @@ from datetime import datetime
 import logging
 
 logger = logging.getLogger(__name__)
+
+def create_person(db: Session, person: Person) -> Person:
+    db.add(person)
+    db.commit()
+    db.refresh(person)
+    return person
+
+def create_voice_sample(db: Session, voice_sample: VoiceSample) -> VoiceSample:
+    db.add(voice_sample)
+    db.commit()
+    db.refresh(voice_sample)
+    return voice_sample
+
+def get_persons(db: Session) -> List[Person]:
+    return db.query(Person).all()
 
 def create_utterance(db: Session, utterance: Utterance) -> Utterance:
     db.add(utterance)

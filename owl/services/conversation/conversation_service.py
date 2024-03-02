@@ -6,7 +6,7 @@ import logging
 
 from ..stt.asynchronous.abstract_async_transcription_service import AbstractAsyncTranscriptionService
 from ..conversation.transcript_summarizer import TranscriptionSummarizer  
-from ...database.crud import create_transcription, create_conversation, find_most_common_location, create_capture_file_segment_file_ref, update_conversation_state, get_conversation_by_conversation_uuid, get_capturing_conversation_by_capture_uuid 
+from ...database.crud import create_transcription, create_conversation, find_most_common_location, create_capture_file_segment_file_ref, update_conversation_state, get_conversation_by_conversation_uuid, get_capturing_conversation_by_capture_uuid, get_persons 
 from ...database.database import Database
 from ...core.config import Configuration
 from ...models.schemas import Transcription, Conversation, ConversationState, Capture, CaptureSegment, TranscriptionRead, ConversationRead, SuggestedLink
@@ -15,13 +15,14 @@ from ...files import CaptureDirectory
 logger = logging.getLogger(__name__)
 
 class ConversationService:
-    def __init__(self, config: Configuration, database: Database, transcription_service: AbstractAsyncTranscriptionService, notification_service, bing_search_service=None):
+    def __init__(self, config: Configuration, database: Database, transcription_service: AbstractAsyncTranscriptionService, notification_service, bing_search_service=None, speaker_identification_service=None):
         self._config = config
         self._database = database
         self._transcription_service = transcription_service
         self._notification_service = notification_service
         self._summarizer = TranscriptionSummarizer(config)
         self._bing_search_service = bing_search_service
+        self._speaker_identification_service = speaker_identification_service
 
     async def create_conversation(self, conversation_uuid: str, start_time: datetime, capture_file: Capture) -> Conversation:
         with next(self._database.get_db()) as db:
@@ -109,6 +110,15 @@ class ConversationService:
                     serialized_payload = deleted_data.json() 
                     await self._notification_service.send_notification("Empty Conversation", "An empty conversation was deleted", "delete_conversation", payload=serialized_payload)
                     return None, None  
+                
+                if self._speaker_identification_service:
+                    persons = get_persons(db)
+                    if not persons:
+                        logger.info("No persons found in the database. Skipping speaker identification.")
+                    else:
+                        start_time = time.time()
+                        transcription = await self._speaker_identification_service.identify_speakers(transcription, persons)
+                        logger.info(f"Speaker identification complete in {time.time() - start_time:.2f} seconds")
 
                 for utterance in transcription.utterances:
                     utterance.spoken_at = conversation_start_time + timedelta(seconds=utterance.start)

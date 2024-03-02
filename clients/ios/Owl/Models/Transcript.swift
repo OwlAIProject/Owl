@@ -21,7 +21,6 @@ struct CaptureFile: Codable {
     }
 }
 
-
 struct CaptureFileSegment: Codable {
     var id: Int
     var filePath: String
@@ -34,6 +33,7 @@ struct CaptureFileSegment: Codable {
         case sourceCapture = "source_capture"
     }
 }
+
 struct Transcription: Codable {
     var id: Int
     var model: String
@@ -53,6 +53,7 @@ struct Utterance: Codable {
     var end: Double?
     var text: String?
     var speaker: String?
+    var person: Person?
 //    var words: [Word]
 }
 
@@ -68,5 +69,17 @@ struct Word: Codable {
     enum CodingKeys: String, CodingKey {
         case id, word, start, end, score, speaker
         case utteranceId = "utterance_id"
+    }
+}
+
+struct Person: Codable {
+    var id: Int
+    var firstName: String
+    var lastName: String?
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case firstName = "first_name"
+        case lastName = "last_name"
     }
 }

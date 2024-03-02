@@ -49,6 +49,13 @@ class StreamingTranscriptionConfiguration(BaseModel):
 class AsyncTranscriptionConfiguration(BaseModel):
     provider: str
 
+class SpeakerIdentificationConfiguration(BaseModel):
+    provider: str
+    voice_sample_directory: Optional[str] = None
+
+class SpeechBrainConfiguration(BaseModel):
+    threshold: float # todo actual config
+
 class DatabaseConfiguration(BaseModel):
     url: str
 
@@ -105,3 +112,5 @@ class Configuration(BaseModel):
     notification: NotificationConfiguration
     udp: UDPConfiguration
     bing: BingConfiguration | None = None
+    speaker_identification: SpeakerIdentificationConfiguration | None = None
+    speech_brain: SpeechBrainConfiguration | None = None

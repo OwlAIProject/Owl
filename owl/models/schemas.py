@@ -1,5 +1,5 @@
 from typing import List, Optional
-from sqlmodel import SQLModel, Field, Relationship
+from sqlmodel import SQLModel, Field, Relationship, Column, JSON
 from datetime import datetime, timezone
 from pydantic import BaseModel
 from enum import Enum
@@ -36,6 +36,8 @@ class Utterance(CreatedAtMixin, table=True):
     transcription: "Transcription" = Relationship(back_populates="utterances")
 
     words: List[Word] = Relationship(back_populates="utterance", sa_relationship_kwargs={"cascade": "all, delete-orphan"})
+    person_id: Optional[int] = Field(default=None, foreign_key="person.id")
+    person: Optional["Person"] = Relationship(back_populates="utterances")
 
 class Transcription(CreatedAtMixin, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -106,6 +108,19 @@ class CaptureSegment(CreatedAtMixin, table=True):
 
     conversation: Optional[Conversation] = Relationship(back_populates="capture_segment_file")
 
+class Person(CreatedAtMixin, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    first_name: str
+    last_name: str
+    voice_samples: List["VoiceSample"] = Relationship(back_populates="person")
+    utterances: List[Utterance] = Relationship(back_populates="person")
+
+class VoiceSample(CreatedAtMixin, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    filepath: str = Field(...)
+    speaker_embeddings: dict = Field(default={}, sa_column=Column(JSON))
+    person_id: Optional[int] = Field(default=None, foreign_key="person.id")
+    person: Optional["Person"] = Relationship(back_populates="voice_samples")
 
 #  API Response Models
 #  https://sqlmodel.tiangolo.com/tutorial/fastapi/relationships/#dont-include-all-the-data
@@ -121,6 +136,15 @@ class WordRead(BaseModel):
     class Config:
         from_attributes=True
 
+class PersonRead(BaseModel):
+    id: Optional[int]
+    first_name: str
+    last_name: Optional[str]
+
+    class Config:
+        from_attributes=True
+
+
 class UtteranceRead(BaseModel):
     id: Optional[int]
     start: Optional[float]
@@ -128,6 +152,8 @@ class UtteranceRead(BaseModel):
     spoken_at: Optional[datetime]
     text: Optional[str]
     speaker: Optional[str]
+    person: Optional[PersonRead] = None
+    
     class Config:
         from_attributes=True
         json_encoders = {
