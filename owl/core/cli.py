@@ -32,15 +32,19 @@ from .config import Configuration
 def load_config_yaml(ctx, param, value) -> Configuration:
     return Configuration.load_config_yaml(value.name)
 
+
 def add_options(options):
     def _add_options(func):
         for option in reversed(options):
             func = option(func)
         return func
+
     return _add_options
 
+
 _config_options = [
-    click.option("--config", default="owl/sample_config.yaml", help="Configuration file", type=click.File(mode="r"), callback=load_config_yaml)
+    click.option("--config", default="owl/sample_config.yaml", help="Configuration file", type=click.File(mode="r"),
+                 callback=load_config_yaml)
 ]
 
 
@@ -85,7 +89,6 @@ def transcribe(config: Configuration, main_audio_filepath: str, voice_sample_fil
 
     console.print(transcription.utterances, style="bold yellow")
     console.log(f"[bold green]Transcription complete! Time taken: {time.time() - start_time:.2f} seconds")
-
 
 
 ###################################################################################################
@@ -151,9 +154,9 @@ def upload(config: Configuration, file: str, timestamp: datetime | None, device_
     # Timestamp
     if timestamp is not None:
         try:
-           timestamp = datetime.strptime(timestamp, "%Y%m%d-%H%M%S.%f")
+            timestamp = datetime.strptime(timestamp, "%Y%m%d-%H%M%S.%f")
         except:
-           raise ValueError("'timestamp' string does not conform to YYYYmmdd-HHMMSS.fff format")
+            raise ValueError("'timestamp' string does not conform to YYYYmmdd-HHMMSS.fff format")
     else:
         timestamp = datetime.now(timezone.utc)
 
@@ -162,9 +165,9 @@ def upload(config: Configuration, file: str, timestamp: datetime | None, device_
         "Authorization": f"Bearer {config.user.client_token}"
     }
     data = {
-         "capture_uuid": capture_uuid,
-         "timestamp": timestamp.strftime("%Y%m%d-%H%M%S.%f")[:-3],
-         "device_type": device_type if device_type else "unknown"
+        "capture_uuid": capture_uuid,
+        "timestamp": timestamp.strftime("%Y%m%d-%H%M%S.%f")[:-3],
+        "device_type": device_type if device_type else "unknown"
     }
     files = {
         "file": (os.path.basename(file), file_contents)
@@ -175,17 +178,19 @@ def upload(config: Configuration, file: str, timestamp: datetime | None, device_
     if response.status_code != 200:
         print(f"Error {response.status_code}: {response.content}")
     else:
-        response = requests.post(url=f"http://{host}:{port}/capture/process_capture", data={ "capture_uuid": capture_uuid }, headers=headers)
+        response = requests.post(url=f"http://{host}:{port}/capture/process_capture",
+                                 data={"capture_uuid": capture_uuid}, headers=headers)
         if response.status_code != 200:
             print(f"Error {response.status_code}: {response.content}")
         print(response.content)
 
+
 ####################################################################################################
 # Database
 ####################################################################################################
-        
+
 @cli.command()
-@add_options(_config_options) 
+@add_options(_config_options)
 @click.option('--message', '-m', required=True, help='Migration message')
 def create_migration(config: Configuration, message: str):
     """Generate a new migration script for schema changes."""
@@ -202,6 +207,7 @@ def create_migration(config: Configuration, message: str):
 
     console.log(f"[bold green]Migration script generated with message: '{message}'")
 
+
 ####################################################################################################
 # Server
 ####################################################################################################
@@ -211,9 +217,10 @@ def create_migration(config: Configuration, message: str):
 @click.option('--host', default='127.0.0.1', help='The interface to bind to.')
 @click.option('--port', default=8000, help='The port to bind to.')
 @click.option('--web', is_flag=True, help='Build and start the web frontend.')
-def serve(config: Configuration, host, port, web):
+@click.option('--share', is_flag=True, default=False, help='Create a public share url')
+def serve(config: Configuration, host, port, web, share):
     """Start the server."""
-    from .. import server  
+    from .. import server
     console = Console()
 
     if web:
@@ -231,7 +238,14 @@ def serve(config: Configuration, host, port, web):
 
     console.log(f"[bold green]Starting Python server at http://{host}:{port}...")
     app = server.create_server_app(config=config)
+    if share:
+        try:
+            share_url = server.setup_tunnel(host, port)
+            console.log(f"[bold green]Running on public URL: {share_url}")
+        except Exception as e:
+            console.log(e)
     uvicorn.run(app, host=host, port=port, log_level="info", ws_ping_interval=None, ws_ping_timeout=None)
+
 
 if __name__ == '__main__':
     cli()
