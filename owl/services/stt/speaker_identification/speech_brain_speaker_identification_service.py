@@ -1,11 +1,46 @@
 #
+# speech_brain_speaker_identification_service.py
+#
+# Uses SpeechBrain's spkrec-ecapa-voxceleb model to identify speakers from a database of enrolled
+# speakers' voice samples.
+#
+# How It Works
+# ------------
+# - Model is used to compute an embedding vector (192 elements) of each enrolled speech sample. The
+#   idea is to then compare this against captured conversations to identify known people in the 
+#   transcript.
+# - We rely on the transcription service's diarization, for now, to identify speakers. For each 
+#   speaker in the transcript, we take a "representative sample" of audio, compute embeddings, and
+#   then compare against the enrolled embeddings. 
+# - We begin by sorting each speaker's utterances by length, with those nearest to an "ideal sample
+#   length" (e.g., 10 seconds) first, and larger deviations from this last. This threshold has been
+#   chosen somewhat arbitrarily but the reasoning is that we want samples that are not too short 
+#   but also not too long (and therefore likely to contain other speakers due to diarization issues
+#   or other noise).
+# - We accumulate up to a maximum length (e.g., 30 seconds) for each speaker.
+# - Compute embeddings for all samples accumulated, resulting in a list of embeddings for each 
+#   speaker.
+# - We score all M unknown speakers against the N enrolled speakers and produce an NxM matrix. Each
+#   score is the mean of the cosine similarities between the enrolled sample and unknown speaker
+#   samples.
+# - Iteratively assign speakers by pairing up the highest-scoring matches.
+#
 # Notes
 # -----
 # - "speaker" refers to the speaker label string. In a fresh transcript, these are not associated 
 #   with an enrolled speaker (person) yet and are e.g. "Speaker 0", "Speaker 1", etc.
 # - "person" refers to an enrolled speaker, a person with a known name.
 #
-#TODO: how to use CUDA?
+# Improvements
+# ------------
+# - Score each transcript line independently? This would require a lot of processing over the
+#   current sampled approach.
+# - When taking samples, trim the ends and focus on the middle of the utterance to avoid diarization
+#   issues that usually occur at the beginnings and ends of utterances.
+#
+# TODO
+# ----
+# - How to ensure CUDA is used?
 #
 
 from collections import defaultdict
