@@ -13,26 +13,62 @@ from datetime import datetime
 import os
 from typing import Annotated
 
-from fastapi import APIRouter, Request, HTTPException, BackgroundTasks, UploadFile, Form, Depends
+from fastapi import APIRouter, Request, HTTPException, BackgroundTasks, UploadFile, Form, Depends, File
 from fastapi.responses import JSONResponse
 from starlette.requests import ClientDisconnect
 from sqlmodel import Session
+
 import logging
 import traceback
+from datetime import datetime, timezone
 
 from .. import AppState
 from ..task import Task
-from ...database.crud import create_location, update_latest_conversation_location
+from ...database.crud import create_location, update_latest_conversation_location, get_capture_file_ref, get_latest_capturing_conversation_by_capture_uuid, create_image
 from ...files import append_to_wav_file
-from ...models.schemas import Location, Capture, ConversationRead
+from ...models.schemas import Location, Capture, ConversationRead, Image
 from ..streaming_capture_handler import StreamingCaptureHandler
 from ...services import ConversationDetectionService
+from ...files.capture_directory import CaptureDirectory
+
 
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
+####################################################################################################
+# Image API
+####################################################################################################
+
+@router.post("/capture/image")
+async def upload_image(
+    file: UploadFile = File(...),
+    capture_uuid: str = Form(...),
+    app_state: AppState = Depends(AppState.authenticate_request),
+    db: Session = Depends(AppState.get_db),
+    ):
+    capture = get_capture_file_ref(db, capture_uuid)
+    if not capture:
+        raise HTTPException(status_code=404, detail="Capture not found")
+    conversation = get_latest_capturing_conversation_by_capture_uuid(db, capture_uuid)
+    if not conversation:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+    timestamp = datetime.now(timezone.utc)
+    extension = os.path.splitext(file.filename)[1]
+    filepath = CaptureDirectory(config=app_state.config).get_image_filepath(capture_file=capture, conversation_uuid=conversation.conversation_uuid, timestamp=timestamp, extension=extension)
+    with open(filepath, "wb+") as file_object:
+        file_object.write(await file.read())
+    image = Image(
+        filepath=filepath,
+        conversation_uuid=conversation.conversation_uuid,
+        capture_uuid=capture_uuid,
+        captured_at=timestamp,
+        source_capture_id=capture.id,
+        conversation_id=conversation.id
+    )
+    create_image(db, image)
+    return JSONResponse(status_code=200, content={"message": f"File '{file.filename}' saved.'"})
 
 ####################################################################################################
 # Stream API

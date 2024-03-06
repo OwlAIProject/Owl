@@ -20,3 +20,4 @@ class DeviceType(Enum, metaclass=DeviceTypeMeta):
     XIAO_ESP32S3_SENSE = "xiao_esp32s3_sense"
     SONY_SPRESENSE = "spresense"
     WEB = "web"
+    ANDROID = "android"
