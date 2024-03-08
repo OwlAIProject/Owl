@@ -11,6 +11,7 @@
 user:
   name: "Bob"
   client_token: your_own_secret_token
+  language: "english"
 
 # Choose an LLM. To use OpenAI models, 'api_key' must be valid and 'api_base_url' must remain blank.
 llm:
