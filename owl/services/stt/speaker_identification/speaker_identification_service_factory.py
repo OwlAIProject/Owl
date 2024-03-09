@@ -1,4 +1,4 @@
-from .speech_brain_speaker_identification_service import SpeechBrainIdentificationService
+from .speech_brain_speaker_identification_service import SpeechBrainSpeakerIdentificationService
 import logging
 
 logger = logging.getLogger(__name__)
@@ -12,7 +12,7 @@ class SpeakerIdentificationServiceFactory:
         if service_type not in SpeakerIdentificationServiceFactory._instances:
             logger.info(f"Creating new {service_type} speaker identification service")
             if service_type == "speech_brain":
-                SpeakerIdentificationServiceFactory._instances[service_type] = SpeechBrainIdentificationService(config.speech_brain)
+                SpeakerIdentificationServiceFactory._instances[service_type] = SpeechBrainSpeakerIdentificationService(config.speech_brain)
             else:
                 raise ValueError(f"Unknown speaker identification service type: {service_type}")
 

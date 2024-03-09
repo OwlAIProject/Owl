@@ -54,7 +54,9 @@ class SpeakerIdentificationConfiguration(BaseModel):
     voice_sample_directory: Optional[str] = None
 
 class SpeechBrainConfiguration(BaseModel):
-    threshold: float # todo actual config
+    host: str
+    port: int
+    threshold: float
 
 class DatabaseConfiguration(BaseModel):
     url: str

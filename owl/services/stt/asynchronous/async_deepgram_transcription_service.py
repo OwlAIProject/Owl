@@ -70,7 +70,7 @@ class AsyncDeepgramTranscriptionService(AbstractAsyncTranscriptionService):
                         start=utterance.start,
                         end=utterance.end,
                         text=utterance.transcript,
-                        speaker=utterance.speaker,
+                        speaker=str(utterance.speaker), # speaker must be string
                         words=[]
                     )
 
@@ -80,7 +80,7 @@ class AsyncDeepgramTranscriptionService(AbstractAsyncTranscriptionService):
                             start=word.start,
                             end=word.end,
                             score=word.confidence,
-                            speaker=new_utterance.speaker
+                            speaker=str(new_utterance.speaker)
                         )
                         new_utterance.words.append(new_word)
 

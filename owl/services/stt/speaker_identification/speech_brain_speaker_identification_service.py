@@ -1,3 +1,7 @@
+#TODO: speaker_embeddings -> speaker_embeddings_by_model
+#TODO: write back speaker embeddings or get rid of this from database altogether because we can just
+# always compute them lazily
+
 #
 # speech_brain_speaker_identification_service.py
 #
@@ -43,32 +47,182 @@
 # - How to ensure CUDA is used?
 #
 
+from __future__ import annotations
 from collections import defaultdict
 import logging
+import math
+from multiprocessing import Process
+import os
+import requests
+import signal
 import time
 from typing import Dict, List
 
+from fastapi import FastAPI, HTTPException
+from fastapi.responses import JSONResponse
+import httpx
 import numpy as np
+from pydantic import BaseModel
 from pydub import AudioSegment
 from speechbrain.pretrained import EncoderClassifier
 import torch
+import uvicorn
 
 from .abstract_speaker_identification_service import AbstractSpeakerIdentificationService
 from ....core.config import SpeechBrainConfiguration
-from ....models.schemas import Transcription, Conversation, Person
+from ....models.schemas import Transcription, Conversation, Person, Utterance, VoiceSample
 
 
 logger = logging.getLogger(__name__)
 
+class JSONVoiceSample(BaseModel):
+    filepath: str
 
-class SpeechBrainIdentificationService(AbstractSpeakerIdentificationService):
+    def create_from(voice_sample: VoiceSample) -> JSONVoiceSample:
+        return JSONVoiceSample(filepath=voice_sample.filepath)
+
+class JSONPerson(BaseModel):
+    id: int
+    voice_samples: List[JSONVoiceSample]
+
+    def create_from(person: Person) -> JSONPerson:
+       return JSONPerson(
+            id=person.id,
+            voice_samples=[ JSONVoiceSample.create_from(voice_sample=voice_sample) for voice_sample in person.voice_samples ]
+        )
+
+class JSONUtterance(BaseModel):
+    start: float
+    end: float
+    speaker: str
+    person: JSONPerson | None
+
+    def create_from(utterance: Utterance) -> JSONUtterance:
+        return JSONUtterance(
+            start=utterance.start,
+            end=utterance.end,
+            speaker=utterance.speaker,
+            person=JSONPerson.create_from(person=utterance.person) if utterance.person is not None else None
+        )
+
+    def start_millis(self) -> int:
+        return int(self.start * 1000)
+
+    def end_millis(self) -> int:
+        return int(math.ceil(self.end * 1000))
+    
+    def duration(self) -> float:
+        return self.end - self.start
+    
+    def duration_millis(self) -> int:
+        return self.end_millis() - self.start_millis()
+
+class JSONTranscription(BaseModel):
+    utterances: List[JSONUtterance]
+
+    def create_from(transcription: Transcription):
+        return JSONTranscription(utterances=[ JSONUtterance.create_from(utterance=utterance) for utterance in transcription.utterances ])
+
+class SpeakerIdentificationRequest(BaseModel):
+    transcript: JSONTranscription
+    conversation_filepath: str
+    persons: List[JSONPerson]
+
+    def create_from(transcript: Transcription, conversation: Conversation, persons: List[Person]) -> SpeakerIdentificationRequest:
+        return SpeakerIdentificationRequest(
+            transcript=JSONTranscription.create_from(transcription=transcript),
+            conversation_filepath=conversation.capture_segment_file.filepath,
+            persons=[ JSONPerson.create_from(person=person) for person in persons ]
+        )
+
+class SpeakerIdentificationResponse(BaseModel):
+    transcript: JSONTranscription
+
+class SpeechBrainSpeakerIdentificationService(AbstractSpeakerIdentificationService):
+    def __init__(self, config: SpeechBrainConfiguration):
+        self._config = config
+        self._http_client = httpx.AsyncClient(timeout=None) 
+
+        # Start subprocess to run server
+        process_args = (config,)
+        self._process = Process(target=SpeechBrainSpeakerIdentificationService._run, args=process_args)
+        self._process.start()
+
+    def __del__(self):
+        # This nasty trick c/o: https://benjoe.medium.com/programmatically-shutdown-uvicorn-server-running-fastapi-application-2038ade9436d
+        requests.get(f"http://{self._config.host}:{self._config.port}/terminate")
+
+    async def identify_speakers(self, transcript: Transcription, conversation: Conversation, persons: List[Person]) -> Transcription:
+        # Send request to server and get response
+        json_transcript = None
+        try:
+            client = httpx.AsyncClient(timeout=None)
+            url = f"http://{self._config.host}:{self._config.port}/identify_speakers"
+            logger.info(f"Sending request to local SpeechBrain speaker identification server at {url}...")
+            request = SpeakerIdentificationRequest.create_from(transcript=transcript, conversation=conversation, persons=persons).model_dump()
+            response = await client.post(url, json=request)
+            response.raise_for_status()
+            response_string = response.text
+            logger.info(f"Received response from local SpeechBrain speaker identification server: {response_string}")
+            json_transcript = SpeakerIdentificationResponse.model_validate_json(response_string).transcript
+        except httpx.HTTPStatusError as e:
+            logger.error(f"Error response {e.response.status_code} while requesting {e.request.url!r}.")
+        except httpx.RequestError as e:
+            logger.error(f"An error occurred while requesting {e.request.url!r}.")
+        except Exception as e:
+            logger.error(f"An unexpected error occurred while requesting {url}: {e}")
+        
+        # Label the transcript. The JSON version of the transcript should match the real one 1:1. If
+        # we wanted to be really pedantic, we could preserve the detabase ID for each utterance and
+        # verify.
+        if json_transcript is not None:
+            assert len(json_transcript.utterances) == len(transcript.utterances)
+            person_by_id: Dict[int,Person] = { person.id: person for person in persons }
+            for i in range(len(json_transcript.utterances)):
+                json_person = json_transcript.utterances[i].person
+                if json_person is not None:
+                    transcript.utterances[i].person = person_by_id[json_person.id]
+                    transcript.utterances[i].person_id = json_person.id
+
+        return transcript
+
+    def _run(config: SpeechBrainConfiguration):
+        server = SpeechBrainSpeakerIdentificationServer(config=config)
+        server.run()
+
+
+class SpeechBrainSpeakerIdentificationServer:
     def __init__(self, config: SpeechBrainConfiguration):
         self._config = config
         self._classifier = EncoderClassifier.from_hparams(source="speechbrain/spkrec-ecapa-voxceleb")
         self._embeddings_by_enrolled_person_id: Dict[int, torch.Tensor] = {}
         self._cos_similarity = torch.nn.CosineSimilarity(dim=-1, eps=1e-6)
 
-    async def identify_speakers(self, transcript: Transcription, conversation: Conversation, persons: List[Person]) -> Transcription:
+        # Setup server and routes
+        self._app = FastAPI()
+
+        @self._app.post("/identify_speakers", response_model=SpeakerIdentificationResponse)
+        async def api_identify_speakers(request: SpeakerIdentificationRequest):
+            try:
+                transcript = await self._identify_speakers(
+                    transcript=request.transcript,
+                    conversation_filepath=request.conversation_filepath,
+                    persons=request.persons
+                )
+                return SpeakerIdentificationResponse(transcript=transcript)
+            except Exception as e:
+                raise HTTPException(status_code=500, detail=str(e))
+        
+        @self._app.get("/terminate")
+        async def api_terminate():
+            logger.info("Terminating SpeechBrain speaker identification process")
+            os.kill(os.getpid(), signal.SIGTERM)
+            return JSONResponse(content={"success": True}, status_code=200)
+        
+    def run(self):
+        uvicorn.run(self._app, host=self._config.host, port=self._config.port, log_level="info")
+
+    async def _identify_speakers(self, transcript: JSONTranscription, conversation_filepath: str, persons: List[JSONPerson]) -> JSONTranscription:
         # Lazily update enrolled speaker embeddings, because we may encounter new enrolled speakers
         # at any time
         self._update_enrolled_speaker_embeddings(persons=persons)
@@ -79,7 +233,7 @@ class SpeechBrainIdentificationService(AbstractSpeakerIdentificationService):
         # Compute embeddings for each speaker in the given transcript (all of which are unknown) and
         # identify them by comparing against the enrolled speaker embeddings
         t_start = time.perf_counter()
-        embeddings_by_speaker = self._compute_each_speaker_embeddings_from_conversation(transcript=transcript, conversation=conversation)
+        embeddings_by_speaker = self._compute_each_speaker_embeddings_from_conversation(transcript=transcript, conversation_filepath=conversation_filepath)
         identified_person_id_by_speaker = self._identify_speakers_from_embeddings(
             embeddings_by_unknown_speaker=embeddings_by_speaker,
             embeddings_by_enrolled_person_id=self._embeddings_by_enrolled_person_id
@@ -94,12 +248,12 @@ class SpeechBrainIdentificationService(AbstractSpeakerIdentificationService):
                 utterance.person = person_by_id[person_id]
         return transcript
     
-    def _update_enrolled_speaker_embeddings(self, persons: List[Person]):
+    def _update_enrolled_speaker_embeddings(self, persons: List[JSONPerson]):
         for person in persons:
             if person.id not in self._embeddings_by_enrolled_person_id:
                 self._embeddings_by_enrolled_person_id[person.id] = self._compute_embeddings_for_enrolled_speaker(person=person)
     
-    def _compute_embeddings_for_enrolled_speaker(self, person: Person) -> torch.Tensor:
+    def _compute_embeddings_for_enrolled_speaker(self, person: JSONPerson) -> torch.Tensor:
         audio = AudioSegment.from_file(file=person.voice_samples[0].filepath).set_channels(1).set_frame_rate(16000)
         return self._compute_embeddings(audio=audio)
     
@@ -112,14 +266,14 @@ class SpeechBrainIdentificationService(AbstractSpeakerIdentificationService):
         embeddings = self._classifier.encode_batch(data)    # shape: [1,1,192]
         return embeddings.squeeze()                         # shape: [192,]
 
-    def _compute_each_speaker_embeddings_from_conversation(self, transcript: Transcription, conversation: Conversation) -> Dict[int, List[torch.Tensor]]:
+    def _compute_each_speaker_embeddings_from_conversation(self, transcript: JSONTranscription, conversation_filepath: str) -> Dict[int, List[torch.Tensor]]:
         """
         For each speaker in a conversation transcript, computes a number of embeddings from
         various utterances attributed to that speaker.
         """
 
         # Load conversation audio
-        audio = AudioSegment.from_file(conversation.capture_segment_file.filepath)
+        audio = AudioSegment.from_file(conversation_filepath)
 
         # How much total audio for each speaker to accumulate?
         max_sample_millis = 30 * 1000

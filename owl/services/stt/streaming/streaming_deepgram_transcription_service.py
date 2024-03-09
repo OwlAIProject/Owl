@@ -62,9 +62,9 @@ class StreamingDeepgramTranscriptionService(AbstractStreamingTranscriptionServic
                     if not transcript.strip():
                         continue
                     
-                    speaker = words_data[0].get('speaker') if words_data else None
+                    speaker = str(words_data[0].get('speaker')) if words_data else None
 
-                    words = [Word(word=w['word'], start=w['start'], end=w['end'], confidence=w['confidence'], speaker=w.get('speaker')) for w in words_data]
+                    words = [Word(word=w['word'], start=w['start'], end=w['end'], confidence=w['confidence'], speaker=str(w.get('speaker'))) for w in words_data]
                     spoken_at = self.connection_open_time + timedelta(seconds=start)
 
                     utterance = Utterance(start=start, end=end, spoken_at=spoken_at, text=transcript, speaker=speaker, words=words, realtime=True)
