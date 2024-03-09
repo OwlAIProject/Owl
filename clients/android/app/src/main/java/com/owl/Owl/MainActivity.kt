@@ -4,12 +4,22 @@ import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.util.Log
-import androidx.appcompat.app.AppCompatActivity
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.Column
+import androidx.compose.material3.Button
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import java.util.UUID
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : ComponentActivity() {
 
     private lateinit var cameraHandler: CameraHandler
     private lateinit var audioStreamer: AudioStreamer
@@ -19,13 +29,34 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
-
+        setContent {
+            MaterialTheme {
+                Surface {
+                    var isCaptureStarted by remember { mutableStateOf(false) }
+                    Column {
+                        Button(onClick = {
+                            if (isCaptureStarted) {
+                                stopCapture()
+                                isCaptureStarted = false
+                            } else {
+                                if (checkAndRequestPermissions()) {
+                                    startCapture()
+                                    isCaptureStarted = true
+                                }
+                            }
+                        }) {
+                            Text(if (isCaptureStarted) "Stop Local Capture" else "Start Local Capture")
+                        }
+                        ConversationsScreen()
+                    }
+                }
+            }
+        }
         cameraHandler = CameraHandler(this, captureUUID)
-        requestPermissions()
+        audioStreamer = AudioStreamer(this, captureUUID)
     }
 
-    private fun requestPermissions() {
+    private fun checkAndRequestPermissions(): Boolean {
         val requiredPermissions = arrayOf(Manifest.permission.RECORD_AUDIO, Manifest.permission.CAMERA)
         val permissionsToRequest = requiredPermissions.filter {
             ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED
@@ -33,40 +64,53 @@ class MainActivity : AppCompatActivity() {
 
         if (permissionsToRequest.isNotEmpty()) {
             ActivityCompat.requestPermissions(this, permissionsToRequest, REQUEST_PERMISSIONS)
+            return false
         } else {
-            permissionsGranted()
+            return true
         }
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == REQUEST_PERMISSIONS && grantResults.all { it == PackageManager.PERMISSION_GRANTED }) {
-            permissionsGranted()
+            startCapture()
         } else {
             Log.e(TAG, "Permissions not granted by the user.")
         }
     }
 
-    private fun permissionsGranted() {
+    private fun startCapture() {
         cameraHandler.startBackgroundThread()
         cameraHandler.openCamera()
-        audioStreamer = AudioStreamer(this, captureUUID)
         audioStreamer.startStreaming()
+    }
+
+    private fun stopCapture() {
+        cameraHandler.closeCamera()
+        cameraHandler.stopBackgroundThread()
+        audioStreamer.stopStreaming()
     }
 
     override fun onResume() {
         super.onResume()
-        cameraHandler.startBackgroundThread()
+        if (::cameraHandler.isInitialized && ::audioStreamer.isInitialized) {
+            cameraHandler.startBackgroundThread()
+        }
     }
 
     override fun onPause() {
-        cameraHandler.stopBackgroundThread()
+        if (::cameraHandler.isInitialized && ::audioStreamer.isInitialized) {
+            cameraHandler.stopBackgroundThread()
+        }
         super.onPause()
     }
 
     override fun onDestroy() {
+        if (::cameraHandler.isInitialized && ::audioStreamer.isInitialized) {
+            cameraHandler.closeCamera()
+            cameraHandler.stopBackgroundThread()
+            audioStreamer.stopStreaming()
+        }
         super.onDestroy()
-        cameraHandler.closeCamera()
-        cameraHandler.stopBackgroundThread()
     }
 }
