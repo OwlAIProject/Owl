@@ -1,5 +1,7 @@
 # Native Android Version Coming Soon
 
+*Update 2:* There is now a skeleton for displaying conversations. Full companion UI and Bluetooth support coming soon.
+
 *Update:* This project now contains an implementation of Android as a capture device itself. This means it uses the android devices camera and microphone, primarily targeting non phone android devices as wearable/semi-wearable multimodal capture devices. See this [Demo](https://x.com/EthanSutin/status/1763646900056826153?s=20).
 
 
