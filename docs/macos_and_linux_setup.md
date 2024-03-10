@@ -37,12 +37,25 @@ Owl uses PyAnnote for diarization. Please visit Hugging Face and accept the term
 
 3. **Install Dependencies**
 
-   Use Poetry to install the required dependencies:
+   Install required OS dependencies
+   ```
+   # on Ubuntu or Debian
+   sudo apt install portaudio19-dev python3-pyaudio
+   
+   # on Mac Os
+   brew install portaudio
+   ```
+    Use Poetry to install the required dependencies:
    ```
    poetry install
    ```
-
-4. **Start the Server**
+4. **Activate environment**
+    Activate virtual env created with poetry
+    
+    ```
+   poetry shell
+   ```
+5. **Start the Server**
 
    Launch the Owl server:
    ```
