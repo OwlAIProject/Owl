@@ -1,6 +1,6 @@
 # Local configuration files
-/*.env
-/*.yaml
+.env
+config.yaml
 
 # Local database
 *.sqlite3

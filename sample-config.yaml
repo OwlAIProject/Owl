@@ -1,0 +1,107 @@
+# For a detailed overview of each configuration option, see docs/configuration-options.md
+
+user:
+  name: Owl
+  client_token:
+  config_filename: config-sample.yaml
+  voice_sample_filepath:
+
+web:
+  base_url: http://localhost
+  port: 3000
+  environment: development
+  backend:
+    base_url: http://localhost
+    port: 8000
+
+llm:
+  model: ollama/mistral:instruct
+  api:
+    base_url: http://localhost
+    port: 11434
+    key:
+
+prompt:
+  suggest_links_system_message: >
+    You are the world's most advanced AI assistant. You are given the transcript of an interaction.
+    One of the participants is your client. Their name is {config.user.name}. Your task is to generate a
+    rich search query based on the summary of the interaction. You want to optimize the search query
+    to get maximally interesting relevant links for {config.user.name}. IMPORTANT: Try and make your search
+    query about a single subject that is most relevant to the interaction. Make it as specific as
+    possible and only pick one subject. Don't include {config.user.name}'s name in the output, just output
+    the query and nothing else. VERY IMPORTANT: You must just output the search engine query without
+    any prefix and nothing else!
+  summarization_system_message: >
+    You are the world's most advanced AI assistant. You are given the transcript of an interaction.
+    One of the participants is your client. Their name is {config.user.name}. The transcript includes
+    speaker ids, but unfortunately sometimes we don't know the specific person name and sometimes they
+    can be mislabeled. Do your best to infer the participants based on the context, but never referred
+    to the speaker ids in the summary because they alone are not useful. Your job is to return a short
+    summary of the interaction on behalf of {config.user.name} so they can remember what was happening.
+    This is for {config.user.name}'s memories so please include anything that might be useful but also
+    make it narrative so that it's helpful for creating a cherished memory. Format your summary with
+    the following sections: Summary, Atmosphere, Key Take aways (bullet points)
+  short_summarization_system_message: >
+    You are the world's most advanced AI assistant. You are given the transcript of an interaction. One
+    of the participants is your client. Their name is {config.user.name}. The transcript includes
+    speaker ids, but unfortunately sometimes we don't know the specific person name and sometimes they
+    can be mislabeled. Do your best to infer the participants based on the context, but never referred
+    to the speaker ids in the summary because they alone are not useful. Your job is to return a one
+    sentence summary of the interaction on behalf of {config.user.name}. It should capture the overall
+    significance of the interaction but not exceed one sentence.
+
+streaming_transcription:
+  provider: whisper
+
+streaming_whisper:
+  host: 127.0.0.1
+  port: 8009
+  model: small
+  language: en
+  silero_sensitivity: 0.4
+  webrtc_sensitivity: 2
+  post_speech_silence_duration: 0.5
+
+async_transcription:
+  provider: whisper
+
+async_whisper:
+  host: 127.0.0.1
+  port: 8010
+  hf_token:
+  device: cpu
+  compute_type: int8
+  batch_size: 16
+  model: tiny
+  verification_threshold: 0.1
+  verification_model_source: speechbrain/spkrec-ecapa-voxceleb
+  verification_model_savedir: pretrained_models/spkrec-ecapa-voxceleb
+
+deepgram:
+  api_key:
+  model: nova-2
+  language: en-US
+
+database:
+  url: sqlite:///./db.sqlite3
+
+captures:
+  directory: captures
+
+vad:
+  directory: pretrained_models/vad
+
+conversation_endpointing:
+  timeout_seconds: 300
+  min_utterances: 2
+
+notification:
+  apn_team_id:
+
+udp:
+  enabled: false
+  host: 0.0.0.0
+  port: 8001
+
+bing:
+  subscription_key:
