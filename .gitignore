@@ -1,4 +1,5 @@
 # Local configuration files
+/*.env
 /*.yaml
 
 # Local database
