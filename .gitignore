@@ -16,12 +16,11 @@ audio_cache/
 # vscode
 .vscode/launch.json
 
-
 # Local voice samples
 voice_samples/
 
 # Local models
-pretrained_models/
+.models/
 
 # Captures
 captures/
