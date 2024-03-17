@@ -135,7 +135,7 @@ The board firmware at `clients/xiao-esp32s3-sense/firmware` uses the Arduino SDK
 </p>
 
 - Now the board will always run the loaded firmware until it is reprogrammed.
-
+- If you face an issue with uploading, try to power ESP32 while holding a small "B button" on the board. It will load the system in the boot mode
 
 ### Connecting to the iOS App
 
