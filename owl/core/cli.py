@@ -5,25 +5,27 @@
 #
 
 import asyncio
-from datetime import datetime, timezone
 import os
-import requests
+import secrets
+import subprocess
 import time
 import uuid
-import subprocess
+from datetime import datetime, timezone
+
+import click
+import requests
+import uvicorn
+from rich.console import Console
+
 from alembic import command
 from alembic.config import Config
 
-import click
-from rich.console import Console
-
-from ..services.stt.asynchronous.async_transcription_service_factory import AsyncTranscriptionServiceFactory
 from ..services.conversation.transcript_summarizer import TranscriptionSummarizer
-
-import uvicorn
-
+from ..services.stt.asynchronous.async_transcription_service_factory import (
+    AsyncTranscriptionServiceFactory,
+)
 from .config import Configuration
-
+from .utils.setup import setup_config, setup_env
 
 ####################################################################################################
 # Config File Parsing
@@ -40,7 +42,13 @@ def add_options(options):
     return _add_options
 
 _config_options = [
-    click.option("--config", default="owl/sample_config.yaml", help="Configuration file", type=click.File(mode="r"), callback=load_config_yaml)
+    click.option(
+        "--config",
+        default="config.yaml",
+        help="Configuration file",
+        type=click.File(mode="r"),
+        callback=load_config_yaml,
+    )
 ]
 
 
@@ -52,6 +60,36 @@ _config_options = [
 def cli():
     """Owl CLI tool."""
     pass
+
+
+####################################################################################################
+# Setup
+####################################################################################################
+
+@cli.command()
+def setup() -> None:
+    """
+    Set up project configuration files.
+    """
+    console = Console()
+    console.print()
+    console.rule("Owl Setup")
+    console.print("\nWelcome to Owl! Let's get started.", style="bold green", end="\n\n")
+    user_name: str = console.input("Enter first name: ")
+    client_token: str = secrets.token_urlsafe(32)
+    console.print()
+
+    setup_env(console=console, client_token=client_token)
+    setup_config(
+        console=console,
+        data={
+            "user.name": user_name,
+            "user.client_token": client_token,
+        }
+    )
+
+    console.print("\nOwl setup complete. 🎉", style="bold green", end="\n\n")
+    console.rule()
 
 
 ###################################################################################################
@@ -87,7 +125,6 @@ def transcribe(config: Configuration, main_audio_filepath: str, voice_sample_fil
     console.log(f"[bold green]Transcription complete! Time taken: {time.time() - start_time:.2f} seconds")
 
 
-
 ###################################################################################################
 # Summarize File
 ###################################################################################################
@@ -99,7 +136,6 @@ def transcribe(config: Configuration, main_audio_filepath: str, voice_sample_fil
 @click.option('--speaker_name', help='Name of the speaker')
 def summarize(config: Configuration, main_audio_filepath: str, voice_sample_filepath: str, speaker_name: str):
     """Transcribe and summarize an audio file."""
-    from .. import prompts
     console = Console()
 
     console.log("[bold green]Loading transcription service...")
@@ -138,7 +174,7 @@ def summarize(config: Configuration, main_audio_filepath: str, voice_sample_file
 @click.option("--file", required=True, help="Audio file to send.")
 @click.option("--timestamp", help="Timestamp in YYYYmmdd-HHMMSS.fff format. If not specified, will use current time.")
 @click.option("--device-type", help="Capture device type otherwise 'unknown'.")
-@click.option("--host", default="127.0.0.1", help="Address to send to.")
+@click.option("--host", default="localhost", help="Address to send to.")
 @click.option('--port', default=8000, help="Port to use.")
 def upload(config: Configuration, file: str, timestamp: datetime | None, device_type: str | None, host: str, port: int):
     # Load file
@@ -183,9 +219,9 @@ def upload(config: Configuration, file: str, timestamp: datetime | None, device_
 ####################################################################################################
 # Database
 ####################################################################################################
-        
+
 @cli.command()
-@add_options(_config_options) 
+@add_options(_config_options)
 @click.option('--message', '-m', required=True, help='Migration message')
 def create_migration(config: Configuration, message: str):
     """Generate a new migration script for schema changes."""
@@ -207,23 +243,28 @@ def create_migration(config: Configuration, message: str):
 ####################################################################################################
 
 @cli.command()
-@add_options(_config_options)
-@click.option('--host', default='127.0.0.1', help='The interface to bind to.')
+@click.option('--host', default='localhost', help='The interface to bind to.')
 @click.option('--port', default=8000, help='The port to bind to.')
 @click.option('--web', is_flag=True, help='Build and start the web frontend.')
-def serve(config: Configuration, host, port, web):
+def serve(host, port, web):
     """Start the server."""
-    from .. import server  
+    from .. import server
     console = Console()
+
+    try:
+        # Load the configuration
+        config: Configuration = Configuration.load_config_yaml("config.yaml")
+    except FileNotFoundError:
+        console.log("[bold red]Error: config.yaml not found.")
+        console.log("Run 'owl setup' to create the necessary configuration files.")
+        return
 
     if web:
         console.log("[bold green]Building and starting the web frontend...")
         next_project_dir = "./clients/web"
-        env = os.environ.copy()
-        env['OWL_USER_CLIENT_TOKEN'] = config.user.client_token
         try:
             subprocess.run(["npm", "install"], check=True, cwd=next_project_dir)
-            subprocess.Popen(["npm", "run", "dev"], cwd=next_project_dir, env=env)
+            subprocess.Popen(["npm", "run", "dev"], cwd=next_project_dir, env=os.environ)
             console.log("[bold green]Web server started successfully.")
         except subprocess.CalledProcessError as e:
             console.log("[bold red]Failed to build or start the webserver.")
