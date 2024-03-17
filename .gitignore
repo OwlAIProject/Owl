@@ -15,6 +15,8 @@ audio_cache/
 # vscode
 .vscode/launch.json
 
+# Jetbrains
+.idea/
 
 # Local voice samples
 voice_samples/
@@ -104,3 +106,7 @@ inject_derived
 Network Trash Folder
 Temporary Items
 .apdisk
+
+# FRP binary
+
+frpc_*
