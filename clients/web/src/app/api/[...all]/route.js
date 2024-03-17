@@ -6,7 +6,7 @@ async function fetchFromBackend(url, options) {
     if (newPathname === '/tokens') {
         return new Response(JSON.stringify({
             OWL_USER_CLIENT_TOKEN: token,
-            GOOGLE_MAPS_API_KEY: process.env.GOOGLE_MAPS_API_KEY
+            OWL_GOOGLE_MAPS_API_KEY: process.env.OWL_GOOGLE_MAPS_API_KEY
         }), {
             status: 200,
             headers: {
@@ -15,10 +15,10 @@ async function fetchFromBackend(url, options) {
         });
     }
 
-    const backendBaseUrl = process.env.OWL_API_URL || 'http://127.0.0.1:8000';
-    const backendUrl = new URL(newPathname, backendBaseUrl);
+    const apiBaseUrl = process.env.OWL_WEB_API_BASE_URL || 'http://localhost:8000';
+    const apiUrl = new URL(newPathname, apiBaseUrl);
 
-    const backendOptions = {
+    const apiOptions = {
         ...options,
         headers: {
             'Authorization': `Bearer ${token}`,
@@ -27,11 +27,11 @@ async function fetchFromBackend(url, options) {
         },
     };
 
-    const backendResponse = await fetch(backendUrl.toString(), backendOptions);
-    const data = await backendResponse.json();
+    const apiResponse = await fetch(apiUrl.toString(), apiOptions);
+    const data = await apiResponse.json();
 
     return new Response(JSON.stringify(data), {
-        status: backendResponse.status,
+        status: apiResponse.status,
         headers: {
             'Content-Type': 'application/json',
         },

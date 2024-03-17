@@ -5,8 +5,8 @@ let socket;
 
 export const initSocket = (token) => {
     if (!socket) {
-        const dev = process.env.NODE_ENV !== 'production';
-        const backendBaseUrl = dev ? 'http://127.0.0.1:8000' : '/';
+        const dev = process.env.OWL_WEB_ENVIRONMENT !== 'production';
+        const apiBaseUrl = dev ? 'http://localhost:8000' : '/';
         let options = {
             extraHeaders: {
                 Authorization: `Bearer ${token}`
@@ -15,7 +15,7 @@ export const initSocket = (token) => {
         if (!dev) {
             options.path = '/api/socket';
         }
-        socket = io(backendBaseUrl, options);
+        socket = io(apiBaseUrl, options);
         console.log('Connecting to socket server');
     }
 

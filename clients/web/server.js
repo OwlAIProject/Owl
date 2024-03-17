@@ -2,14 +2,16 @@ const http = require('http');
 const next = require('next');
 const httpProxy = require('http-proxy');
 
-const port = process.env.PORT || 3000;
-const dev = process.env.NODE_ENV !== 'production';
+const baseUrl = process.env.OWL_WEB_BASE_URL || 'http://localhost';
+const port = process.env.OWL_WEB_PORT || 3000;
+const apiBaseUrl = process.env.OWL_WEB_API_BASE_URL || 'http://localhost';
+const apiPort = process.env.OWL_WEB_API_PORT || 8000;
+const apiUrl = `${apiBaseUrl}:${apiPort}`;
+
+const dev = process.env.OWL_WEB_ENVIRONMENT !== 'production';
 const app = next({ dev });
 const handle = app.getRequestHandler();
-
 const proxy = httpProxy.createProxyServer({});
-
-const backendBaseUrl = process.env.OWL_API_URL || 'http://127.0.0.1:8000';
 
 app.prepare().then(() => {
   const server = http.createServer((req, res) => {
@@ -17,7 +19,7 @@ app.prepare().then(() => {
       req.url = req.url.replace('/api/socket', '')
       req.url = '/socket.io/' + req.url;
       proxy.web(req, res, {
-        target: backendBaseUrl,
+        target: apiUrl,
         ws: true,
       });
     } else {
@@ -30,13 +32,13 @@ app.prepare().then(() => {
       req.url = req.url.replace('/api/socket', '')
       req.url = '/socket.io/' + req.url;
       proxy.ws(req, socket, head, {
-        target: backendBaseUrl,
+        target: apiUrl,
       });
     }
   });
 
   server.listen(port, (err) => {
     if (err) throw err;
-    console.log(`> Ready on http://127.0.0.1:${port}`);
+    console.log(`> Ready on ${baseUrl}:${port}`);
   });
 });

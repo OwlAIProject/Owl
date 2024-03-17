@@ -25,7 +25,7 @@ const ConversationDetail = ({ params }) => {
             throw new Error('Failed to fetch API tokens');
         }
         const data = await response.json();
-        return data.GOOGLE_MAPS_API_KEY;
+        return data.OWL_GOOGLE_MAPS_API_KEY;
     };
 
     useEffect(() => {
