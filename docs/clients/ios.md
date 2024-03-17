@@ -64,7 +64,7 @@ We **strongly** recommend running the server over HTTPS in order to ensure that 
 
 ### 5. Configure App Constants
 
-The server address and client token (created during [server configuration](server_configuration.md)) must be entered into their respective fields in the `AppConstants` structure, found in `Shared/AppConstants.swift`.
+The server address and client token (created during [server configuration](server-configuration.md)) must be entered into their respective fields in the `AppConstants` structure, found in `Shared/AppConstants.swift`.
 
 <p align="center">
 <img alt="Signing & Capabilities" src="../docs/images/xcode/xcode_app_constants.png"><br>

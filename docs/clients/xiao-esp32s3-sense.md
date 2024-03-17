@@ -143,7 +143,7 @@ The firmware makes the board act as a Bluetooth peripheral that constantly broad
 
 To test with iOS:
 
-- [Build and deploy the iOS app](ios_instructions.md).
+- [Build and deploy the iOS app](docs/clients/ios.md).
 - Ensure the server is running and that the iOS app is able to reach it.
 - Power on the XIAO ESP32S3 Sense board (e.g., connect it to your PC or outlet via USB-C).
 - Open the iOS app. It should indicate that the board is connected. Begin speaking and an in-progress conversation will appear.

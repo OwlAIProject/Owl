@@ -1,12 +1,12 @@
 # Owl - Always-on Wearable AI
 
-[<< Home](../README.md)
+[<< Home](../../README.md)
 
 ## Apple Watch Setup and User Guide
 
 ### Building and Deploying the App
 
-- Follow the [instructions for building and deploying the Apple Watch app from the Xcode project](ios_instructions.md).
+- Follow the [instructions for building and deploying the Apple Watch app from the Xcode project](ios.md).
 
 ### Basic Operation
 

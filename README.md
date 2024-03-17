@@ -13,16 +13,16 @@
 What would you do with an AI that listens to and observes everything that happens in your life? **Owl** aims to explore this idea using always-on wearable devices. The convergence of powerful LLM and VLM models with low-power wearable devices opens up entirely new frontiers for human-computer interaction, including memory augmentation, pro-active life assistance, and distributed knowledge gathering. We believe in exploring this transparently and openly.
 
 ### Key Features
-* 📱 **Broad Capture Device Support:** Capture your life using custom devices based on ESP platforms, Sony Spresense, or consumer hardware like the Apple Watch. Additional device support is continually added, so anything with a sensor will be able to send data to Owl.
-* 🧠 **Flexible Inference Options:** Run completely **locally** or leverage commercial models. Perform inference using any model available on **Ollama**, or use commercial models like GPT-4. Utilize TTS with **Whisper** or choose commercial services like Deepgram.
-* 🌐 **Capture from the Web:** Easily capture content from your desktop or any mobile phone.
-* 🎙️ **Multimodal Capture:** Engage in continuous capture of location and audio. Support for images and video coming very soon!
-* 📶 **Wide Connectivity Options:** Capture with devices supporting BLE, LTE, or WiFi.
-* 🚶‍♂️ **Interactive AI on the Go:** Interact with your AI effortlessly through native iOS and web interfaces (Android support coming soon!).
-* 🔊 **Speaker Verification:** Your AI learns your voice so it knows when it’s you talking.
-* 📡 **Streaming and Offline Modes:** Stream your life to your AI in real-time for proactive assistance, or switch to offline mode in network-constrained environments.
-* 💬 **Advanced Conversation Understanding:** Utilize VAD-based conversation endpointing to segment and understand your interactions.
 
+- 📱 **Broad Capture Device Support:** Capture your life using custom devices based on ESP platforms, Sony Spresense, or consumer hardware like the Apple Watch. Additional device support is continually added, so anything with a sensor will be able to send data to Owl.
+- 🧠 **Flexible Inference Options:** Run completely **locally** or leverage commercial models. Perform inference using any model available on **Ollama**, or use commercial models like GPT-4. Utilize TTS with **Whisper** or choose commercial services like Deepgram.
+- 🌐 **Capture from the Web:** Easily capture content from your desktop or any mobile phone.
+- 🎙️ **Multimodal Capture:** Engage in continuous capture of location and audio. Support for images and video coming very soon!
+- 📶 **Wide Connectivity Options:** Capture with devices supporting BLE, LTE, or WiFi.
+- 🚶‍♂️ **Interactive AI on the Go:** Interact with your AI effortlessly through native iOS and web interfaces (Android support coming soon!).
+- 🔊 **Speaker Verification:** Your AI learns your voice so it knows when it’s you talking.
+- 📡 **Streaming and Offline Modes:** Stream your life to your AI in real-time for proactive assistance, or switch to offline mode in network-constrained environments.
+- 💬 **Advanced Conversation Understanding:** Utilize VAD-based conversation endpointing to segment and understand your interactions.
 
 ## Table of Contents
 
@@ -35,10 +35,9 @@ What would you do with an AI that listens to and observes everything that happen
   - [iOS and watchOS Application Build Instructions](#ios-and-watchos-application-build-instructions)
   - [Capture Device Setup](#capture-device-setup)
 - [Technical Guide](#technical-guide)
-  - [A *Tour de Source*](#a-tour-de-source)
+  - [A _Tour de Source_](#a-tour-de-source)
   - [Capture Storage](#capture-storage)
 - [Contributing](#contributing)
-
 
 ## Overview
 
@@ -46,13 +45,13 @@ What would you do with an AI that listens to and observes everything that happen
 
 **Owl** is an experiment in human-computer interaction using wearable devices to observe our lives and extract information and insights from them using AI. Presently, only audio and location are captured, but we plan to incorporate vision and other modalities as well. The objectives of the project are, broadly speaking:
 
-1. Develop an always-on AI system that is *useful*, unlocking new ways to enhance our productivity, our understanding of ourselves and the world around us, and ability to connect with others.
+1. Develop an always-on AI system that is _useful_, unlocking new ways to enhance our productivity, our understanding of ourselves and the world around us, and ability to connect with others.
 2. Implement specific use cases for always-on AI (e.g., productivity and memory enhancement, knowledge capture and sharing, health, etc.)
 3. Explore human-computer interaction questions: user experience, interface design, privacy, security.
 
 There are three major components to this project:
 
-1. Wearable capture devices. These include semi-custom development [boards](docs/development_boards.md) (with some assembly required) as well as off-the-shelf products like Apple Watch. We would like to develop fully custom open source hardware.
+1. Wearable capture devices. These include semi-custom development [boards](docs/development-boards.md) (with some assembly required) as well as off-the-shelf products like Apple Watch. We would like to develop fully custom open source hardware.
 2. AI server.
 3. Presentation clients. Applications that display information gathered by the system (e.g., transcripts, conversation summaries) and allow interaction with an online assistant. Currently, a mobile app and web app are included.
 
@@ -65,11 +64,13 @@ There are three major components to this project:
 We are thrilled to unveil "Bee," our pioneering reference hardware device tailored for AI wearable developers and aficionados. Bee distinguishes itself with a remarkable fifty-hour battery life and a sleek, compact form factor, spanning merely 1.2 inches in diameter.
 
 ### Key Features of Bee:
+
 - 🔋 **Fifty-Hour Battery Life**: Engineered for longevity, Bee empowers you to unlock new potential by feeding your entire life as context for your personal AI, which is always by your side ready to assist.
 - 🤏 **Compact Size**: At just 1.2 inches in diameter, Bee is designed to integrate seamlessly into a myriad of wearable contexts.
 - 🌍 **Community Testing Program**: We are offering Bee to select contributors and those keen to delve into its potential and unlocking new use cases around productivity, memory, and agents.
 
 ### Join Us
+
 For detailed information about Bee, opportunities for participation in its testing, or to engage with a community of like-minded AI wearable enthusiasts, we invite you to [join our Discord](https://discord.gg/a2UJkDbTBt).
 
 We are eager to see what you build with Bee. 🌟
@@ -79,9 +80,9 @@ We are eager to see what you build with Bee. 🌟
 Please [join our Discord](https://discord.gg/a2UJkDbTBt)!
 
 Social media:
+
 - Ethan Sutin ([Twitter](https://twitter.com/ethansutin), [GitHub](https://github.com/etown), [LinkedIn](https://www.linkedin.com/in/ethan-sutin-ba598b6/))
 - Bart Trzynadlowski ([Twitter](https://twitter.com/bartronpolygon), [GitHub](https://github.com/trzy), [LinkedIn](https://www.linkedin.com/in/bart-trzynadlowski-9b41938))
-
 
 ## Privacy and Security
 
@@ -93,38 +94,43 @@ Social media:
   - Use a reverse proxy (such as [ngrok](https://ngrok.com/)) when running on a personal server, which will encrypt traffic using HTTPS.
   - If you absolutely insist on running an unprotected home server, change your authorization token regularly and consider frequently deleting your database and capture directory so as not to leave a large number of conversations exposed.
 
-
 ## Setup Guide
+
+### Getting Started
+
+To get started, follow the instructions in the [Getting Started](docs/getting-started.md) guide.
 
 ### Server Setup
 
 Platform-specific instructions for installing and running the server:
 
-- [macOS and Linux instructions](docs/macos_and_linux_setup.md).
-- [Windows instructions](docs/windows_setup.md).
-- [Docker instructions](docs/docker_setup.md).
+- [macOS and Linux](docs/installation/macos-and-linux.md)
+- [Windows](docs/installation/windows.md).
+- [Docker](docs/installation/docker.md).
 
 Once the server is installed, it can be completely customized:
 
-- [Configuring the server](docs/server_configuration.md)
+- [Server Configuration](docs/server-configuration.md)
+- [Configuration Options](docs/configuration-options.md)
+- [Environment Variables](docs/environment-variables.md)
 
 ### iOS and watchOS Application Build Instructions
 
 The iOS app is the primary way to view and interact with conversations. The Xcode project also includes a watchOS capture client app that allows Apple Watch to be used as a wearable capture device.
 
-- [iOS and watchOS Application Build Instructions](docs/ios_instructions.md)
+- [iOS and watchOS Application Build Instructions](docs/clients/ios.md)
 
 ### Capture Device Setup
 
 Multiple capture devices are supported:
 
-- [Apple Watch](docs/apple_watch_setup.md)
-- [XIAO ESP32S3 Sense Board](docs/xiao_esp32s3_sense_setup.md)
-- [Sony Spresense LTE-M Board](docs/sony_spresense_setup.md)
+- [Apple Watch](docs/clients/apple-watch.md)
+- [XIAO ESP32S3 Sense Board](docs/clients/xiao-esp32s3-sense.md)
+- [Sony Spresense LTE-M Board](docs/clients/sony-spresense.md)
 
 ## Technical Guide
 
-### A *Tour de Source*
+### A _Tour de Source_
 
 To help orient newcomers to the code base, we will trace the complete path that data takes through the system, from speech to displayed summary.
 
@@ -134,11 +140,11 @@ Bluetooth-based devices, like the XIAO ESP32S3 Sense board in this example, conn
 
 1. Audio is continuously picked up by the Sense board's microphone at 16 KHz and encoded to AAC. This reduces packets to a third of their original size, which is important because transmission consumes the most power. Packets are broadcast via BLE as fast as they are recorded in the board firmware's `loop()` function found in `clients/xiao-esp32s3-sense/firmware/src/main.cpp`.
 
-2. Packets enter the iOS app in `peripheral(_:,didUpdateValueFor:,error:)` in `clients/ios/Owl/Services/BLEManager.swift`. The iOS app passes complete frames to the server via a socket. *Frame* here refers to an AAC frame and there is a sequence numbering mechanism used to detect dropped BLE packets. AAC frames are independent, allowing us to drop incomplete frames that would cause downstream transcription models to choke.
+2. Packets enter the iOS app in `peripheral(_:,didUpdateValueFor:,error:)` in `clients/ios/Owl/Services/BLEManager.swift`. The iOS app passes complete frames to the server via a socket. _Frame_ here refers to an AAC frame and there is a sequence numbering mechanism used to detect dropped BLE packets. AAC frames are independent, allowing us to drop incomplete frames that would cause downstream transcription models to choke.
 
 3. Frames enter the server socket in `on_audio_data()` in `owl/server/capture_socket.py`. The `CaptureSocketApp` object is created with the FastAPI server in `main.py`. The capture session's UUID is used to look up the appropriate `StreamingCaptureHandler` and the data is forwarded there.
 
-4. In `owl/server/streaming_capture_handler.py`, the audio data is appended to files on disk and then passed along to a transcription service for real-time transcription and conversation endpoint detection. A `Capture` object, which is recorded in the persistent database, is created and represents the capture session and file on disk. Capture files contain all audio recorded during a session. As conversations are detected, they are written out to capture *segment* files with associated `CaptureSegment` objects to represent them. These can be thought of as "children" of the parent capture file. `Conversation` objects are produced to store the conversations themselves (transcript, summaries, processing state, etc.) Whenever a conversation is created by the conversation service, a notification is pushed to the server over the socket connection to the iOS app.
+4. In `owl/server/streaming_capture_handler.py`, the audio data is appended to files on disk and then passed along to a transcription service for real-time transcription and conversation endpoint detection. A `Capture` object, which is recorded in the persistent database, is created and represents the capture session and file on disk. Capture files contain all audio recorded during a session. As conversations are detected, they are written out to capture _segment_ files with associated `CaptureSegment` objects to represent them. These can be thought of as "children" of the parent capture file. `Conversation` objects are produced to store the conversations themselves (transcript, summaries, processing state, etc.) Whenever a conversation is created by the conversation service, a notification is pushed to the server over the socket connection to the iOS app.
 
 5. The transcription service uses a streaming transcription model (Deepgram at the time of this writing, with a local option planned) that delivers utterances to `handle_utterance()`. This in turn passes the utterance, which includes timestamps, to the endpointing service. When the endpointing service determines a conversation has ended, `on_endpoint()` is invoked. The completed conversation segment file is then transcribed more thoroughly and summarized. A task is created and dispatched to the server's async background processing queue, which is drained continuously in `main.py` (`process_queue()`). The task, still in `streaming_capture_handler.py`, simply calls `process_conversation_from_audio()` on `ConversationService`, an instance of which was created as part of the server app's shared state (`AppState`).
 
@@ -172,7 +178,7 @@ Chunked uploads enter the server differently than streaming audio, use a differe
 
 ### Capture Storage
 
-Captures are stored in the directory specified by the `capture_dir` key in the YAML configuration file. They are organized by date and capture
+Captures are stored in the directory specified by the `captures.directory` key in the YAML configuration file. They are organized by date and capture
 device to make manual inspection easy. When conversations are detected within a capture, they are extracted into a subdirectory named after the capture file. The subdirectory will contain conversation audio files as well as transcripts and summaries in JSON form. Conversation detection may sometimes be incorrect; conversations that are too short or contain no dialog at all are not summarized and the corresponding JSON files will be absent.
 
 <p align="center">
@@ -185,10 +191,9 @@ device to make manual inspection easy. When conversations are detected within a 
 <i>Conversations extracted from a particular capture.</i>
 </p>
 
-
 ## Contributing
 
 We welcome discussion and contributions. Please [connect with us](#contact). To contribute, we recommend:
 
-  - [Opening an issue](https://github.com/OwlAIProject/Owl/issues) and describing what you are working on so that everyone is aware and we have a chance to discuss.
-  - Forking our repo and making a pull request when ready.
+- [Opening an issue](https://github.com/OwlAIProject/Owl/issues) and describing what you are working on so that everyone is aware and we have a chance to discuss.
+- Forking our repo and making a pull request when ready.

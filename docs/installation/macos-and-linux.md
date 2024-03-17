@@ -15,49 +15,55 @@ Before you begin, ensure you have the following installed on your system:
 ## Model Agreements
 
 Owl uses PyAnnote for diarization. Please visit Hugging Face and accept the terms for the following models:
+
 - [PyAnnote Segmentation Model](https://huggingface.co/pyannote/segmentation)
 - [PyAnnote Speaker Diarization Model](https://huggingface.co/pyannote/speaker-diarization)
 
 ## Setup Instructions
 
-1. **Environment Variables**
-
-   Set your Hugging Face token as an environment variable:
-   ```
-   export OWL_ASYNC_WHISPER_HF_TOKEN=<your_hugging_face_token>
-   ```
-
-2. **Clone Repository**
+1. **Clone Repository**
 
    Clone the Owl repository from GitHub:
+
    ```
    git clone https://github.com/OwlAIProject/Owl.git
    cd Owl
    ```
 
-3. **Install Dependencies**
+2. **Install Dependencies**
 
    Install required OS dependencies
+
    ```
    # on Ubuntu or Debian
    sudo apt install portaudio19-dev python3-pyaudio
-   
+
    # on Mac Os
    brew install portaudio
    ```
-    Use Poetry to install the required dependencies:
+
+   Use Poetry to install the required dependencies:
+
    ```
    poetry install
    ```
-4. **Activate environment**
-    Activate virtual env created with poetry
-    
-    ```
-   poetry shell
+
+3. **Activate environment**
+   Activate virtual env created with poetry
+
    ```
+   poetry shell
+
+   ```
+
+4. **Set Environment Variables**
+
+   For details on customizing application behavior by setting environment variables, see the [Environment Variables](../docs/environment-variables.md) document.
+
 5. **Start the Server**
 
    Launch the Owl server:
+
    ```
    owl serve --web
    ```
@@ -69,6 +75,7 @@ Owl uses PyAnnote for diarization. Please visit Hugging Face and accept the term
 If you prefer using commercial models for transcription and summarization, set up the following environment variables instead of the PyAnnote setup:
 
 - For Deepgram:
+
   ```
   export OWL_STREAMING_TRANSCRIPTION_PROVIDER=deepgram
   export OWL_ASYNC_TRANSCRIPTION_PROVIDER=deepgram
@@ -78,7 +85,7 @@ If you prefer using commercial models for transcription and summarization, set u
 - For GPT-4 Turbo:
   ```
   export OWL_LLM_MODEL=gpt-4-turbo-preview
-  export OWL_LLM_API_BASE_URL=https://api.openai.com/v1
+  export OWL_LLM_BASE_URL=https://api.openai.com/v1
   export OWL_LLM_API_KEY=<your_api_key>
   ```
 
