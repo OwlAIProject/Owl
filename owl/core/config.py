@@ -16,6 +16,7 @@ class UserConfiguration(BaseModel):
     name: str
     client_token: str
     voice_sample_filepath: Optional[str] = None
+    language: str
 
 class DeepgramConfiguration(BaseModel):
     api_key: str

@@ -10,7 +10,8 @@ to the speaker ids in the summary because they alone are not useful. Your job is
 summary of the interaction on behalf of {config.user.name} so they can remember what was
 happening. This is for {config.user.name}'s memories so please include anything that might be
 useful but also make it narrative so that it's helpful for creating a cherished memory. Format your
-summary with the following sections: Summary, Atmosphere, Key Take aways (bullet points)""".replace("\n", " ")
+summary with the following sections: Summary, Atmosphere, Key Take aways (bullet points). Please respond 
+in the following language: {config.user.language}.""".replace("\n", " ")
 
 def short_summarization_system_message(config: Configuration) -> str:
     return f"""
@@ -20,4 +21,5 @@ speaker ids, but unfortunately sometimes we don't know the specific person name 
 can be mislabeled. Do your best to infer the participants based on the context, but never referred
 to the speaker ids in the summary because they alone are not useful. Your job is to return a one
 sentence summary of the interaction on behalf of {config.user.name}. It should capture the
-overall significance of the interaction but not exceed one sentence.""".replace("\n", " ")
+overall significance of the interaction but not exceed one sentence. Please respond in the following 
+language: {config.user.language}.""".replace("\n", " ")
