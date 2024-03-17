@@ -1,45 +1,55 @@
-#
-# llm.py
-#
-# LLM class: LLM abstraction layer. Performs LLM requests using a particular local or remote model.
-#
-from litellm import completion, acompletion
-from ...core.config import LLMConfiguration
-import logging
+"""
+LLM abstraction layer.
+"""
 
-logger = logging.getLogger(__name__)
+import logging
+from typing import Any
+
+from litellm import acompletion, completion
+from litellm.utils import CustomStreamWrapper, ModelResponse
+
+from owl.core.config import LLMConfiguration
+
+logger: logging.Logger = logging.getLogger(__name__)
+
 
 class LLMService:
-    def __init__(self, config: LLMConfiguration):
-        self._config = config
-        self._model = config.model
+    """A service class for performing LLM completions."""
 
-    def llm_completion(self, messages, stream=False):
-        logger.info(f"LLM completion request for model {self._model}...")
-        llm_params = {
-            "model": self._model,
-            "messages": messages,
-            "stream": stream
+    def __init__(self, config: LLMConfiguration) -> None:
+        """
+        Initialize the LLMService with the given configuration.
+        """
+        self._config: LLMConfiguration = config
+        self._params: dict[str, Any] = {
+            "model": config.model,
+            "api_base": f"{config.base_url}{f':{config.port}' if config.port else ''}",
+            "api_key": config.api_key,
         }
 
-        if self._config.api_base_url:
-            llm_params["api_base"] = self._config.api_base_url
-        if self._config.api_key:
-            llm_params["api_key"] = self._config.api_key
+    def _prepare_request(
+        self, messages: Any, stream: bool = False, **kwargs
+    ) -> dict[str, Any]:
+        """
+        Prepare the parameters for the LLM completion request.
+        """
+        logger.info("LLM completion request for model %s...", self._params["model"])
+        params: dict[str, Any] = self._params.copy()
+        params.update({"messages": messages, "stream": stream, **kwargs})
+        return params
 
-        return completion(**llm_params)
+    def llm_completion(
+        self, messages: Any, stream: bool = False, **kwargs
+    ) -> ModelResponse | CustomStreamWrapper:
+        """
+        Perform an LLM completion request.
+        """
+        request: dict[str, Any] = self._prepare_request(messages, stream, **kwargs)
+        return completion(**request)
 
-    async def async_llm_completion(self, messages):
-        logger.info(f"LLM completion request for model {self._model}...")
-        llm_params = {
-            "model": self._model,
-            "messages": messages
-        }
-
-        if self._config.api_base_url:
-            llm_params["api_base"] = self._config.api_base_url
-        if self._config.api_key:
-            llm_params["api_key"] = self._config.api_key
-
-        return await acompletion(**llm_params)
-
+    async def async_llm_completion(self, messages: Any, **kwargs) -> Any:
+        """
+        Perform an asynchronous LLM completion request.
+        """
+        request: dict[str, Any] = self._prepare_request(messages, **kwargs)
+        return await acompletion(**request)

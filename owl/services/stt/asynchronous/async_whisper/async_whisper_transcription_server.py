@@ -47,11 +47,11 @@ class AsyncWhisperTranscriptionServer:
         self._setup_routes()
 
     def _load_models(self):
-        logger.info(f"Transcription model: {self._config.model} | Device: {self._config.device} | Compute type: {self._config.compute_type} | Batch size: {self._config.batch_size} | Verification model source: {self._config.verification_model_source} | Verification model savedir: {self._config.verification_model_savedir} | Verification threshold: {self._config.verification_threshold} | HF token: {self._config.hf_token}")
+        logger.info(f"Transcription model: {self._config.model} | Device: {self._config.device} | Compute type: {self._config.compute_type} | Batch size: {self._config.batch_size} | Verification model source: {self._config.verification_model_source} | Verification model savedir: {self._config.verification_model_directory} | Verification threshold: {self._config.verification_threshold} | HF token: {self._config.hf_token}")
         transcription_model = whisperx.load_model(self._config.model, self._config.device, compute_type=self._config.compute_type)
 
         diarize_model = whisperx.DiarizationPipeline(model_name='pyannote/speaker-diarization@2.1', use_auth_token=self._config.hf_token, device=self._config.device)
-        verification_model = SpeakerRecognition.from_hparams(source=self._config.verification_model_source, savedir=self._config.verification_model_savedir, run_opts={"device": self._config.device})
+        verification_model = SpeakerRecognition.from_hparams(source=self._config.verification_model_source, savedir=self._config.verification_model_directory, run_opts={"device": self._config.device})
         alignment_model, alignment_metadata = whisperx.load_align_model(language_code="en", device=self._config.device)
         return transcription_model, diarize_model, verification_model, alignment_model, alignment_metadata
 

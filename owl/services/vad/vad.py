@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 
 class VoiceActivityDetector:
     def __init__(self, config: Configuration, force_onnx_cpu=True):
-        path = self._download(model_savedir=config.vad.vad_model_savedir)
+        path = self._download(model_savedir=config.vad.directory)
 
         opts = onnxruntime.SessionOptions()
         opts.log_severity_level = 3
@@ -118,11 +118,11 @@ class VoiceActivityDetector:
         if not os.path.exists(model_filepath):
             logger.info(f"Downloading VAD ONNX model to: {model_filepath}...")
             try:
-                 urllib.request.urlretrieve(model_url, model_filepath)
+                urllib.request.urlretrieve(model_url, model_filepath)
             except Exception as e:
                 raise RuntimeError("Failed to download VAD model")
         return model_filepath
-    
+
     def get_speech_timestamps(
         self,
         audio: torch.Tensor,
