@@ -65,6 +65,7 @@ We **strongly** recommend running the server over HTTPS in order to ensure that 
 ### 5. Configure App Constants
 
 The server address and client token (created during [server configuration](server_configuration.md)) must be entered into their respective fields in the `AppConstants` structure, found in `Shared/AppConstants.swift`.
+- Note: You need to point to the Python server, not the node server that hosts the web front end. By default, python server runs on port 8000, so just add :8000 to your IP address. (and you have to make sure this port is accessible through your firewall).
 
 <p align="center">
 <img alt="Signing & Capabilities" src="../docs/images/xcode/xcode_app_constants.png"><br>
